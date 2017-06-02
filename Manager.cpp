@@ -11,6 +11,9 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 	//Parsing
 	Parsing(Input_file);
 
+	//test
+	all_layer[0].SpanningGraphConstruct();
+
 }
 
 

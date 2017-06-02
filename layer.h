@@ -46,10 +46,10 @@ struct Via{
 class Layer{
 public:
 	Layer();
-	void SpanningGraphConstruct();  		  //step 1
-	void SpanningTreeConstruct();   		  //step 2
+	void SpanningGraphConstruct();            //step 1
+	void SpanningTreeConstruct();             //step 2
 	void RectilinearSpanningTreeConstruct();  //step 3
-	void OARSMT();  						  //step 4
+	void OARSMT();                            //step 4
 
 
 	//for private use
@@ -64,17 +64,23 @@ private:
 	list < Shape* > Rshape_list;
 	list < Shape* > Obstacle_list;
 	list < Via*   > Via_list;
+	vector <Shape* > X_sort_shape;
 	/*vec < Shape* > Rshape_vec;
 	vec < Shape* > Obstacle_vec;
 	vec < Via*   > Via_vec;*/
 	int Rshape_num;
 	int Obstacle_num;
 	int Via_num;
+	int Layer_Shape_num;
 	//step 1
 
 
 
 };
+
+
+
+typedef list<Shape*>::iterator it_shape;
 
 
 
