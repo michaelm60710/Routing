@@ -43,7 +43,7 @@ void Manager::Parsing(const char* Input_file){
 		l = int(layer[1]) - 49; // M1 -> l = 0, M2 -> l = 1
 		temp_shape->coords = Parsing_coordinate(coor1,coor2);
 		temp_shape->Shape_type = RSHAPE;
-		all_layer[l].Rshape_list.push_back(temp_shape);
+		all_layer[l].Rshape_list_append(temp_shape);
 	}
 
 	//###3. read RoutedVias
@@ -52,24 +52,24 @@ void Manager::Parsing(const char* Input_file){
 		i_file>>garbage>>layer>>coor1;
 		l = int(layer[1]) - 49; // V1 -> 0, V2 -> 1
 		Via* temp_via = Parsing_via(coor1);
-		all_layer[l].Via_list.push_back(temp_via);
+		all_layer[l].Via_list_append(temp_via);
 	}
 
 	//###2. read Obstacles
-	cout << "read Obstaclese...\n" << endl;
+	cout << "read Obstaclese..." << endl;
 	for(int i = 0; i < Obstacles;i++){
 		i_file>>garbage>>layer>>coor1>>coor2;
 		Shape *temp_shape = new Shape;
 		l = int(layer[1]) - 49; // M1 -> 0, M2 -> 1
 		temp_shape->coords = Parsing_coordinate(coor1,coor2);
-		temp_shape->Shape_type = RSHAPE;
-		all_layer[l].Obstacle_list.push_back(temp_shape);
+		temp_shape->Shape_type = OBSTACLE;
+		all_layer[l].Obstacle_list_append(temp_shape);
 	}
 
 
 
 	//###3. print & check
-	cout << "ViaCost: " << ViaCost << endl;
+	cout << "\nViaCost: " << ViaCost << endl;
 	cout << "Spacing: " << Spacing << endl;
 	cout << "MetalLayers: " <<MetalLayers << endl;
 	cout << "RoutedShapes: " <<RoutedShapes << endl;
@@ -77,9 +77,9 @@ void Manager::Parsing(const char* Input_file){
 	cout << "Obstacles: " <<Obstacles << endl;
 	for(int i=0;i<MetalLayers;i++){
 		cout << "LAYER " << i << ":"<<endl;
-		cout << "   Rshape size: " << all_layer[i].Rshape_list.size() << endl;
-		cout << "   Via size: " << all_layer[i].Via_list.size() << endl;
-		cout << "   Obstacle size: " << all_layer[i].Obstacle_list.size() << endl;
+		cout << "   Rshape size: " << all_layer[i].get_Rshape_num() << endl;
+		cout << "   Via size: " << all_layer[i].get_Via_num() << endl;
+		cout << "   Obstacle size: " << all_layer[i].get_Obstacle_num() << endl;
 	}
 
 }
