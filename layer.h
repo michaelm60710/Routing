@@ -2,44 +2,9 @@
 #define LAYER_H
 
 
-
-#include <stdlib.h>
-#include <string.h> 
-#include <vector>
-#include <list>
-
-#define RSHAPE 0
-#define OBSTACLE 1
+#include "cluster.h"
 
 using namespace std;
-
-
-struct Coords{
-	int x1;
-	int y1;
-	int x2;
-	int y2;
-};
-
-
-struct Shape{
-
-	//int x;
-	//int y;
-	//int width;
-	//int height;
-	Coords *coords;
-	bool Shape_type;//Rshape or Obstacle
-};
-
-struct Via{
-	int x;
-	int y;
-};
-
-
-
-
 
 
 
@@ -64,7 +29,10 @@ private:
 	list < Shape* > Rshape_list;
 	list < Shape* > Obstacle_list;
 	list < Via*   > Via_list;
-	vector <Shape* > X_sort_shape;
+	vector <Shape* > all_shape_vec;
+	//vector <Shape* > X_sort_shape;
+	MAP_Shape X_msort_shape; //sort X2
+	MAP_Shape Y_msort_shape; //sort Y2
 	/*vec < Shape* > Rshape_vec;
 	vec < Shape* > Obstacle_vec;
 	vec < Via*   > Via_vec;*/
@@ -80,7 +48,6 @@ private:
 
 
 
-typedef list<Shape*>::iterator it_shape;
 
 
 

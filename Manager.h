@@ -2,12 +2,8 @@
 #define Mgr_H
 
 #include <fstream>
-#include <stdlib.h>
-#include <string.h> 
-#include <vector>
-#include <list>
-
 #include "layer.h"
+
 using namespace std;
 
 

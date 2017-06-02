@@ -18,23 +18,26 @@ bool Sort_Shape(Shape* a, Shape* b){
 
 
 void Layer::SpanningGraphConstruct(){
-	/* 1.1 sorting
-	   1.2 construct cluster
+	/* 1.1 construct cluster
 
 	   */
-	//#1.1 sorting x 
+	//#1.0 construct all_shape_vec
 	int pos = 0;
 	Layer_Shape_num = Rshape_num+Obstacle_num;
-	X_sort_shape.resize(Layer_Shape_num);
+	all_shape_vec.resize(Layer_Shape_num);
 	for (it_shape it_s= Rshape_list.begin();it_s != Rshape_list.end();++it_s)
-		X_sort_shape[pos++] = (*it_s); 
+		all_shape_vec[pos++] = (*it_s); 
 	for (it_shape it_s= Obstacle_list.begin();it_s != Obstacle_list.end();++it_s)
-		X_sort_shape[pos++] = (*it_s); 
+		all_shape_vec[pos++] = (*it_s); 
 
-	sort(X_sort_shape.begin(),X_sort_shape.end(),Sort_Shape);
-	//for (int i=0;i<Rshape_num+Obstacle_num;i++)
-	//	cout << i << ": " << X_sort_shape[i]->coords->x1 << endl;
+	//#1.1 construct cluster
+	for (int i =0;i < Layer_Shape_num; ++i){
+		Cluster *clu = new Cluster(all_shape_vec[i]);
 
+
+
+	}
+	//for(MS_it it = X_msort_shape.begin();it!=X_msort_shape.end();++it)
 	
 
 }
@@ -75,11 +78,15 @@ void Layer::SpanningGraphConstruct(){
 void Layer::Rshape_list_append(Shape *temp_shape){
 	Rshape_num++;
 	Rshape_list.push_back(temp_shape);
+	X_msort_shape.insert(MAP_Shape::value_type(temp_shape->coords->x2, temp_shape));
+	Y_msort_shape.insert(MAP_Shape::value_type(temp_shape->coords->y2, temp_shape));
 }
 
 void Layer::Obstacle_list_append(Shape *temp_shape){
 	Obstacle_num++;
 	Obstacle_list.push_back(temp_shape);
+	X_msort_shape.insert(MAP_Shape::value_type(temp_shape->coords->x2, temp_shape));
+	Y_msort_shape.insert(MAP_Shape::value_type(temp_shape->coords->y2, temp_shape));
 }
 
 void Layer::Via_list_append(Via *temp_via){
