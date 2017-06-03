@@ -12,7 +12,10 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 	Parsing(Input_file);
 
 	//test
-	all_layer[0].SpanningGraphConstruct();
+	for(size_t s = 0; s < all_layer.size(); s++){
+		cout<<"layer "<<s+1<<endl;
+		all_layer[s].SpanningGraphConstruct();
+	}
 
 }
 

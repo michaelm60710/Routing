@@ -41,7 +41,7 @@ struct Shape{
 	Coords *coords;
 	bool Shape_type;//Rshape or Obstacle
 	Cluster *clu;
-
+    int    y_idx;
 };
 
 struct Via{
@@ -53,7 +53,7 @@ struct Via{
 
 
 class Cluster{
-	
+	friend class Layer;
 public:
 	Cluster(Shape*);
 	void Add_shape(Shape*);
