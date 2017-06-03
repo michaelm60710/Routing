@@ -16,6 +16,7 @@ public:
 	void RectilinearSpanningTreeConstruct();  //step 3
 	void OARSMT();                            //step 4
 
+	//void MergeCluster(Cluster *, Cluster *);
 
 	//for private use
 	void Rshape_list_append(Shape *);

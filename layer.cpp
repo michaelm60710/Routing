@@ -32,7 +32,13 @@ void Layer::SpanningGraphConstruct(){
 
 	//#1.1 construct cluster
 	for (int i =0;i < Layer_Shape_num; ++i){
-		Cluster *clu = new Cluster(all_shape_vec[i]);
+		all_shape_vec[i]->clu = NULL;
+
+
+
+
+
+		//Cluster *clu = new Cluster(all_shape_vec[i]);
 
 
 

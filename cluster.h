@@ -14,6 +14,7 @@
 struct Coords;
 struct Shape;
 struct Via;
+class Cluster;
 
 using namespace std;
 
@@ -39,6 +40,7 @@ struct Shape{
 	//int height;
 	Coords *coords;
 	bool Shape_type;//Rshape or Obstacle
+	Cluster *clu;
 
 };
 
