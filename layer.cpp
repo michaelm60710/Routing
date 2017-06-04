@@ -34,7 +34,11 @@ void Layer::SpanningGraphConstruct(){
 	
 	//#1.1 construct cluster
     clustering_shape();
-    check_cluster();
+
+    //#2 construct graph
+    SGconstruct();
+
+    //check_cluster();
 	//for(MS_it it = X_msort_shape.begin();it!=X_msort_shape.end();++it)
 	
 
@@ -115,6 +119,78 @@ Layer::overlap(Shape* S1, Shape* S2){
     }
     return false;
 }
+
+
+bool
+sort_line_x(Line* L1, Line* L2){
+    return L1->x < L2->x;
+}
+
+void
+Layer::SGconstruct(){
+    cout << "SGconstruct"<< endl;
+    vector <Line* > all_line_vec;
+    all_line_vec.resize(Layer_Shape_num*2);
+
+    //### 1. sorting all shape line(x)
+    for(size_t s = 0; s < all_shape_vec.size(); s++){
+        Line *l_l = new Line;
+        Line *l_r = new Line;
+        l_l->S = l_r->S = all_shape_vec[s];
+        l_l->x = all_shape_vec[s]->coords->x1;
+        l_r->x = all_shape_vec[s]->coords->x2;
+        l_l->y = l_r->y = all_shape_vec[s]->coords->y1;
+        l_l->length = l_r->length = all_shape_vec[s]->coords->y2 - l_l->y;
+        l_l->LR = LEFT;
+        l_l->LR = RIGHT;
+        //cout << "x,y,x2,y2:"<< all_shape_vec[s]->coords->x1 << " " << all_shape_vec[s]->coords->y1 << " " << all_shape_vec[s]->coords->x2 << " " <<all_shape_vec[s]->coords->y2 << endl;
+        //cout << "l_l:" << l_l->x << " " << l_l->y << " " << l_l->length << " " <<  l_l->LR << endl;
+        //cout << "l_r:" << l_r->x << " " << l_r->y << " " << l_r->length << " " <<  l_r->LR << endl;
+        all_line_vec[2*s] = l_l;
+        all_line_vec[2*s+1] = l_r;
+    }
+    sort(all_line_vec.begin(), all_line_vec.end(), sort_line_x);
+
+    //### 2. lets go~
+    multimap< int , GraphPoint* , less<int> > bound_map;
+    for(size_t s = 0; s < all_line_vec.size(); s++){
+    
+
+    }
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //int convert to string
 string itos(int a) {
@@ -202,15 +278,15 @@ Layer::check_cluster(){
 void Layer::Rshape_list_append(Shape *temp_shape){
 	Rshape_num++;
 	Rshape_list.push_back(temp_shape);
-	X_msort_shape.insert(MAP_Shape::value_type(temp_shape->coords->x2, temp_shape));
-	Y_msort_shape.insert(MAP_Shape::value_type(temp_shape->coords->y2, temp_shape));
+	//X_msort_shape.insert(MAP_Shape::value_type(temp_shape->coords->x2, temp_shape));
+	//Y_msort_shape.insert(MAP_Shape::value_type(temp_shape->coords->y2, temp_shape));
 }
 
 void Layer::Obstacle_list_append(Shape *temp_shape){
 	Obstacle_num++;
 	Obstacle_list.push_back(temp_shape);
-	X_msort_shape.insert(MAP_Shape::value_type(temp_shape->coords->x2, temp_shape));
-	Y_msort_shape.insert(MAP_Shape::value_type(temp_shape->coords->y2, temp_shape));
+	//X_msort_shape.insert(MAP_Shape::value_type(temp_shape->coords->x2, temp_shape));
+	//Y_msort_shape.insert(MAP_Shape::value_type(temp_shape->coords->y2, temp_shape));
 }
 
 void Layer::Via_list_append(Via *temp_via){

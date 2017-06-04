@@ -10,18 +10,23 @@
 
 #define RSHAPE 0
 #define OBSTACLE 1
+#define LEFT 0
+#define RIGHT 1
 
 struct Coords;
 struct Shape;
 struct Via;
+struct Line;
+struct GraphPoint;
 class Cluster;
 
 using namespace std;
 
+typedef pair<int, int> Point;
 typedef multimap< int , Shape* , less<int> > MAP_Shape;
+typedef multimap< int , pair<GraphPoint*, Point*> , less<int> > MAP_GP_edge;
 typedef MAP_Shape::iterator MS_it;
 typedef list<Shape*>::iterator it_shape;
-typedef pair<int, int> Point;
 
 
 struct Coords{
@@ -50,6 +55,24 @@ struct Via{
 	int y;
 };
 
+struct Line{
+	int x;
+	int y;
+	int length;
+	bool LR; //LEFT or RIGHT
+	Shape *S;
+};
+
+struct GraphPoint{
+	Cluster *clu;
+	bool Shape_type;
+	MAP_GP_edge map_edge;
+	//if the GraphPoint is RoutedShape, x & y is not a fixed value
+	int x;
+	int y;
+
+
+};
 
 
 

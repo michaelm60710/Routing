@@ -17,6 +17,7 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 		all_layer[s].SpanningGraphConstruct();
 	}
 
+
 }
 
 
