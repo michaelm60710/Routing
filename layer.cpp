@@ -33,7 +33,7 @@ void Layer::SpanningGraphConstruct(){
 	
 	//#1.1 construct cluster
     clustering_shape();
-
+    //test
 
 	//for(MS_it it = X_msort_shape.begin();it!=X_msort_shape.end();++it)
 	
