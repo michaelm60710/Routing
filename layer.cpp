@@ -34,8 +34,7 @@ void Layer::SpanningGraphConstruct(){
 	
 	//#1.1 construct cluster
     clustering_shape();
-    //test
-
+    check_cluster();
 	//for(MS_it it = X_msort_shape.begin();it!=X_msort_shape.end();++it)
 	
 
@@ -127,19 +126,21 @@ string itos(int a) {
 
 void
 Layer::check_cluster(){
-    system("mkdir Gnuplot");
-
+    //system("mkdir Gnuplot");
+    int count = 0;
     for(size_t i = 0; i < all_cluster.size(); i++){
-        cout << i <<":\n";
+        //cout << i <<":\n";
+        count += all_cluster[i]->shape_list.size();
 
-        string num = itos(i);
+
+        /*string num = itos(i);
         string a1 = string("Gnuplot/data")+num+string(".txt");
         string gnu = string("Gnuplot/gnu")+num;
         ofstream a(a1.c_str());
         ofstream b(gnu.c_str());
 
         it_shape it = all_cluster[i]->shape_list.begin();
-        cout<<"elements:"<<endl;
+        //cout<<"elements:"<<endl;
         int idx = 1;
         for(; it != all_cluster[i]->shape_list.end(); it++){
             int x1 = (*it)->coords->x1;
@@ -163,11 +164,10 @@ Layer::check_cluster(){
     a.close();
     b.close();
     string command ="gnuplot "+gnu; 
-    system(command.c_str());
-    //cin.get();
+    system(command.c_str());*/
 
     }
-
+    cout << "count:" <<count << endl;
 
 }
 
