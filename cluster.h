@@ -42,6 +42,7 @@ struct Shape{
 	bool Shape_type;//Rshape or Obstacle
 	Cluster *clu;
     int    y_idx;
+    list < Shape* > Overlaps;
 };
 
 struct Via{

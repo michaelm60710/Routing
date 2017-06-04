@@ -1,6 +1,7 @@
 #include "layer.h"
 #include <iostream>
 #include <algorithm>
+#include <fstream>
 
 using namespace std;
 
@@ -55,10 +56,10 @@ Layer::clustering_shape(){
 		sort_by_x1.push_back(all_shape_vec[s]);
 	}
     sort(sort_by_x1.begin(), sort_by_x1.end(), sort_func_x1);
-    /*cout<<"layer:"<<endl;
-    cout<<"sort by x1:"<<endl;
+    cout<<"layer:"<<endl;
+    /*cout<<"sort by x1:"<<endl;
     for(size_t s = 0; s < sort_by_x1.size(); s++)
-    	cout<<sort_by_x1[s]->coords->x1<<", "<<sort_by_x1[s]->coords->y1<<endl;*/
+    	cout<<s<<": "<<sort_by_x1[s]->coords->x1<<", "<<sort_by_x1[s]->coords->y1<<endl;*/
     
     for(size_t s = 0; s < sort_by_x1.size(); s++){
         if(sort_by_x1[s]->clu == NULL){
@@ -116,7 +117,59 @@ Layer::overlap(Shape* S1, Shape* S2){
     return false;
 }
 
+//int convert to string
+string itos(int a) {
+    string sign = a<0?"-":"";
+    string result = a>0?string(1,(a%10+'0')):string(1,((a=-a)%10+'0'));
+    (a/=10)>0?result=itos(a)+result:result;
+    return sign+result;
+ }
 
+void
+Layer::check_cluster(){
+    system("mkdir Gnuplot");
+
+    for(size_t i = 0; i < all_cluster.size(); i++){
+        cout << i <<":\n";
+
+        string num = itos(i);
+        string a1 = string("Gnuplot/data")+num+string(".txt");
+        string gnu = string("Gnuplot/gnu")+num;
+        ofstream a(a1.c_str());
+        ofstream b(gnu.c_str());
+
+        it_shape it = all_cluster[i]->shape_list.begin();
+        cout<<"elements:"<<endl;
+        int idx = 1;
+        for(; it != all_cluster[i]->shape_list.end(); it++){
+            int x1 = (*it)->coords->x1;
+            int x2 = (*it)->coords->x2;
+            int y1 = (*it)->coords->y1;
+            int y2 = (*it)->coords->y2;
+            a<<x1<<" "<<y1<<endl;
+            a<<x2<<" "<<y2<<endl;
+            b<<"set object " << idx << " rect from "<<x1<<","<<y1<<" to "<<x2<<","<<y2<<" fc lt 2 fs pattern 1 lw 3"<<endl;
+            b<<"set label \""<< idx++ <<"\" at "<<(x1+x2)/2<<","<<(y1+y2)/2<<" front center font \",10\""<<endl;
+            cout<<(*it)->coords->x1<<", "<<(*it)->coords->y1<<"; "
+            <<(*it)->coords->x2<<", "<<(*it)->coords->y2<<endl;
+
+        }
+    a<<10000<<" "<<10000<<endl;
+    b<<"set arrow from 0,"<<10000<<" to "<<10000<<","<<10000<<" nohead lc 3 lw 5"<<endl;
+    b<<"set arrow from "<<10000<<",0 to "<<10000<<","<<10000<<" nohead lc 3 lw 5"<<endl;
+    b<<"set term png size 2000,2000"<<endl;
+    b<<"set output \'"<<""<<"out"<<num<<".png"<<"\'"<<endl;
+    b<<"plot \'"<< a1 <<"\' using 1:2 with points"<<endl;
+    a.close();
+    b.close();
+    string command ="gnuplot "+gnu; 
+    system(command.c_str());
+    //cin.get();
+
+    }
+
+
+}
 
 
 

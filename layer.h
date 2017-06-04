@@ -25,9 +25,13 @@ public:
 	int get_Rshape_num();
 	int get_Obstacle_num();
 	int get_Via_num();
+
 	void clustering_shape();
+	void find_overlap(Shape*, int);
+	void BFS_overlap_graph(Shape *, Cluster*);
     void build_clu(Shape*, Cluster*, int);
     bool overlap(Shape*, Shape*);
+    void check_cluster();
 private:
 	list < Shape* > Rshape_list;
 	list < Shape* > Obstacle_list;
