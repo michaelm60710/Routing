@@ -152,21 +152,49 @@ Layer::SGconstruct(){
     sort(all_line_vec.begin(), all_line_vec.end(), sort_line_x);
 
     //### 2. lets go~
-    multimap< int , GraphPoint* , less<int> > bound_map;
+    multimap< int , BoundLine_info* , less<int> > bound_map;
+    multimap< int , BoundLine_info* , less<int> >::iterator it1,it2;
+    bool t_shape_type,p1,p2;
     for(size_t s = 0; s < all_line_vec.size(); s++){
-    
+    	t_shape_type = all_line_vec[s]->S->Shape_type;
+
+    	if(t_shape_type==RSHAPE){
+
+    	}
+    	else{ //t_shape_type==OBSTACLE
+
+    	}
+
+
+    	if(all_line_vec[s]->LR==LEFT){ //LEFT
+    		BoundLine_info* b1 = new BoundLine_info{NULL, all_line_vec[s]->LR, all_line_vec[s]->S->coords->x2};
+    		BoundLine_info* b2 = new BoundLine_info{NULL, all_line_vec[s]->LR, all_line_vec[s]->S->coords->x2};
+    		it1 = bound_map.insert(pair< int , BoundLine_info*>(all_line_vec[s]->y+all_line_vec[s]->length, b1) );
+    		it2 = bound_map.insert(pair< int , BoundLine_info*>(all_line_vec[s]->y                        , b2) );
+    	}
+    	else{ //RIGHT
+
+    	}
+
 
     }
 
 
 
+    //for (it1 = bound_map.begin();it1 != bound_map.end();++it1)
+    //	cout << it1->first << endl;
+    cin.get();
 
 }
 
 
 
 
+void 
+Layer::SG_find_GPinfo(int x_pos, BoundLine_info* bl_info){
+	
 
+}
 
 
 

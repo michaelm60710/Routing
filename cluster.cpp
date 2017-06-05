@@ -23,3 +23,19 @@ void Cluster::Add_shape(Shape *temp_shape){
 
 
 }
+
+
+
+GraphPoint::GraphPoint(Line* L, bool UPorDown){
+	clu = L->S->clu;
+	Shape_type = L->S->Shape_type;
+	x = L->x;
+	if(UPorDown){ //UP = true
+		y = L->y + L->length;
+	}
+	else{ //Down = false
+		y = L->y;
+	}
+
+
+}

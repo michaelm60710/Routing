@@ -18,6 +18,7 @@ struct Shape;
 struct Via;
 struct Line;
 struct GraphPoint;
+struct BoundLine_info;
 class Cluster;
 
 using namespace std;
@@ -63,7 +64,9 @@ struct Line{
 	Shape *S;
 };
 
-struct GraphPoint{
+class GraphPoint{
+public:
+	GraphPoint(Line*, bool);
 	Cluster *clu;
 	bool Shape_type;
 	MAP_GP_edge map_edge;
@@ -74,6 +77,12 @@ struct GraphPoint{
 
 };
 
+struct BoundLine_info{
+	GraphPoint* Gp;
+	bool LR;
+	int max_x;
+
+};
 
 
 class Cluster{
@@ -88,6 +97,7 @@ private:
 	int shape_num;
 	list < Shape* > shape_list;
 	list < Point* > boundary; //counterclkwise
+	list < GraphPoint* > GraphP_list; //routed shape cluster only one GP
 
 	Point *TopLCorner;
 	Point *TopRCorner;

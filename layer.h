@@ -29,6 +29,7 @@ public:
 
     //
     void SGconstruct();
+    void SG_find_GPinfo(int , BoundLine_info*);
 
 
 	//for private use
