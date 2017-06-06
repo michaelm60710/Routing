@@ -28,6 +28,25 @@ void Cluster::Add_GP(GraphPoint *gp){
 	GraphP_list.push_back(gp);
 }
 
+GraphPoint* Cluster::Add_GP(Line* L, int UPorDown, int &_idx){
+	GraphPoint* gp;
+	if(Shape_type==OBSTACLE || GraphP_list.size()==0){
+		gp = new GraphPoint(L, UPorDown, _idx++);
+		GraphP_list.push_back(gp);
+	}
+	else{ //ROUTED SHAPE & already exist
+		gp = (*GraphP_list.begin());
+	}
+
+	//check
+	if(Shape_type==RSHAPE && GraphP_list.size()>1){
+		cerr << "bug";
+		cin.get();
+	}
+
+	return gp;
+}
+
 
 
 GraphPoint::GraphPoint(Line* L, int UPorDown, int _idx){
@@ -44,10 +63,32 @@ GraphPoint::GraphPoint(Line* L, int UPorDown, int _idx){
 
 }
 
-void GraphPoint::Add_edge(GraphPoint *insert_gp){
-	if (insert_gp->clu == clu) return;
-	map_edge.insert(MAP_GP_edge::value_type(insert_gp->idx, insert_gp) );
+void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_x, int insert_y){
+	if (insert_gp->clu == clu) return;//same cluster
+	int distance = abs(my_x-insert_x) + abs(my_y-insert_y);
+	MAP_GP_Status status1;//,status2;
+	Edge_info *E1;//, *E2;
+	//E1 = new Edge_info(insert_gp, my_x, my_y, insert_x, insert_y, distance);
+	status1 = map_edge.insert(MAP_GP_edge::value_type(insert_gp->idx, E1 ) );
+	//check
+	/*if(status1.second != status2.second){
+		cerr << "bug";
+		cin.get();
+	}*/
 
+	if(status1.second==true){
+		E1 = new Edge_info(insert_gp, my_x, my_y, insert_x, insert_y, distance);
+		status1.first->second = E1;
+	}
+	else{
+		if (distance < status1.first->second->distance){ //update point position & distance
+			status1.first->second->point_x1 = my_x;
+			status1.first->second->point_y1 = my_y;
+			status1.first->second->point_x2 = insert_x;
+			status1.first->second->point_y2 = insert_y;
+			status1.first->second->distance = distance;
+		}
+	}
 
 }
 

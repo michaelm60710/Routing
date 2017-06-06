@@ -24,14 +24,16 @@ struct Via;
 struct Line;
 class GraphPoint;
 struct BoundLine_info;
+struct Edge_info;
 class Cluster;
 
 using namespace std;
 
 typedef pair<int, int> Point;
 typedef multimap< int , Shape* , less<int> > MAP_Shape;
-//typedef multimap< int , pair<GraphPoint*, Point*> , less<int> > MAP_GP_edge;
-typedef multimap< int , GraphPoint*, less<int> > MAP_GP_edge;
+typedef map< int , Edge_info* , less<int> > MAP_GP_edge; //Point: this cluster point
+//typedef multimap< int , GraphPoint*, less<int> > MAP_GP_edge;
+typedef pair<map< int , Edge_info* , less<int> >::iterator,bool> MAP_GP_Status;
 typedef MAP_Shape::iterator MS_it;
 typedef list<Shape*>::iterator it_shape;
 
@@ -73,7 +75,7 @@ struct Line{
 class GraphPoint{
 public:
 	GraphPoint(Line*, int, int);
-	void Add_edge(GraphPoint*);
+	void Add_edge(GraphPoint*, int, int, int, int);
 
 	Cluster *clu;
 	bool Shape_type;
@@ -87,14 +89,14 @@ public:
 };
 
 struct BoundLine_info{
-	BoundLine_info(bool lr, int m_x,int flag):Gp(NULL),LR(lr),max_x(m_x),pos_flag(flag)
+	BoundLine_info(bool lr, int m_x, int temp_x, int flag, int P_y):Gp(NULL),LR(lr),max_x(m_x),point_x(temp_x),pos_flag(flag),point_y(P_y)
 	{
 		if(flag & UP) {
 			down_edge_x = m_x;
-			up_edge_x   = 0;
+			up_edge_x   = -1;
 		}
 		else{
-			down_edge_x = 0;
+			down_edge_x = -1;
 			up_edge_x   = m_x;
 		}
 	}
@@ -103,10 +105,27 @@ struct BoundLine_info{
 	GraphPoint* Gp;
 	bool LR; // no use
 	int max_x;
+	int point_x;
 	int pos_flag; // no use
+	int point_y;
 	int up_edge_x;
 	int down_edge_x;
 
+
+};
+
+struct Edge_info{
+	Edge_info(GraphPoint* gp, int x, int y, int x2, int y2, int d):Gp(gp),point_x1(x),point_y1(y),point_x2(x2),point_y2(y2),distance(d)
+	{
+	}
+
+	GraphPoint* Gp;
+	int point_x1;
+	int point_y1;
+	int point_x2;
+	int point_y2;
+
+	int distance;
 };
 
 
@@ -116,6 +135,7 @@ public:
 	Cluster(Shape*);
 	void Add_shape(Shape*);
 	void Add_GP(GraphPoint*);
+	GraphPoint* Add_GP(Line*, int, int &);
 
 
 private:
