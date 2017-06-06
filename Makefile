@@ -1,4 +1,4 @@
-CFLAGS = -O3  -Wall
+CFLAGS = -g  -Wall
 main.exe: main.o Manager.o layer.o cluster.o
 	g++ -o main.exe main.o Manager.o layer.o cluster.o
 

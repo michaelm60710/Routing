@@ -30,7 +30,7 @@ public:
     //
     void SGconstruct();
     void SG_find_GPinfo(int , BoundLine_info*);
-
+    void check_point_svg();
 
 	//for private use
 	void Rshape_list_append(Shape *);
@@ -56,6 +56,7 @@ private:
 	int Obstacle_num;
 	int Via_num;
 	int Layer_Shape_num;
+	int G_point_num;
 	//step 1
 
 

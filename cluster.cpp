@@ -24,18 +24,30 @@ void Cluster::Add_shape(Shape *temp_shape){
 
 }
 
+void Cluster::Add_GP(GraphPoint *gp){
+	GraphP_list.push_back(gp);
+}
 
 
-GraphPoint::GraphPoint(Line* L, bool UPorDown){
+
+GraphPoint::GraphPoint(Line* L, int UPorDown, int _idx){
 	clu = L->S->clu;
 	Shape_type = L->S->Shape_type;
 	x = L->x;
-	if(UPorDown){ //UP = true
+	if(UPorDown & UP){ //UP = true
 		y = L->y + L->length;
 	}
 	else{ //Down = false
 		y = L->y;
 	}
+	idx = _idx;
+
+}
+
+void GraphPoint::Add_edge(GraphPoint *insert_gp){
+	if (insert_gp->clu == clu) return;
+	map_edge.insert(MAP_GP_edge::value_type(insert_gp->idx, insert_gp) );
 
 
 }
+

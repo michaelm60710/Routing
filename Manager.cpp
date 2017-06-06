@@ -12,10 +12,11 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 	Parsing(Input_file);
 
 	//test
-	for(size_t s = 0; s < all_layer.size(); s++){
+	all_layer[0].SpanningGraphConstruct();
+	/*for(size_t s = 0; s < all_layer.size(); s++){
 		cout<<"layer "<<s+1<<endl;
 		all_layer[s].SpanningGraphConstruct();
-	}
+	}*/
 
 
 }
@@ -34,6 +35,7 @@ void Manager::Parsing(const char* Input_file){
 	i_file>>garbage>>garbage>>Spacing;
 	i_file>>garbage>>garbage>>coor1>>coor2;
 	Boundary = Parsing_coordinate(coor1,coor2);
+	cout << "boundary: " << Boundary->x1 << " " << Boundary->y1 << ", " << Boundary->x2 << " " << Boundary->y2 <<endl;
 	i_file>>garbage>>garbage>>MetalLayers;
 	i_file>>garbage>>garbage>>RoutedShapes;
 	i_file>>garbage>>garbage>>RoutedVias;
