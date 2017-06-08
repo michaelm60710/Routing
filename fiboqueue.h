@@ -1,7 +1,8 @@
 /**
- * This is basically a Fibonacci heap with an added fast store for retrieving
- * nodes, and decrease their key as needed. Useful for search algorithms (e.g.
- * Dijstra, heuristic, ...).
+ * Fibonacci Heap
+ * Copyright (c) 2014, Emmanuel Benazera beniz@droidnik.fr, All rights reserved.
+ *
+ https://github.com/beniz/fiboheap
  */
 
 #ifndef FIBOQUEUE_H
