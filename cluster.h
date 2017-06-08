@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <climits>
 
 #include "fiboheap.h"
 #include "fiboqueue.h"
@@ -80,7 +81,7 @@ class GraphPoint{
 public:
 	GraphPoint(Line*, int, int);
 	void Add_edge(GraphPoint*, int, int, int, int);
-
+	GraphPoint* Find_Set();
 	Cluster *clu;
 	bool Shape_type;
 	MAP_GP_edge map_edge;
@@ -90,7 +91,9 @@ public:
 	int idx;
 
 	//Extended Dijkstra's
-	GraphPoint *parent; // find root 
+	FibHeap<int>::FibNode *Fnode;
+	GraphPoint *parent; // find path	
+	GraphPoint *root; //
 	int terminal_dis;
 	bool select;
 };
@@ -107,8 +110,7 @@ struct BoundLine_info{
 			up_edge_x   = m_x;
 		}
 	}
-
-
+	
 	GraphPoint* Gp;
 	bool LR; // no use
 	int max_x;
@@ -144,7 +146,7 @@ public:
 	void Add_GP(GraphPoint*);
 	GraphPoint* Add_GP(Line*, int, int &);
 
-
+	bool GetShapeType();
 private:
 	bool Shape_type;//Rshape or Obstacle
 	int shape_num;

@@ -28,6 +28,10 @@ void Cluster::Add_GP(GraphPoint *gp){
 	GraphP_list.push_back(gp);
 }
 
+bool Cluster::GetShapeType(){
+	return Shape_type;
+}
+
 GraphPoint* Cluster::Add_GP(Line* L, int UPorDown, int &_idx){
 	GraphPoint* gp;
 	if(Shape_type==OBSTACLE || GraphP_list.size()==0){
@@ -64,7 +68,7 @@ GraphPoint::GraphPoint(Line* L, int UPorDown, int _idx){
 }
 
 void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_x, int insert_y){
-	if (insert_gp->clu == clu) return;//same cluster
+	if (insert_gp->clu == clu && clu->GetShapeType()==RSHAPE) return;//same cluster
 	int distance = abs(my_x-insert_x) + abs(my_y-insert_y);
 	MAP_GP_Status status1;//,status2;
 	Edge_info *E1;//, *E2;
@@ -90,5 +94,14 @@ void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_
 		}
 	}
 
+}
+
+GraphPoint* GraphPoint::Find_Set(){
+	if(parent==NULL){//bug?
+		cout << "parent = NULL"<<endl;
+		return NULL;
+	}
+	if(parent == parent->parent) return parent;
+	else 						 return parent->Find_Set();
 }
 
