@@ -8,6 +8,10 @@
 #include <map>
 #include <list>
 
+#include "fiboheap.h"
+#include "fiboqueue.h"
+
+
 #define RSHAPE 0
 #define OBSTACLE 1
 #define LEFT 0
@@ -85,7 +89,10 @@ public:
 	int y;
 	int idx;
 
-
+	//Extended Dijkstra's
+	GraphPoint *parent; // find root 
+	int terminal_dis;
+	bool select;
 };
 
 struct BoundLine_info{
