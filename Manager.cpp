@@ -13,6 +13,7 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 	//test
 	all_layer[0].SpanningGraphConstruct();
+	all_layer[0].SpanningTreeConstruct();
 	/*for(size_t s = 0; s < all_layer.size(); s++){
 		cout<<"layer "<<s+1<<endl;
 		all_layer[s].SpanningGraphConstruct();

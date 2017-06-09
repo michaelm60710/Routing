@@ -38,15 +38,27 @@ void Layer::SpanningGraphConstruct(){
     //#2 construct graph
     SGconstruct();
 
-    //#3 Extended Dijkstra's Algorithm
-    EXtendedDijkstra();
-
-
     //check_cluster();
 	//for(MS_it it = X_msort_shape.begin();it!=X_msort_shape.end();++it)
 	
 
 }
+
+void Layer::SpanningTreeConstruct(){
+
+	//#1 Extended Dijkstra's Algorithm
+    EXtendedDijkstra();
+
+
+    //#2 Extended Kruska's Algorithm
+    //TODO
+
+    //#PLOT
+    check_point_svg();
+
+}
+
+
 
 bool
 sort_func_x1(Shape* S1, Shape* S2){
@@ -476,10 +488,9 @@ Layer::SGconstruct(){
     //### 3. directed graph convert to undirected grpah
     ConvertToUndirectedG();
 
-    //### 4. Plot 
+    //### 4. Print 
     cout << "point:" <<G_point_num << endl;
     cout << "shape count:" << Layer_Shape_num << endl;
-    check_point_svg();
 
 }
 
@@ -538,8 +549,8 @@ Layer::EXtendedDijkstra(){
 	FibHeap<int>::FibNode *temp_fibn;
 	list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
     MAP_GP_edge::iterator map_gp_itr;
-    GraphPoint *temp_gp;
-    int temp_dis;
+    GraphPoint *temp_gp, *temp_gp2;
+    int temp_dis, temp_dis2;
 
 
 	//### 1. insert all GP in fibo heap & initialize SET
@@ -550,12 +561,14 @@ Layer::EXtendedDijkstra(){
         	(*begin_itr)->parent = (*begin_itr); //SET root
         	(*begin_itr)->terminal_dis = 0;
         	(*begin_itr)->Fnode = Fq.push(0, (*begin_itr));
+        	(*begin_itr)->select = false;
         }
         else{
         	for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
         		(*gp_itr)->parent = NULL;
         		(*gp_itr)->terminal_dis = INT_MAX;
         		(*gp_itr)->Fnode = Fq.push(INT_MAX, (*gp_itr));
+        		(*gp_itr)->select = false;
         	}
         }
     }
@@ -566,21 +579,23 @@ Layer::EXtendedDijkstra(){
 		temp_dis = temp_fibn->key;
 		temp_gp = (GraphPoint*)temp_fibn->payload;
 		temp_gp->select = true;
-		cout << "Top: " << temp_dis << endl;
+		//cout << "Top: " << temp_dis << endl;
 
 		//# pop the target vertex
 		Fq.pop();
 
 		//# update edge   // map_gp_itr->second->Gp .... not good
 		for(map_gp_itr = temp_gp->map_edge.begin();map_gp_itr!=temp_gp->map_edge.end(); ++map_gp_itr){
-			if( map_gp_itr->second->Gp->select==false && map_gp_itr->second->Gp->terminal_dis > map_gp_itr->second->distance ){
-				map_gp_itr->second->Gp->terminal_dis = map_gp_itr->second->distance;
-				map_gp_itr->second->Gp->parent = temp_gp;
-				Fq.decrease_key(map_gp_itr->second->Gp->Fnode, map_gp_itr->second->distance);
+			temp_gp2 = map_gp_itr->second->Gp;
+			temp_dis2 = map_gp_itr->second->distance + temp_dis;
+			if( temp_gp2->select==false && temp_gp2->terminal_dis > temp_dis2 ){
+				temp_gp2->terminal_dis = temp_dis2;
+				temp_gp2->parent = temp_gp;
+
+				Fq.decrease_key(temp_gp2->Fnode, temp_dis2);
 			}
 
 		}
-		//check
 
     }
 
@@ -592,11 +607,20 @@ Layer::EXtendedDijkstra(){
         for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
         	 (*gp_itr)->root = (*gp_itr)->Find_Set();
         	 num_vertex++;
+        	 //bug
+        	 if((*gp_itr)->root==NULL){
+        	 	cout << "bug\n";
+        	 	for(map_gp_itr = (*gp_itr)->map_edge.begin();map_gp_itr!=(*gp_itr)->map_edge.end(); ++map_gp_itr){
+        	 		cout << "a"<< (*gp_itr)->idx;
+        	 		cout <<"\n" <<  map_gp_itr->second->distance << endl;
+        	 	}
+        	 	cout << endl;
+        	 }
         }
     }
 
     //#check
-    cout << "num vertex: " << num_vertex << endl;
+    //cout << "num vertex: " << num_vertex << endl;
 
 
 
@@ -682,6 +706,7 @@ Layer::check_cluster(){
 
 void 
 Layer::check_point_svg(){
+	cout << "START PLOT"<<endl;
     string a1 = string("Point_test")+string(".svg");
     ofstream a(a1.c_str());
     
@@ -723,7 +748,7 @@ Layer::check_point_svg(){
     }
 
     //edge
-    int x1,y1,x2,y2;
+   /* int x1,y1,x2,y2;
     for(size_t i = 0; i < all_cluster.size(); i++){
         begin_itr = all_cluster[i]->GraphP_list.begin();
         end_itr = all_cluster[i]->GraphP_list.end();
@@ -741,9 +766,29 @@ Layer::check_point_svg(){
                 a << "<line x1=\"" << x1 << "\" y1=\"" << y1 << "\" x2=\"" << x2 << "\" y2=\"" << y2 << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
             }
         }
+    }*/
+    
+    //check Extended Dijkstra's
+    int x1,y1,x2,y2;
+    for(size_t i = 0; i < all_cluster.size(); i++){
+ 		begin_itr = all_cluster[i]->GraphP_list.begin();
+        end_itr = all_cluster[i]->GraphP_list.end();
+        for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
+			int xx = (*gp_itr)->x;//test
+        	int yy = (*gp_itr)->y;//test
+            for(map_gp_itr = (*gp_itr)->map_edge.begin();map_gp_itr!=(*gp_itr)->map_edge.end(); ++map_gp_itr){
+                x1 = map_gp_itr->second->point_x1;
+                y1 = map_gp_itr->second->point_y1;
+                x2 = map_gp_itr->second->point_x2;
+                y2 = map_gp_itr->second->point_y2;
+                if((*gp_itr)->Shape_type==OBSTACLE ){
+                	if(xx!=x1 || yy!=y1) cin.get();//test error
+                }
+                if((*gp_itr)->parent==map_gp_itr->second->Gp )
+                	a << "<line x1=\"" << x1 << "\" y1=\"" << y1 << "\" x2=\"" << x2 << "\" y2=\"" << y2 << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
+            }
+        }
     }
-       
-
 
 
 

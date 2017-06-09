@@ -88,12 +88,14 @@ public:
 	//if the GraphPoint is RoutedShape, x & y is not a fixed value
 	int x;
 	int y;
+	
 	int idx;
+
 
 	//Extended Dijkstra's
 	FibHeap<int>::FibNode *Fnode;
-	GraphPoint *parent; // find path	
-	GraphPoint *root; //
+	GraphPoint *parent;
+	GraphPoint *root;
 	int terminal_dis;
 	bool select;
 };

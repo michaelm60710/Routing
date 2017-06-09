@@ -97,11 +97,14 @@ void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_
 }
 
 GraphPoint* GraphPoint::Find_Set(){
+
+
 	if(parent==NULL){//bug?
 		cout << "parent = NULL"<<endl;
-		return NULL;
+		root = NULL;
 	}
-	if(parent == parent->parent) return parent;
-	else 						 return parent->Find_Set();
+	if(parent == parent->parent) root = parent;
+	else 						 root = parent->Find_Set();
+	return root;
 }
 

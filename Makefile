@@ -8,7 +8,7 @@ main.o: main.cpp Manager.h
 cluster.o: cluster.cpp cluster.h fiboheap.h fiboqueue.h
 	g++ -c $(CFLAGS) cluster.cpp
 
-layer.o: layer.cpp layer.h cluster.h
+layer.o: layer.cpp layer.h cluster.h fiboheap.h fiboqueue.h
 	g++ -c $(CFLAGS) layer.cpp
 
 Manager.o: Manager.cpp Manager.h layer.h

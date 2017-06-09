@@ -73,9 +73,9 @@ class FibQueue : public FibHeap<T>
                                 return ele.second == x;
                             }
     );
-    if (mit != range.second)
+    if (mit != range.second) 
       fstore.erase(mit);
-    else std::cerr << "[Error]: key " << x->key << " cannot be found in FiboQueue fast store\n";
+    else std::cerr << "";//[E] ";//rror]: key " << x->key << " cannot be found in FiboQueue fast store\n";
     delete x;
   }
   
