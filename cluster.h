@@ -100,6 +100,7 @@ public:
 	bool select;
 
 	//Extended Kruskal's
+	GraphPoint *parentKK;
 	bool visit, chosen;
 	unsigned rank;
 };

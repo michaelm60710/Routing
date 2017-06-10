@@ -624,6 +624,12 @@ Layer::ExtendedDijkstra(){
 
 }
 
+GraphPoint* findSet(GraphPoint *p) {
+	if (p != p->parentKK)
+		p->parentKK = findSet(p->parentKK);
+	return p->parentKK;
+}
+
 void unionSet( GraphPoint *s1, GraphPoint *s2 ) {
 
 	if (s1->rank >= s2->rank)
@@ -634,7 +640,6 @@ void unionSet( GraphPoint *s1, GraphPoint *s2 ) {
 	if (s1->rank == s2->rank)
 		s1->rank++;
 
-	
 }
 
 void markChosenPoints(GraphPoint *p1, GraphPoint *p2) {
@@ -683,14 +688,14 @@ void Layer::ExtendedKruskal() {
 
         for (gp_itr = begin1; gp_itr != end1; ++gp_itr) {
         	temp_gp1 = (*gp_itr);
-        	temp_gp1->parent = temp_gp1;
-        	temp_gp1->visit = true;
+        	temp_gp1->parentKK = temp_gp1;
+        	//temp_gp1->visit = true;
         	begin2 = temp_gp1->map_edge.begin();
         	end2 = temp_gp1->map_edge.end();
 
             for (map_gp_itr = begin2; map_gp_itr != end2; ++map_gp_itr) {
             	temp_gp2 = map_gp_itr->second->Gp;
-            	if (temp_gp2->visit == true) continue;
+            	//if (temp_gp2->visit == true) continue;
             	edgeLength = map_gp_itr->second->distance;
             	dis1 = temp_gp1->terminal_dis;
             	dis2 = temp_gp2->terminal_dis;
@@ -710,8 +715,8 @@ void Layer::ExtendedKruskal() {
     	curEdge = HeapBE.begin();
     	temp_gp1 = curEdge->second->source;
     	temp_gp2 = curEdge->second->Gp;
-    	GraphPoint *set1 = temp_gp1->Find_Set();
-    	GraphPoint *set2 = temp_gp2->Find_Set();
+    	GraphPoint *set1 = findSet(temp_gp1);
+    	GraphPoint *set2 = findSet(temp_gp2);
     	if (set1 != set2) {
     		unionSet(set1, set2);
     		markChosenPoints(temp_gp1, temp_gp2);
