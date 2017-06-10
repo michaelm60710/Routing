@@ -43,6 +43,9 @@ public:
 	int get_Obstacle_num();
 	int get_Via_num();
 
+	//Extended Kruskal's
+	void addMSTEdges(GraphPoint *p1, GraphPoint *p2);
+
 private:
 	list < Shape* > Rshape_list;
 	list < Shape* > Obstacle_list;
@@ -62,10 +65,11 @@ private:
 	int G_point_num;
 	//step 1
 
+	//Extended Kruskal's
+	list <Edge> MSTEdges;
 
 
 };
-
 
 
 

@@ -639,21 +639,35 @@ void unionSet( GraphPoint *s1, GraphPoint *s2 ) {
 
 void markChosenPoints(GraphPoint *p1, GraphPoint *p2) {
 	p1->chosen = p2->chosen = true;
-	p1->root->chosen = p2->root->chosen = true;
 	GraphPoint *p = p1->parent;
-	while(p != p1->root) {
+	while(p != p->parent) {
 		p->chosen = true;
 		p = p->parent;
 	}
+	p->chosen = true;
 	p = p2->parent;
-	while(p != p2->root) {
+	while(p != p->parent) {
 		p->chosen = true;
+		p = p->parent;
+	}
+	p->chosen = true;
+}
+
+void Layer::addMSTEdges(GraphPoint *p1, GraphPoint *p2) {
+	GraphPoint *p = p1;
+	while (p != p->parent) {
+		MSTEdges.push_back( Edge(p->x, p->parent->x, p->y, p->parent->y) );
+		p = p->parent;
+	}
+	p = p2;
+	while (p != p->parent) {
+		MSTEdges.push_back( Edge(p->x, p->parent->x, p->y, p->parent->y) );
 		p = p->parent;
 	}
 }
 
 void Layer::ExtendedKruskal() {
-
+	cout << "...Start Kruskal's" << endl;
 	list <GraphPoint*>::iterator gp_itr, begin1, end1;
 	MAP_GP_edge::iterator map_gp_itr, begin2, end2;
 	GraphPoint *temp_gp1, *temp_gp2;
@@ -689,6 +703,8 @@ void Layer::ExtendedKruskal() {
         }
     }
 
+
+    cout << "...Start choosing points" << endl;
  	// choose MST points
     while (!HeapBE.empty()) {
     	curEdge = HeapBE.begin();
@@ -696,14 +712,14 @@ void Layer::ExtendedKruskal() {
     	temp_gp2 = curEdge->second->Gp;
     	GraphPoint *set1 = temp_gp1->Find_Set();
     	GraphPoint *set2 = temp_gp2->Find_Set();
-
     	if (set1 != set2) {
     		unionSet(set1, set2);
     		markChosenPoints(temp_gp1, temp_gp2);
+    		addMSTEdges(temp_gp1, temp_gp2);
     	}
 
     	HeapBE.erase(curEdge);
-    };
+    }
 
 }
 
@@ -848,6 +864,7 @@ Layer::check_point_svg(){
         }
     }*/
     
+    /*
     //check Extended Dijkstra's
     int x1,y1,x2,y2;
     for(size_t i = 0; i < all_cluster.size(); i++){
@@ -868,6 +885,16 @@ Layer::check_point_svg(){
                 	a << "<line x1=\"" << x1 << "\" y1=\"" << y1 << "\" x2=\"" << x2 << "\" y2=\"" << y2 << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
             }
         }
+    }*/
+
+    //check Extended Kruskal's
+    int x1,y1,x2,y2;
+    for (auto itr = MSTEdges.begin(); itr != MSTEdges.end(); ++itr) {
+    	x1 = (*itr)._x1;
+    	x2 = (*itr)._x2;
+    	y1 = (*itr)._y1;
+    	y2 = (*itr)._y2;
+    	a << "<line x1=\"" << x1 << "\" y1=\"" << y1 << "\" x2=\"" << x2 << "\" y2=\"" << y2 << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
     }
 
 
