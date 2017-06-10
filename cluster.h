@@ -94,8 +94,8 @@ public:
 
 	//Extended Dijkstra's
 	FibHeap<int>::FibNode *Fnode;
-	GraphPoint *parent;
-	GraphPoint *root;
+	GraphPoint *parent;//no null
+	GraphPoint *root; //no null
 	int terminal_dis;
 	bool select;
 

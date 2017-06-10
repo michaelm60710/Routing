@@ -104,6 +104,7 @@ GraphPoint* GraphPoint::Find_Set(){
 	if(parent==NULL){//bug?
 		cout << "parent = NULL"<<endl;
 		root = NULL;
+		return root;
 	}
 	if(parent == parent->parent) root = parent;
 	else 						 root = parent->Find_Set();

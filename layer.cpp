@@ -608,7 +608,8 @@ Layer::ExtendedDijkstra(){
         	 num_vertex++;
         	 //bug
         	 if((*gp_itr)->root==NULL){
-        	 	cout << "bug\n";
+                cerr << "bug\n";
+                cin.get();
         	 	for(map_gp_itr = (*gp_itr)->map_edge.begin();map_gp_itr!=(*gp_itr)->map_edge.end(); ++map_gp_itr){
         	 		cout << "a"<< (*gp_itr)->idx;
         	 		cout <<"\n" <<  map_gp_itr->second->distance << endl;
@@ -617,7 +618,7 @@ Layer::ExtendedDijkstra(){
         	 }
         }
     }
-
+    cin.get();
     //#check
     //cout << "num vertex: " << num_vertex << endl;
 
@@ -633,9 +634,9 @@ GraphPoint* findSet(GraphPoint *p) {
 void unionSet( GraphPoint *s1, GraphPoint *s2 ) {
 
 	if (s1->rank >= s2->rank)
-		s2->parent = s1;
+		s2->parentKK = s1;
 	else 
-		s1->parent = s2;
+		s1->parentKK = s2;
 
 	if (s1->rank == s2->rank)
 		s1->rank++;
@@ -646,14 +647,12 @@ void markChosenPoints(GraphPoint *p1, GraphPoint *p2) {
 	p1->chosen = p2->chosen = true;
 	GraphPoint *p = p1;
 	while(p != p->parent) {
-		cout << "UP" << endl;
 		p->chosen = true;
 		p = p->parent;
 	}
 	p->chosen = true;
 	p = p2;
 	while(p != p->parent) {
-		cout << "UP" << endl;
 		p->chosen = true;
 		p = p->parent;
 	}
@@ -662,13 +661,35 @@ void markChosenPoints(GraphPoint *p1, GraphPoint *p2) {
 
 void Layer::addMSTEdges(GraphPoint *p1, GraphPoint *p2) {
 	GraphPoint *p = p1;
+    int x1,y1,x2,y2;
+    MAP_GP_edge::iterator map_gp_itr, map_begin_itr, map_end_itr;
+    for(map_gp_itr = p1->map_edge.begin();map_gp_itr!=p1->map_edge.end(); ++map_gp_itr){
+        x1 = map_gp_itr->second->point_x1;
+        y1 = map_gp_itr->second->point_y1;
+        x2 = map_gp_itr->second->point_x2;
+        y2 = map_gp_itr->second->point_y2;
+        if(p2==map_gp_itr->second->Gp ) MSTEdges.push_back( Edge(x1, x2, y1, y2) );
+    }
+
 	while (p != p->parent) {
-		MSTEdges.push_back( Edge(p->x, p->parent->x, p->y, p->parent->y) );
+		for(map_gp_itr = p->map_edge.begin();map_gp_itr!=p->map_edge.end(); ++map_gp_itr){
+            x1 = map_gp_itr->second->point_x1;
+            y1 = map_gp_itr->second->point_y1;
+            x2 = map_gp_itr->second->point_x2;
+            y2 = map_gp_itr->second->point_y2;
+            if(p->parent==map_gp_itr->second->Gp ) MSTEdges.push_back( Edge(x1, x2, y1, y2) );
+        }
 		p = p->parent;
 	}
 	p = p2;
 	while (p != p->parent) {
-		MSTEdges.push_back( Edge(p->x, p->parent->x, p->y, p->parent->y) );
+	    for(map_gp_itr = p->map_edge.begin();map_gp_itr!=p->map_edge.end(); ++map_gp_itr){
+            x1 = map_gp_itr->second->point_x1;
+            y1 = map_gp_itr->second->point_y1;
+            x2 = map_gp_itr->second->point_x2;
+            y2 = map_gp_itr->second->point_y2;
+            if(p->parent==map_gp_itr->second->Gp ) MSTEdges.push_back( Edge(x1, x2, y1, y2) );
+        }
 		p = p->parent;
 	}
 }
@@ -684,10 +705,14 @@ void Layer::ExtendedKruskal() {
 	multimap < int, Edge_info* >::iterator curEdge;
 
 	// initialization
+    int ttt= 0;
     for (size_t i = 0; i < all_cluster.size(); i++) {
  		begin1 = all_cluster[i]->GraphP_list.begin();
         end1 = all_cluster[i]->GraphP_list.end();
-
+        if(all_cluster[i]->GetShapeType()==RSHAPE){
+             (*(all_cluster[i]->GraphP_list.begin() ))->parentKK = (*(all_cluster[i]->GraphP_list.begin() ));
+             ttt++;
+        }
         for (gp_itr = begin1; gp_itr != end1; ++gp_itr) {
         	temp_gp1 = (*gp_itr);
         	temp_gp1->parentKK = temp_gp1;
@@ -710,24 +735,22 @@ void Layer::ExtendedKruskal() {
         }
     }
 
-
     cout << "...Start choosing points" << endl;
  	// choose MST points
+    int i=0;
     while (!HeapBE.empty()) {
     	curEdge = HeapBE.begin();
     	temp_gp1 = curEdge->second->source;
     	temp_gp2 = curEdge->second->Gp;
-    	GraphPoint *set1 = findSet(temp_gp1);
-    	GraphPoint *set2 = findSet(temp_gp2);
+    	GraphPoint *set1 = findSet(temp_gp1->root);
+    	GraphPoint *set2 = findSet(temp_gp2->root);
+        //cout << "shape11 type:" << temp_gp1->Shape_type << ", " << temp_gp2->Shape_type << endl;
+        //cout << "root: "<< temp_gp1->root << ", " << temp_gp2->root << endl;
     	if (set1 != set2) {
+            cout << i++<<endl;
     		unionSet(set1, set2);
-    		cout << "123" << endl;
-    		markChosenPoints(temp_gp1, temp_gp2);
-    		cout << "456" << endl;
     		addMSTEdges(temp_gp1, temp_gp2);
-    		cout << "789" << endl;
     	}
-
     	HeapBE.erase(curEdge);
     }
 
@@ -816,7 +839,7 @@ Layer::check_point_svg(){
     string a1 = string("Point_test")+string(".svg");
     ofstream a(a1.c_str());
     
-    a << " <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"7000\" height=\"3000\">\n ";
+    a << " <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40000\" height=\"15000\">\n ";
     a << "<marker xmlns=\"http://www.w3.org/2000/svg\" id=\"lineEnd\" viewBox=\"0 0 10 10\" refX=\"5\" refY=\"5\" markerUnits=\"strokeWidth\" markerWidth=\"4\" markerHeight=\"3\" orient=\"auto\">\n";
     a << "<rect x=\"0\" y=\"0\" width=\"10\" height=\"10\" fill=\"red\" />\n";
     a << "</marker>  " << endl;
