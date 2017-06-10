@@ -645,13 +645,13 @@ void unionSet( GraphPoint *s1, GraphPoint *s2 ) {
 void markChosenPoints(GraphPoint *p1, GraphPoint *p2) {
 	p1->chosen = p2->chosen = true;
 	GraphPoint *p = p1->parent;
-	while(p != p->parent) {
+	while(p != NULL) {
 		p->chosen = true;
 		p = p->parent;
 	}
 	p->chosen = true;
 	p = p2->parent;
-	while(p != p->parent) {
+	while(p != NULL) {
 		p->chosen = true;
 		p = p->parent;
 	}
@@ -660,12 +660,12 @@ void markChosenPoints(GraphPoint *p1, GraphPoint *p2) {
 
 void Layer::addMSTEdges(GraphPoint *p1, GraphPoint *p2) {
 	GraphPoint *p = p1;
-	while (p != p->parent) {
+	while (p != NULL) {
 		MSTEdges.push_back( Edge(p->x, p->parent->x, p->y, p->parent->y) );
 		p = p->parent;
 	}
 	p = p2;
-	while (p != p->parent) {
+	while (p != NULL) {
 		MSTEdges.push_back( Edge(p->x, p->parent->x, p->y, p->parent->y) );
 		p = p->parent;
 	}
