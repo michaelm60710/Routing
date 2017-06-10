@@ -98,6 +98,10 @@ public:
 	GraphPoint *root;
 	int terminal_dis;
 	bool select;
+
+	//Extended Kruskal's
+	bool visit, chosen;
+	unsigned rank;
 };
 
 struct BoundLine_info{
@@ -137,6 +141,9 @@ struct Edge_info{
 	int point_y2;
 
 	int distance;
+
+	//Extended Kruskal's
+	GraphPoint* source;
 };
 
 

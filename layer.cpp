@@ -47,11 +47,10 @@ void Layer::SpanningGraphConstruct(){
 void Layer::SpanningTreeConstruct(){
 
 	//#1 Extended Dijkstra's Algorithm
-    EXtendedDijkstra();
+    ExtendedDijkstra();
 
-
-    //#2 Extended Kruska's Algorithm
-    //TODO
+    //#2 Extended Kruskal's Algorithm
+    ExtendedKruskal();
 
     //#PLOT
     check_point_svg();
@@ -498,7 +497,7 @@ void
 Layer::ConvertToUndirectedG(){
 	pair<MAP_GP_edge::iterator, bool> map_gp_status;
 	list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
-    MAP_GP_edge::iterator map_gp_itr, map_begin_itr, map_end_itr;
+    MAP_GP_edge::iterator map_gp_itr;
     GraphPoint *temp_gp;
     Edge_info *E1;
     int x1,y1,x2,y2,distance;
@@ -543,7 +542,7 @@ Layer::SG_find_GPinfo(int x_pos, BoundLine_info* bl_info){
 }
 
 void
-Layer::EXtendedDijkstra(){
+Layer::ExtendedDijkstra(){
 
 	FibQueue<int> Fq;
 	FibHeap<int>::FibNode *temp_fibn;
@@ -623,9 +622,90 @@ Layer::EXtendedDijkstra(){
     //cout << "num vertex: " << num_vertex << endl;
 
 
-
 }
 
+void unionSet( GraphPoint *s1, GraphPoint *s2 ) {
+
+	if (s1->rank >= s2->rank)
+		s2->parent = s1;
+	else 
+		s1->parent = s2;
+
+	if (s1->rank == s2->rank)
+		s1->rank++;
+
+	
+}
+
+void markChosenPoints(GraphPoint *p1, GraphPoint *p2) {
+	p1->chosen = p2->chosen = true;
+	p1->root->chosen = p2->root->chosen = true;
+	GraphPoint *p = p1->parent;
+	while(p != p1->root) {
+		p->chosen = true;
+		p = p->parent;
+	}
+	p = p2->parent;
+	while(p != p2->root) {
+		p->chosen = true;
+		p = p->parent;
+	}
+}
+
+void Layer::ExtendedKruskal() {
+
+	list <GraphPoint*>::iterator gp_itr, begin1, end1;
+	MAP_GP_edge::iterator map_gp_itr, begin2, end2;
+	GraphPoint *temp_gp1, *temp_gp2;
+	int edgeLength, dis1, dis2;
+
+	multimap < int, Edge_info* > HeapBE; // bridge edge
+	multimap < int, Edge_info* >::iterator curEdge;
+
+	// initialization
+    for (size_t i = 0; i < all_cluster.size(); i++) {
+ 		begin1 = all_cluster[i]->GraphP_list.begin();
+        end1 = all_cluster[i]->GraphP_list.end();
+
+        for (gp_itr = begin1; gp_itr != end1; ++gp_itr) {
+        	temp_gp1 = (*gp_itr);
+        	temp_gp1->parent = temp_gp1;
+        	temp_gp1->visit = true;
+        	begin2 = temp_gp1->map_edge.begin();
+        	end2 = temp_gp1->map_edge.end();
+
+            for (map_gp_itr = begin2; map_gp_itr != end2; ++map_gp_itr) {
+            	temp_gp2 = map_gp_itr->second->Gp;
+            	if (temp_gp2->visit == true) continue;
+            	edgeLength = map_gp_itr->second->distance;
+            	dis1 = temp_gp1->terminal_dis;
+            	dis2 = temp_gp2->terminal_dis;
+
+            	if (temp_gp1->root != temp_gp2->root) {
+            		map_gp_itr->second->source = temp_gp1;
+            		HeapBE.insert(  pair <int, Edge_info*> ( dis1 + edgeLength + dis2, map_gp_itr->second )  );
+            	}
+            }
+        }
+    }
+
+ 	// choose MST points
+    while (!HeapBE.empty()) {
+    	curEdge = HeapBE.begin();
+    	temp_gp1 = curEdge->second->source;
+    	temp_gp2 = curEdge->second->Gp;
+    	GraphPoint *set1 = temp_gp1->Find_Set();
+    	GraphPoint *set2 = temp_gp2->Find_Set();
+
+    	if (set1 != set2) {
+    		unionSet(set1, set2);
+    		markChosenPoints(temp_gp1, temp_gp2);
+    	}
+
+    	HeapBE.erase(curEdge);
+    };
+
+}
 
 
 
@@ -854,3 +934,4 @@ int Layer::get_Obstacle_num(){
 int Layer::get_Via_num(){
 	return Via_num;
 }
+

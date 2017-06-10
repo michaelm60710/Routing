@@ -64,7 +64,9 @@ GraphPoint::GraphPoint(Line* L, int UPorDown, int _idx){
 		y = L->y;
 	}
 	idx = _idx;
-
+	// initialization for Extended Kruskal's
+	visit = chosen = false;
+	rank = 0;
 }
 
 void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_x, int insert_y){

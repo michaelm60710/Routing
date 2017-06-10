@@ -31,7 +31,8 @@ public:
     void SGconstruct();
     void SG_find_GPinfo(int , BoundLine_info*);
     void ConvertToUndirectedG();
-    void EXtendedDijkstra();
+    void ExtendedDijkstra();
+    void ExtendedKruskal();
     void check_point_svg();
 
 	//for private use
