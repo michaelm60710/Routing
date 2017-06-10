@@ -644,14 +644,16 @@ void unionSet( GraphPoint *s1, GraphPoint *s2 ) {
 
 void markChosenPoints(GraphPoint *p1, GraphPoint *p2) {
 	p1->chosen = p2->chosen = true;
-	GraphPoint *p = p1->parent;
-	while(p != NULL) {
+	GraphPoint *p = p1;
+	while(p != p->parent) {
+		cout << "UP" << endl;
 		p->chosen = true;
 		p = p->parent;
 	}
 	p->chosen = true;
-	p = p2->parent;
-	while(p != NULL) {
+	p = p2;
+	while(p != p->parent) {
+		cout << "UP" << endl;
 		p->chosen = true;
 		p = p->parent;
 	}
@@ -660,12 +662,12 @@ void markChosenPoints(GraphPoint *p1, GraphPoint *p2) {
 
 void Layer::addMSTEdges(GraphPoint *p1, GraphPoint *p2) {
 	GraphPoint *p = p1;
-	while (p != NULL) {
+	while (p != p->parent) {
 		MSTEdges.push_back( Edge(p->x, p->parent->x, p->y, p->parent->y) );
 		p = p->parent;
 	}
 	p = p2;
-	while (p != NULL) {
+	while (p != p->parent) {
 		MSTEdges.push_back( Edge(p->x, p->parent->x, p->y, p->parent->y) );
 		p = p->parent;
 	}
@@ -719,8 +721,11 @@ void Layer::ExtendedKruskal() {
     	GraphPoint *set2 = findSet(temp_gp2);
     	if (set1 != set2) {
     		unionSet(set1, set2);
+    		cout << "123" << endl;
     		markChosenPoints(temp_gp1, temp_gp2);
+    		cout << "456" << endl;
     		addMSTEdges(temp_gp1, temp_gp2);
+    		cout << "789" << endl;
     	}
 
     	HeapBE.erase(curEdge);
