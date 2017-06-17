@@ -152,12 +152,15 @@ Layer::SGconstruct(){
         Line *l_l = new Line;
         Line *l_r = new Line;
         l_l->S = l_r->S = all_shape_vec[s];
+        l_r->LR = RIGHT;
+        l_l->LR = LEFT;
+        
         l_l->x = all_shape_vec[s]->coords->x1;
         l_r->x = all_shape_vec[s]->coords->x2;
         l_l->y = l_r->y = all_shape_vec[s]->coords->y1;
         l_l->length = l_r->length = all_shape_vec[s]->coords->y2 - l_l->y;
-        l_l->LR = LEFT;
-        l_r->LR = RIGHT;
+
+
         //cout << "x,y,x2,y2:"<< all_shape_vec[s]->coords->x1 << " " << all_shape_vec[s]->coords->y1 << " " << all_shape_vec[s]->coords->x2 << " " <<all_shape_vec[s]->coords->y2 << endl;
         //cout << "l_l:" << l_l->x << " " << l_l->y << " " << l_l->length << " " <<  l_l->LR << endl;
         //cout << "l_r:" << l_r->x << " " << l_r->y << " " << l_r->length << " " <<  l_r->LR << endl;
@@ -461,6 +464,9 @@ Layer::SGconstruct(){
 
     	}
 
+
+
+
         //#######check
         for (it1 = bound_map.begin();it1 != bound_map.end();++it1){
             //cout << "y: " << it1->first <<" , max_x: " << it1->second->max_x << ", upper:" <<  it1->second->up_edge_x << ",down:" <<it1->second->down_edge_x << endl;
@@ -608,8 +614,10 @@ Layer::ExtendedDijkstra(){
         	 num_vertex++;
         	 //bug
         	 if((*gp_itr)->root==NULL){
-                cerr << "bug\n";
-                cin.get();
+                string sshape;
+                if((*gp_itr)->Shape_type==RSHAPE) sshape = "RSHAPE";
+                else                              sshape = "OBSTACLE";
+                cerr << "A " << sshape << "'s vertex is isolated\n";
         	 	for(map_gp_itr = (*gp_itr)->map_edge.begin();map_gp_itr!=(*gp_itr)->map_edge.end(); ++map_gp_itr){
         	 		cout << "a"<< (*gp_itr)->idx;
         	 		cout <<"\n" <<  map_gp_itr->second->distance << endl;
@@ -618,7 +626,7 @@ Layer::ExtendedDijkstra(){
         	 }
         }
     }
-    cin.get();
+
     //#check
     //cout << "num vertex: " << num_vertex << endl;
 
@@ -737,7 +745,6 @@ void Layer::ExtendedKruskal() {
 
     cout << "...Start choosing points" << endl;
  	// choose MST points
-    int i=0;
     while (!HeapBE.empty()) {
     	curEdge = HeapBE.begin();
     	temp_gp1 = curEdge->second->source;
@@ -747,7 +754,6 @@ void Layer::ExtendedKruskal() {
         //cout << "shape11 type:" << temp_gp1->Shape_type << ", " << temp_gp2->Shape_type << endl;
         //cout << "root: "<< temp_gp1->root << ", " << temp_gp2->root << endl;
     	if (set1 != set2) {
-            cout << i++<<endl;
     		unionSet(set1, set2);
     		addMSTEdges(temp_gp1, temp_gp2);
     	}
@@ -838,8 +844,11 @@ Layer::check_point_svg(){
 	cout << "START PLOT"<<endl;
     string a1 = string("Point_test")+string(".svg");
     ofstream a(a1.c_str());
+    int size = 1;
+    if(Width>10000) size = Width/10000;
+    cout << "size:" << size <<endl;
     
-    a << " <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40000\" height=\"15000\">\n ";
+    a << " <svg xmlns=\"http://www.w3.org/2000/svg\" width=\""<< Width/size <<"\" height=\""<< Height/size <<"\">\n ";
     a << "<marker xmlns=\"http://www.w3.org/2000/svg\" id=\"lineEnd\" viewBox=\"0 0 10 10\" refX=\"5\" refY=\"5\" markerUnits=\"strokeWidth\" markerWidth=\"4\" markerHeight=\"3\" orient=\"auto\">\n";
     a << "<rect x=\"0\" y=\"0\" width=\"10\" height=\"10\" fill=\"red\" />\n";
     a << "</marker>  " << endl;
@@ -853,7 +862,7 @@ Layer::check_point_svg(){
     for(sh_itr = b_itr; sh_itr!=e_itr;++sh_itr){
         width = (*sh_itr)->coords->x2 - (*sh_itr)->coords->x1;
         height = (*sh_itr)->coords->y2 - (*sh_itr)->coords->y1;
-        a << "<rect x=\"" << (*sh_itr)->coords->x1 << "\" y=\"" << (*sh_itr)->coords->y1 << "\" width=\"" << width << "\" height=\""<< height << "\" style=\"fill:blue;stroke:black;stroke-width:1;fill-opacity:0.2;stroke-opacity:0.6\" />" << endl;
+        a << "<rect x=\"" << (*sh_itr)->coords->x1/size << "\" y=\"" << (*sh_itr)->coords->y1/size << "\" width=\"" << width/size << "\" height=\""<< height/size << "\" style=\"fill:blue;stroke:black;stroke-width:1;fill-opacity:0.2;stroke-opacity:0.6\" />" << endl;
     }
     //1.Obstacle shape
     b_itr = Obstacle_list.begin();
@@ -861,7 +870,7 @@ Layer::check_point_svg(){
     for(sh_itr = b_itr; sh_itr!=e_itr;++sh_itr){
         width = (*sh_itr)->coords->x2 - (*sh_itr)->coords->x1;
         height = (*sh_itr)->coords->y2 - (*sh_itr)->coords->y1;
-        a << "<rect x=\"" << (*sh_itr)->coords->x1 << "\" y=\"" << (*sh_itr)->coords->y1 << "\" width=\"" << width << "\" height=\""<< height << "\" style=\"fill:gray;stroke:black;stroke-width:1;fill-opacity:0.2;stroke-opacity:0.6\" />" << endl;
+        a << "<rect x=\"" << (*sh_itr)->coords->x1/size << "\" y=\"" << (*sh_itr)->coords->y1/size << "\" width=\"" << width/size << "\" height=\""<< height/size << "\" style=\"fill:gray;stroke:black;stroke-width:1;fill-opacity:0.2;stroke-opacity:0.6\" />" << endl;
     }
 
     //point
@@ -871,9 +880,16 @@ Layer::check_point_svg(){
         begin_itr = all_cluster[i]->GraphP_list.begin();
         end_itr = all_cluster[i]->GraphP_list.end();
         for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
-            a<< "<circle cx=\"" << (*gp_itr)->x << "\" cy=\""<< (*gp_itr)->y << "\" r=\"2\" style=\"fill:red;stroke:red;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.8\" />" << endl;
+            a<< "<circle cx=\"" << (*gp_itr)->x/size << "\" cy=\""<< (*gp_itr)->y/size << "\" r=\"2\" style=\"fill:red;stroke:red;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.8\" />" << endl;
      
         }
+    }
+    //Via
+    list < Via* >::iterator via_itr;
+    for(via_itr = Via_list.begin(); via_itr != Via_list.end(); ++via_itr){
+        //cout << "via"<<endl;
+        a<< "<circle cx=\"" << (*via_itr)->x/size << "\" cy=\""<< (*via_itr)->y/size << "\" r=\"10\" style=\"fill:black;stroke:black;stroke-width:4;fill-opacity:1;stroke-opacity:1\" />" << endl;
+
     }
 
     //edge
@@ -892,7 +908,7 @@ Layer::check_point_svg(){
                 if((*gp_itr)->Shape_type==OBSTACLE ){
                 	if(xx!=x1 || yy!=y1) cin.get();//test error
                 }
-                a << "<line x1=\"" << x1 << "\" y1=\"" << y1 << "\" x2=\"" << x2 << "\" y2=\"" << y2 << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
+                a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
             }
         }
     }*/
@@ -915,7 +931,7 @@ Layer::check_point_svg(){
                 	if(xx!=x1 || yy!=y1) cin.get();//test error
                 }
                 if((*gp_itr)->parent==map_gp_itr->second->Gp )
-                	a << "<line x1=\"" << x1 << "\" y1=\"" << y1 << "\" x2=\"" << x2 << "\" y2=\"" << y2 << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
+                	a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
             }
         }
     }*/
@@ -927,7 +943,7 @@ Layer::check_point_svg(){
     	x2 = (*itr)._x2;
     	y1 = (*itr)._y1;
     	y2 = (*itr)._y2;
-    	a << "<line x1=\"" << x1 << "\" y1=\"" << y1 << "\" x2=\"" << x2 << "\" y2=\"" << y2 << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
+    	a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
     }
 
 

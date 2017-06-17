@@ -13,9 +13,11 @@
 #include "fiboqueue.h"
 
 
-#define RSHAPE 0
+#define RSHAPE   0
 #define OBSTACLE 1
-#define LEFT 0
+#define VIA 	 2
+
+#define LEFT  0
 #define RIGHT 1
 
 //#define LEFT  1

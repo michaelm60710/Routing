@@ -45,6 +45,9 @@ public:
 
 	//Extended Kruskal's
 	void addMSTEdges(GraphPoint *p1, GraphPoint *p2);
+	int Spacing;
+	int Width;
+	int Height;
 
 private:
 	list < Shape* > Rshape_list;

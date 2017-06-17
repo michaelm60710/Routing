@@ -12,8 +12,8 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 	Parsing(Input_file);
 
 	//test
-	all_layer[0].SpanningGraphConstruct();
-	all_layer[0].SpanningTreeConstruct();
+	all_layer[1].SpanningGraphConstruct();
+	all_layer[1].SpanningTreeConstruct();
 	/*for(size_t s = 0; s < all_layer.size(); s++){
 		cout<<"layer "<<s+1<<endl;
 		all_layer[s].SpanningGraphConstruct();
@@ -44,6 +44,11 @@ void Manager::Parsing(const char* Input_file){
 
 	//###1.2 construct
 	all_layer.resize(MetalLayers);
+	for(int i = 0;i<MetalLayers;i++) {
+		all_layer[i].Spacing = Spacing;
+		all_layer[i].Width   = Boundary->x2 - Boundary->x1;
+		all_layer[i].Height  = Boundary->y2 - Boundary->y1;
+	}
 
 	//###2. read RoutedShape
 	cout << "read RoutedShape..." << endl;
@@ -72,6 +77,12 @@ void Manager::Parsing(const char* Input_file){
 		Shape *temp_shape = new Shape;
 		l = int(layer[1]) - 49; // M1 -> 0, M2 -> 1
 		temp_shape->coords = Parsing_coordinate(coor1,coor2);
+		//Add Spacing
+		temp_shape->coords->x1 -= Spacing;
+		temp_shape->coords->x2 += Spacing;
+		temp_shape->coords->y1 -= Spacing;
+		temp_shape->coords->y2 += Spacing;
+		
 		temp_shape->Shape_type = OBSTACLE;
 		all_layer[l].Obstacle_list_append(temp_shape);
 	}
