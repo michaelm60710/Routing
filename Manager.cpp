@@ -5,13 +5,21 @@
 
 using namespace std;
 
+int Layer::G_point_num = 0;//Static Initialize
 
 Manager::Manager(const char* Input_file,const char* Output_file){
 
 	//Parsing
 	Parsing(Input_file);
-	SpanningGraphConstruct();
+	
 	//test
+	SpanningGraphConstruct();
+	SpanningTreeConstruct();
+
+
+	// plot test
+    for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
+	
 	//all_layer[1].SpanningGraphConstruct();
 	//all_layer[1].SpanningTreeConstruct();
 	/*for(size_t s = 0; s < all_layer.size(); s++){
@@ -44,7 +52,7 @@ void Manager::Parsing(const char* Input_file){
 
 	//###1.2 construct
 	all_layer.resize(MetalLayers);
-	all_shape.resize(RoutedShapes+RoutedVias+Obstacles);
+	all_shape.resize(RoutedShapes+RoutedVias*2+Obstacles);
 	for(int i = 0;i<MetalLayers;i++) {
 		all_layer[i].Spacing = Spacing;
 		all_layer[i].Width   = Boundary->x2 - Boundary->x1;
@@ -73,6 +81,10 @@ void Manager::Parsing(const char* Input_file){
 		temp_shape->coords = Parsing_via(coor1);
 		all_layer[l].Via_list_append(temp_shape);
 		all_shape[all++] = temp_shape;
+		Shape *temp_shape2 = new Shape(VIA, l+1);
+		temp_shape2->coords = temp_shape->coords;
+		all_layer[l+1].Upper_Via_list_append(temp_shape2);
+		all_shape[all++] = temp_shape2;
 	}
 
 	//###2. read Obstacles

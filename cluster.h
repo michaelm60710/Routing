@@ -71,13 +71,14 @@ struct Line{
 	Shape *S;
 };
 
-class GraphPoint{
+class GraphPoint{//Only consider same layer
 public:
 	GraphPoint(Line*, int, int);
 	void Add_edge(GraphPoint*, int, int, int, int, int, int);
 	GraphPoint* Find_Set();
 	Cluster *clu;
 	int Shape_type;
+	int Layer_pos;
 	MAP_GP_edge map_edge;
 	//if the GraphPoint is RoutedShape, x & y is not a fixed value
 	int x;
@@ -97,6 +98,9 @@ public:
 	GraphPoint *parentKK;
 	bool visit, chosen;
 	unsigned rank;
+
+	//final edge
+	list<Edge_info*> final_edge;
 };
 
 struct BoundLine_info{
@@ -158,7 +162,7 @@ public:
 	void Add_GP(GraphPoint*);
 	GraphPoint* Add_GP(Line*, int, int &);
 
-	bool GetShapeType();
+	int GetShapeType();
 //private:
 	int Shape_type;//Rshape or Obstacle or via
 	int shape_num;

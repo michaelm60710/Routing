@@ -33,7 +33,7 @@ void Cluster::Add_GP(GraphPoint *gp){
 	GraphP_list.push_back(gp);
 }
 
-bool Cluster::GetShapeType(){
+int Cluster::GetShapeType(){
 	return Shape_type;
 }
 
@@ -52,7 +52,6 @@ GraphPoint* Cluster::Add_GP(Line* L, int UPorDown, int &_idx){
 		cerr << "bug";
 		cin.get();
 	}
-
 	return gp;
 }
 
@@ -61,6 +60,7 @@ GraphPoint* Cluster::Add_GP(Line* L, int UPorDown, int &_idx){
 GraphPoint::GraphPoint(Line* L, int UPorDown, int _idx){
 	clu = L->S->clu;
 	Shape_type = L->S->Shape_type;
+	Layer_pos = L->S->layer_position;
 	x = L->x;
 	if(UPorDown & UP){ //UP = true
 		y = L->y + L->length;
