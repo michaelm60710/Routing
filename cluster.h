@@ -26,8 +26,7 @@
 #define DOWN  8
 
 struct Coords;
-struct Shape;
-struct Via;
+class Shape;
 struct Line;
 class GraphPoint;
 struct BoundLine_info;
@@ -53,23 +52,16 @@ struct Coords{
 };
 
 
-struct Shape{
-
-	//int x;
-	//int y;
-	//int width;
-	//int height;
+class Shape{
+public:
+	Shape(int, int);
 	Coords *coords;
-	bool Shape_type;//Rshape or Obstacle
+	int Shape_type;//Rshape or Obstacle or Via
+	int layer_position;//0, 1, 2 ...
 	Cluster *clu;
-    int    y_idx;
     list < Shape* > Overlaps;
 };
 
-struct Via{
-	int x;
-	int y;
-};
 
 struct Line{
 	int x;
@@ -82,10 +74,10 @@ struct Line{
 class GraphPoint{
 public:
 	GraphPoint(Line*, int, int);
-	void Add_edge(GraphPoint*, int, int, int, int);
+	void Add_edge(GraphPoint*, int, int, int, int, int, int);
 	GraphPoint* Find_Set();
 	Cluster *clu;
-	bool Shape_type;
+	int Shape_type;
 	MAP_GP_edge map_edge;
 	//if the GraphPoint is RoutedShape, x & y is not a fixed value
 	int x;
@@ -133,7 +125,7 @@ struct BoundLine_info{
 };
 
 struct Edge_info{
-	Edge_info(GraphPoint* gp, int x, int y, int x2, int y2, int d):Gp(gp),point_x1(x),point_y1(y),point_x2(x2),point_y2(y2),distance(d)
+	Edge_info(GraphPoint* gp, int x, int y, int x2, int y2, int d, int l):Gp(gp),point_x1(x),point_y1(y),point_x2(x2),point_y2(y2),layer(l),distance(d)
 	{
 	}
 
@@ -142,6 +134,7 @@ struct Edge_info{
 	int point_y1;
 	int point_x2;
 	int point_y2;
+	int layer;
 
 	int distance;
 
@@ -166,8 +159,8 @@ public:
 	GraphPoint* Add_GP(Line*, int, int &);
 
 	bool GetShapeType();
-private:
-	bool Shape_type;//Rshape or Obstacle
+//private:
+	int Shape_type;//Rshape or Obstacle or via
 	int shape_num;
 	list < Shape* > shape_list;
 	list < Point* > boundary; //counterclkwise

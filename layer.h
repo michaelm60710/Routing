@@ -25,10 +25,11 @@ public:
 	void BFS_overlap_graph(Shape *, Cluster*);
     void build_clu(Shape*, Cluster*, int);
     bool overlap(Shape*, Shape*);
-    void check_cluster();
 
     //
     void SGconstruct();
+    pair<GraphPoint*, GraphPoint*> SGconstruct(Line*); //same layer shape
+    void SGconstruct_search(Line*, GraphPoint*, GraphPoint*); //dif layer shape
     void SG_find_GPinfo(int , BoundLine_info*);
     void ConvertToUndirectedG();
     void ExtendedDijkstra();
@@ -38,7 +39,7 @@ public:
 	//for private use
 	void Rshape_list_append(Shape *);
 	void Obstacle_list_append(Shape *);
-	void Via_list_append(Via *);
+	void Via_list_append(Shape *);
 	int get_Rshape_num();
 	int get_Obstacle_num();
 	int get_Via_num();
@@ -48,11 +49,13 @@ public:
 	int Spacing;
 	int Width;
 	int Height;
+	int Layer_pos;
+	int Via_cost;
 
 private:
 	list < Shape* > Rshape_list;
 	list < Shape* > Obstacle_list;
-	list < Via*   > Via_list;
+	list < Shape* > Via_list;
 	vector<Cluster*> all_cluster;
 	vector <Shape* > all_shape_vec;
     vector <GraphPoint* > all_GP_vec;
@@ -71,6 +74,7 @@ private:
 	//Extended Kruskal's
 	list <Edge> MSTEdges;
 
+	map< int , BoundLine_info* , less<int> > bound_map;
 
 };
 

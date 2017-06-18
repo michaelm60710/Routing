@@ -10,10 +10,10 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 	//Parsing
 	Parsing(Input_file);
-
+	SpanningGraphConstruct();
 	//test
-	all_layer[1].SpanningGraphConstruct();
-	all_layer[1].SpanningTreeConstruct();
+	//all_layer[1].SpanningGraphConstruct();
+	//all_layer[1].SpanningTreeConstruct();
 	/*for(size_t s = 0; s < all_layer.size(); s++){
 		cout<<"layer "<<s+1<<endl;
 		all_layer[s].SpanningGraphConstruct();
@@ -27,7 +27,7 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 void Manager::Parsing(const char* Input_file){
 	cout << "Read Data:" << endl;
 	string garbage,layer,coor1,coor2;
-	int l;
+	int l,all=0;
 	ifstream i_file;
 
 	i_file.open(Input_file,ios::in);
@@ -44,21 +44,24 @@ void Manager::Parsing(const char* Input_file){
 
 	//###1.2 construct
 	all_layer.resize(MetalLayers);
+	all_shape.resize(RoutedShapes+RoutedVias+Obstacles);
 	for(int i = 0;i<MetalLayers;i++) {
 		all_layer[i].Spacing = Spacing;
 		all_layer[i].Width   = Boundary->x2 - Boundary->x1;
 		all_layer[i].Height  = Boundary->y2 - Boundary->y1;
+		all_layer[i].Layer_pos = i;
+		all_layer[i].Via_cost  = ViaCost;
 	}
 
 	//###2. read RoutedShape
 	cout << "read RoutedShape..." << endl;
 	for(int i = 0; i < RoutedShapes;i++){
 		i_file>>garbage>>layer>>coor1>>coor2;//ex: RoutedShape>> M1>> (6469,2552)>> (6504,2558)
-		Shape *temp_shape = new Shape;
 		l = int(layer[1]) - 49; // M1 -> l = 0, M2 -> l = 1
+		Shape *temp_shape = new Shape(RSHAPE, l);
 		temp_shape->coords = Parsing_coordinate(coor1,coor2);
-		temp_shape->Shape_type = RSHAPE;
 		all_layer[l].Rshape_list_append(temp_shape);
+		all_shape[all++] = temp_shape;
 	}
 
 	//###3. read RoutedVias
@@ -66,16 +69,18 @@ void Manager::Parsing(const char* Input_file){
 	for(int i = 0; i < RoutedVias;i++){
 		i_file>>garbage>>layer>>coor1;
 		l = int(layer[1]) - 49; // V1 -> 0, V2 -> 1
-		Via* temp_via = Parsing_via(coor1);
-		all_layer[l].Via_list_append(temp_via);
+		Shape *temp_shape = new Shape(VIA, l);
+		temp_shape->coords = Parsing_via(coor1);
+		all_layer[l].Via_list_append(temp_shape);
+		all_shape[all++] = temp_shape;
 	}
 
 	//###2. read Obstacles
 	cout << "read Obstaclese..." << endl;
 	for(int i = 0; i < Obstacles;i++){
 		i_file>>garbage>>layer>>coor1>>coor2;
-		Shape *temp_shape = new Shape;
 		l = int(layer[1]) - 49; // M1 -> 0, M2 -> 1
+		Shape *temp_shape = new Shape(OBSTACLE, l);
 		temp_shape->coords = Parsing_coordinate(coor1,coor2);
 		//Add Spacing
 		temp_shape->coords->x1 -= Spacing;
@@ -83,10 +88,9 @@ void Manager::Parsing(const char* Input_file){
 		temp_shape->coords->y1 -= Spacing;
 		temp_shape->coords->y2 += Spacing;
 		
-		temp_shape->Shape_type = OBSTACLE;
 		all_layer[l].Obstacle_list_append(temp_shape);
+		all_shape[all++] = temp_shape;
 	}
-
 
 
 	//###3. print & check
@@ -125,18 +129,20 @@ Coords* Manager::Parsing_coordinate(string coor1, string coor2){ //ex: (4159,294
 	return temp_coords;
 }
 
-Via* Manager::Parsing_via(string coor1){ // ex: (8,523)
+Coords* Manager::Parsing_via(string coor1){ // ex: (8,523)
 
 	int comma;
 	stringstream ss;
-	Via *temp_via = new Via;
+	Coords *temp_coords = new Coords;
 	for(comma = 1;coor1[comma] != ','; comma++);
 	ss << coor1.substr(1,comma-1) << ' ';
 	ss << coor1.substr(comma+1,coor1.length()-comma-2) << ' ';
 
-	ss >> temp_via->x >> temp_via->y;
+	ss >> temp_coords->x1 >> temp_coords->y1;
+	temp_coords->x2 = temp_coords->x1;
+	temp_coords->y2 = temp_coords->y1;
 
 	//cout << temp_via->x << " "<< temp_via->y << endl;
 
-	return temp_via;
+	return temp_coords;
 }

@@ -16,7 +16,9 @@ public:
 
 	void Parsing(const char* );
 	Coords* Parsing_coordinate(string, string);
-	Via* Parsing_via(string);
+	Coords* Parsing_via(string);
+
+	void SpanningGraphConstruct();
 
 private:
 	int ViaCost;
@@ -31,6 +33,9 @@ private:
 	int RoutedVias;
 	int Obstacles;
 	vector < Layer > all_layer;
+	
+	vector < Shape* > all_shape;//via, obstacle, rshape
+	vector <Line* > all_line;
 
 
 };

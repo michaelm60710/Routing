@@ -3,6 +3,11 @@
 #include <algorithm>
 
 
+Shape::Shape(int shape_type, int layer_pos):Shape_type(shape_type),layer_position(layer_pos)
+{}
+
+
+
 Cluster::Cluster(Shape *temp_shape)
 {
 	shape_num = 1;
@@ -69,9 +74,9 @@ GraphPoint::GraphPoint(Line* L, int UPorDown, int _idx){
 	rank = 0;
 }
 
-void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_x, int insert_y){
+void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_x, int insert_y, int layer, int via_cost){ //add_dis = 0 or Viacost
 	if (insert_gp->clu == clu && clu->GetShapeType()==RSHAPE) return;//same cluster
-	int distance = abs(my_x-insert_x) + abs(my_y-insert_y);
+	int distance = abs(my_x-insert_x) + abs(my_y-insert_y) + via_cost;
 	MAP_GP_Status status1;//,status2;
 	Edge_info *E1;//, *E2;
 	//E1 = new Edge_info(insert_gp, my_x, my_y, insert_x, insert_y, distance);
@@ -83,7 +88,7 @@ void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_
 	}*/
 
 	if(status1.second==true){
-		E1 = new Edge_info(insert_gp, my_x, my_y, insert_x, insert_y, distance);
+		E1 = new Edge_info(insert_gp, my_x, my_y, insert_x, insert_y, distance, layer);
 		status1.first->second = E1;
 	}
 	else{
@@ -93,6 +98,7 @@ void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_
 			status1.first->second->point_x2 = insert_x;
 			status1.first->second->point_y2 = insert_y;
 			status1.first->second->distance = distance;
+			status1.first->second->layer    = layer;
 		}
 	}
 

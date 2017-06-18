@@ -1,6 +1,6 @@
 CFLAGS = -std=c++11 -g  -Wall
-main.exe: main.o Manager.o layer.o cluster.o
-	g++ -o main.exe main.o Manager.o layer.o cluster.o
+main.exe: main.o Manager.o layer.o cluster.o Sgc.o
+	g++ -o main.exe main.o Manager.o layer.o cluster.o Sgc.o
 
 main.o: main.cpp Manager.h
 	g++ -c $(CFLAGS) main.cpp
@@ -14,6 +14,8 @@ layer.o: layer.cpp layer.h cluster.h fiboheap.h fiboqueue.h
 Manager.o: Manager.cpp Manager.h layer.h
 	g++ -c $(CFLAGS) Manager.cpp
 
+Sgc.o:sgc.cpp Manager.h
+	g++ -c $(CFLAGS) sgc.cpp
 
 
 clean:

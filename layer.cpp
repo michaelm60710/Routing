@@ -7,7 +7,7 @@ using namespace std;
 
 
 Layer::Layer()
-:Rshape_num(0),Obstacle_num(0),Via_num(0),Layer_Shape_num(0) //initialize
+:Rshape_num(0),Obstacle_num(0),Via_num(0),Layer_Shape_num(0),G_point_num(0) //initialize
 {
 	//cout << "QQ";
 }
@@ -25,18 +25,19 @@ void Layer::SpanningGraphConstruct(){
 	//#1.0 construct all_shape_vec
 	int pos = 0;
 	Layer_Shape_num = Rshape_num+Obstacle_num;
-	all_shape_vec.resize(Layer_Shape_num);
+	all_shape_vec.resize(Layer_Shape_num+Via_num);
 	for (it_shape it_s= Rshape_list.begin();it_s != Rshape_list.end();++it_s)
 		all_shape_vec[pos++] = (*it_s); 
 	for (it_shape it_s= Obstacle_list.begin();it_s != Obstacle_list.end();++it_s)
 		all_shape_vec[pos++] = (*it_s); 
-    
+    for (it_shape it_s= Via_list.begin();it_s != Via_list.end();++it_s)
+        all_shape_vec[pos++] = (*it_s);    
 	
 	//#1 construct cluster
     clustering_shape();
 
-    //#2 construct graph
-    SGconstruct();
+    //#2 construct graph 
+    //SGconstruct();
 
     //check_cluster();
 	//for(MS_it it = X_msort_shape.begin();it!=X_msort_shape.end();++it)
@@ -141,363 +142,542 @@ sort_line_x(Line* L1, Line* L2){
     return L1->x < L2->x;
 }
 
-void
-Layer::SGconstruct(){
-    cout << "SGconstruct"<< endl;
-    vector <Line* > all_line_vec;
-    all_line_vec.resize(Layer_Shape_num*2);
 
-    //### 1. sorting all shape line(x)
-    for(size_t s = 0; s < all_shape_vec.size(); s++){
-        Line *l_l = new Line;
-        Line *l_r = new Line;
-        l_l->S = l_r->S = all_shape_vec[s];
-        l_r->LR = RIGHT;
-        l_l->LR = LEFT;
-        
-        l_l->x = all_shape_vec[s]->coords->x1;
-        l_r->x = all_shape_vec[s]->coords->x2;
-        l_l->y = l_r->y = all_shape_vec[s]->coords->y1;
-        l_l->length = l_r->length = all_shape_vec[s]->coords->y2 - l_l->y;
-
-
-        //cout << "x,y,x2,y2:"<< all_shape_vec[s]->coords->x1 << " " << all_shape_vec[s]->coords->y1 << " " << all_shape_vec[s]->coords->x2 << " " <<all_shape_vec[s]->coords->y2 << endl;
-        //cout << "l_l:" << l_l->x << " " << l_l->y << " " << l_l->length << " " <<  l_l->LR << endl;
-        //cout << "l_r:" << l_r->x << " " << l_r->y << " " << l_r->length << " " <<  l_r->LR << endl;
-        all_line_vec[2*s] = l_l;
-        all_line_vec[2*s+1] = l_r;
-    }
-    sort(all_line_vec.begin(), all_line_vec.end(), sort_line_x);
-
-    //### 2. lets go~
-    /*
-                |
-          5     |
-    ----------------------------
-          3     |               |
- del 4          |  L (shape)    |
-          2     |               |
-    ----------------------------
-          1     |
-                |
-
-    */
-
-
-    map< int , BoundLine_info* , less<int> > bound_map;
+pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
     map< int , BoundLine_info* , less<int> >::iterator it1,it2, low_it,traverse_it;
     pair<map< int , BoundLine_info* , less<int> >::iterator,bool> status1,status2;
     bool p1,p2; //t_shape_type,
     int temp_x,temp_max_x, temp_bound_x,temp_y1,temp_y2;
     GraphPoint *GP1, *GP2;
     Cluster *temp_clu;
-    G_point_num = 0;
 
-    //### 2. start to construct graph
-    for(size_t s = 0; s < all_line_vec.size(); s++){
-        //if(s>224) break;
+    /*
+                    |
+              5     |
+        ---------------------------- p1
+              3     |               |
+     del 4          |  L (shape)    |              
+              2     |               |
+        ---------------------------- p2
+              1     |
+                    |
 
-    	//t_shape_type = all_line_vec[s]->S->Shape_type;
-        temp_x = all_line_vec[s]->x;
-        temp_max_x = all_line_vec[s]->S->coords->x2;
-        temp_clu = all_line_vec[s]->S->clu;
-        temp_y1 = all_line_vec[s]->y+all_line_vec[s]->length;
-        temp_y2 = all_line_vec[s]->y;
-        //cerr << s << ": temp_max_x: " <<  temp_max_x << ", bound size:" << bound_map.size() << endl;
-        //cerr << "x:" << all_line_vec[s]->x << ",max_x:" << temp_max_x << ",y: " <<all_line_vec[s]->y <<"LR:" << all_line_vec[s]->LR<< endl;
+    */
 
-    	if(all_line_vec[s]->LR==LEFT){ //LEFT
-            p1 = p2 = true;
-            GP1 = GP2 = NULL;
-    		BoundLine_info* b1 = new BoundLine_info(all_line_vec[s]->LR, temp_max_x, temp_x, UP, temp_y1);
-    		BoundLine_info* b2 = new BoundLine_info(all_line_vec[s]->LR, temp_max_x, temp_x, DOWN, temp_y2);
+    temp_x = LLine->x;
+    temp_max_x = LLine->S->coords->x2;
+    temp_clu = LLine->S->clu;
+    temp_y1 = LLine->y+LLine->length;
+    temp_y2 = LLine->y;
 
-    		status1 = bound_map.insert(pair< int , BoundLine_info*>(temp_y1, b1) );
-            it1 = status1.first;
-    		status2 = bound_map.insert(pair< int , BoundLine_info*>(temp_y2, b2) );
-            it2 = status2.first;
-            
-            //############check it2 whether need to insert
-            traverse_it = it2;
-            if(traverse_it!=bound_map.begin()) --traverse_it;
+    if(LLine->S->Shape_type==VIA){
+        cerr << "via~";
+        p1 = true;
+        GP1 = NULL;
+        BoundLine_info* b1 = new BoundLine_info(LLine->LR, temp_max_x, temp_x, UP, temp_y1);
+        b1->up_edge_x = b1->down_edge_x = -1;
 
-            if(status2.second==false && it2->second->max_x >= temp_x ){ //same y 
-                //Down point no need 
-            }
-            else if(status2.second!=false && it2!=bound_map.begin() && traverse_it->second->up_edge_x >= temp_x){
-                //Down point no need 
-                if(traverse_it->second->up_edge_x >= temp_max_x) p2 = false;//dont inert this x line 
-            }
-            else{
-                GP2 = temp_clu->Add_GP(all_line_vec[s], DOWN, G_point_num);
-                //1 and 2 construct edge
-                temp_bound_x = -1;
-                traverse_it = it2;
-                if(status2.second==false){
-                    if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                        GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y);
-                    }
-                    if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
-                }
-                if(it2!=bound_map.begin()) --traverse_it;
-                while(1){
-                	if(temp_bound_x >= temp_x) break;
-                    if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                        GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y);
-                    }
-                    if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
-                    if(traverse_it==bound_map.begin()) break;
-                    --traverse_it;
-                }
-                //2
-                temp_bound_x = -1;
-                traverse_it = it2;
-                ++traverse_it;
-                for(;traverse_it!=it1;++traverse_it){
-                    if(temp_bound_x >= temp_x) break;
-                    if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                        GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y);
-                    }
-                    if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
-                }
+        status1 = bound_map.insert(pair< int , BoundLine_info*>(temp_y1, b1) );
+        it1 = status1.first;
+        
+        //############check point whether need to insert
+        traverse_it = it1;
+        ++traverse_it;
 
-                it2->second->Gp = GP2;
-
-            }
-
-            //############check it1  whether need to insert
+        if(status1.second==false && it1->second->max_x >= temp_x ){ //same y 
+            //up point no need 
+        }
+        else if(status1.second!=false && traverse_it!=bound_map.end() && traverse_it->second->down_edge_x >= temp_x){
+            //up point no need 
+            if( traverse_it->second->down_edge_x >= temp_max_x) p1 = false;//this point need to delete
+        }
+        else{
+            GP1 = temp_clu->Add_GP(LLine, UP, G_point_num);
+            //1 and 5 construct edge
+            temp_bound_x = -1;
             traverse_it = it1;
             ++traverse_it;
+            for(;traverse_it!=bound_map.end();++traverse_it){
+                if(temp_bound_x >= temp_x) break;
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
 
-            if(status1.second==false && it1->second->max_x >= temp_x ){ //same y 
-                //up point no need 
+                }
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
             }
-            else if(status1.second!=false && traverse_it!=bound_map.end() && traverse_it->second->down_edge_x >= temp_x){
-                //up point no need 
-                if( traverse_it->second->down_edge_x >= temp_max_x) p1 = false;//this point need to delete
-            }
-            else{
-                GP1 = temp_clu->Add_GP(all_line_vec[s], UP, G_point_num);
-                
-                //3 and 5 construct edge
-                temp_bound_x = -1;
-                traverse_it = it1;
-                ++traverse_it;
-                for(;traverse_it!=bound_map.end();++traverse_it){
-                    if(temp_bound_x >= temp_x) break;
-                    if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                        GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y);
 
-                    }
-                    if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+            //1
+           temp_bound_x = -1;
+            traverse_it = it1;
+            if(status1.second==false){
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
                 }
-                //3
-                temp_bound_x = -1;
-                traverse_it = it1;
-                if(status1.second==false){
-                    if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                        GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y);
-                    }
-                    if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+            }
+            if(it1!=bound_map.begin()) --traverse_it;
+            while(1){
+                if(temp_bound_x >= temp_x) break;
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
                 }
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+                if(traverse_it==bound_map.begin()) break;
                 --traverse_it;
-                for(;traverse_it!=it2;--traverse_it){
-                    if(temp_bound_x >= temp_x) break;
-                    if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                        GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y);
-                    }
-                    if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+            }
+
+            it1->second->Gp = GP1;//////
+
+        }
+        
+        if(status1.second==false){
+            if(it1->second->max_x <= temp_x){
+                it1->second->point_x = temp_x;
+                it1->second->point_y = temp_y1;
+            }
+            if(it1->second->max_x<temp_max_x)
+                it1->second->max_x = temp_max_x;
+        }
+
+        if(p1==false) bound_map.erase(it1);
+        else{
+            traverse_it = it1;
+            ++traverse_it;
+            if(traverse_it!=bound_map.end())
+                it1->second->up_edge_x = traverse_it->second->down_edge_x;
+            if(it1!=bound_map.begin()) {
+                traverse_it = it1;
+                --traverse_it;
+                it1->second->down_edge_x = traverse_it->second->up_edge_x;
+            }
+        }
+
+    }
+    else if(LLine->LR==LEFT){ //LEFT
+        p1 = p2 = true;
+        GP1 = GP2 = NULL;
+        BoundLine_info* b1 = new BoundLine_info(LLine->LR, temp_max_x, temp_x, UP, temp_y1);
+        BoundLine_info* b2 = new BoundLine_info(LLine->LR, temp_max_x, temp_x, DOWN, temp_y2);
+
+        status1 = bound_map.insert(pair< int , BoundLine_info*>(temp_y1, b1) );
+        it1 = status1.first;
+        status2 = bound_map.insert(pair< int , BoundLine_info*>(temp_y2, b2) );
+        it2 = status2.first;
+        
+        //############check it2 whether need to insert
+        traverse_it = it2;
+        if(traverse_it!=bound_map.begin()) --traverse_it;
+
+        if(status2.second==false && it2->second->max_x >= temp_x ){ //same y 
+            //Down point no need 
+        }
+        else if(status2.second!=false && it2!=bound_map.begin() && traverse_it->second->up_edge_x >= temp_x){
+            //Down point no need 
+            if(traverse_it->second->up_edge_x >= temp_max_x) p2 = false;//dont inert this x line 
+        }
+        else{
+            GP2 = temp_clu->Add_GP(LLine, DOWN, G_point_num);
+            //1 and 2 construct edge
+            temp_bound_x = -1;
+            traverse_it = it2;
+            if(status2.second==false){
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
                 }
-    
-                it1->second->Gp = GP1;//////
-
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+            }
+            if(it2!=bound_map.begin()) --traverse_it;
+            while(1){
+                if(temp_bound_x >= temp_x) break;
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
+                }
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+                if(traverse_it==bound_map.begin()) break;
+                --traverse_it;
+            }
+            //2
+            temp_bound_x = -1;
+            traverse_it = it2;
+            ++traverse_it;
+            for(;traverse_it!=it1;++traverse_it){
+                if(temp_bound_x >= temp_x) break;
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
+                }
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
             }
 
-            //############Obstacle left 2 point connect
-            bool connect = true;
-            if(GP1!=NULL && GP2!=NULL && all_line_vec[s]->S->Shape_type!=RSHAPE){
-            	traverse_it = it2;
-            	++traverse_it;
-            	for(;traverse_it!=it1; ++traverse_it){
-	                if(traverse_it->second->max_x >= temp_x ) connect = false;
-	            }
-	            if(connect) GP1->Add_edge(GP2, temp_x, temp_y1, temp_x, temp_y2);
-            }
-            
-            
-            //############delete mid
+            it2->second->Gp = GP2;
 
+        }
+
+        //############check it1  whether need to insert
+        traverse_it = it1;
+        ++traverse_it;
+
+        if(status1.second==false && it1->second->max_x >= temp_x ){ //same y 
+            //up point no need 
+        }
+        else if(status1.second!=false && traverse_it!=bound_map.end() && traverse_it->second->down_edge_x >= temp_x){
+            //up point no need 
+            if( traverse_it->second->down_edge_x >= temp_max_x) p1 = false;//this point need to delete
+        }
+        else{
+            GP1 = temp_clu->Add_GP(LLine, UP, G_point_num);
+            
+            //3 and 5 construct edge
+            temp_bound_x = -1;
+            traverse_it = it1;
+            ++traverse_it;
+            for(;traverse_it!=bound_map.end();++traverse_it){
+                if(temp_bound_x >= temp_x) break;
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
+
+                }
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+            }
+            //3
+            temp_bound_x = -1;
+            traverse_it = it1;
+            if(status1.second==false){
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
+                }
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+            }
+            --traverse_it;
+            for(;traverse_it!=it2;--traverse_it){
+                if(temp_bound_x >= temp_x) break;
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
+                }
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+            }
+
+            it1->second->Gp = GP1;//////
+
+        }
+
+        //############Obstacle left 2 point connect
+        bool connect = true;
+        if(GP1!=NULL && GP2!=NULL && LLine->S->Shape_type!=RSHAPE){
             traverse_it = it2;
             ++traverse_it;
             for(;traverse_it!=it1; ++traverse_it){
-
-                if(traverse_it->second->max_x <= temp_max_x ) {
-                    bound_map.erase(traverse_it++);//traverse_it = bound_map.erase(traverse_it);
-                    --traverse_it;
-
-                }
-                else{
-                    if(traverse_it->second->up_edge_x < temp_max_x)   traverse_it->second->up_edge_x   = temp_max_x;
-                    if(traverse_it->second->down_edge_x < temp_max_x) traverse_it->second->down_edge_x = temp_max_x;
-                    traverse_it->second->Gp = NULL;
-                }
+                if(traverse_it->second->max_x >= temp_x ) connect = false;
             }
-            if(it1->second->down_edge_x < temp_max_x) it1->second->down_edge_x = temp_max_x;// && status1.second==false 
-            if(it2->second->up_edge_x < temp_max_x) it2->second->up_edge_x = temp_max_x;// && status2.second==false
-            
-            //############ bug?
-            if(status1.second==false){
-            	if(it1->second->max_x <= temp_x){
-            		it1->second->point_x = temp_x;
-            		it1->second->point_y = temp_y1;
-            	}
-            	if(it1->second->max_x<temp_max_x)
-            		it1->second->max_x = temp_max_x;
-            }
-            if(status2.second==false) {
-            	if(it2->second->max_x <= temp_x){
-            		it2->second->point_x = temp_x;
-            		it2->second->point_y = temp_y2;
-            	}
-            	if(it2->second->max_x<temp_max_x)
-            		it2->second->max_x = temp_max_x;
-            }
-
-            //
-            if(p1==false) bound_map.erase(it1);
-            else{
-                traverse_it = it1;
-                ++traverse_it;
-                if(traverse_it!=bound_map.end())
-                    it1->second->up_edge_x = traverse_it->second->down_edge_x;
-            }
-            if(p2==false) bound_map.erase(it2);
-            else{
-                if(it2!=bound_map.begin()) {
-                    traverse_it = it2;
-                    --traverse_it;
-                    it2->second->down_edge_x = traverse_it->second->up_edge_x;
-                }
-            }
-
-
-    	}
-    	else{ //RIGHT
-            p1 = p2 = false;
-
-            it1 = bound_map.lower_bound(temp_y1);
-            it2 = bound_map.lower_bound(temp_y2);
-            //############check it2 whether exist
-            for (traverse_it = it2; traverse_it!=bound_map.end();++traverse_it){
-                if(traverse_it->first > temp_y2) break;
-                if(traverse_it->first == temp_y2 && traverse_it->second->max_x == temp_x ){
-                    p2 = true;
-                    break;
-                }
-            }            
-            if(p2){
-                GP2 = temp_clu->Add_GP(all_line_vec[s], DOWN, G_point_num);
-                //1 construct edge
-                temp_bound_x =  all_line_vec[s]->S->coords->x1;
-                traverse_it = it2;
-                if(it2!=bound_map.begin()) --traverse_it;
-                while(1){
-					if(temp_bound_x > temp_x) break;
-                    if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                        GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y);
-
-                    }
-                    if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
-                    if(traverse_it==bound_map.begin()) break;
-                    --traverse_it;
-                }
-
-                //construct Obstacle edge
-                if(all_line_vec[s]->S->Shape_type!=RSHAPE && it2->second->point_x==all_line_vec[s]->S->coords->x1 && it2->second->Gp)
-                	GP2->Add_edge(it2->second->Gp, temp_x, temp_y2, it2->second->point_x, temp_y2);
-
-                it2->second->Gp = GP2;
-                it2->second->point_x = temp_x;
-            }
-
-            //############check it1  whether exist
-            for (traverse_it = it1; traverse_it!=bound_map.end();++traverse_it){
-                if(traverse_it->first > temp_y1) break;
-                if(traverse_it->first == temp_y1 && traverse_it->second->max_x == temp_x ){
-                    p1 = true;
-                    break;
-                }
-            }            
-            if(p1){
-                GP1 = temp_clu->Add_GP(all_line_vec[s], UP, G_point_num);
-                //5 construct edge
-                temp_bound_x = all_line_vec[s]->S->coords->x1;
-                traverse_it = it1;
-                ++traverse_it;
-                for(;traverse_it!=bound_map.end();++traverse_it){
-                    if(temp_bound_x > temp_x) break;
-                    if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                        GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y);
-                    }
-                    if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
-                }
-
-                //construct Obstacle edge
-                if(all_line_vec[s]->S->Shape_type!=RSHAPE && it1->second->point_x==all_line_vec[s]->S->coords->x1 && it1->second->Gp!=NULL)
-                	GP1->Add_edge(it1->second->Gp, temp_x, temp_y1, it1->second->point_x, temp_y1);
-
-                it1->second->Gp = GP1;
-                it1->second->point_x = temp_x;
-            }
-
-			//############Obstacle right 2 point connect
-            bool connect = true;
-            if(p1 && p2 && all_line_vec[s]->S->Shape_type!=RSHAPE){
-            	traverse_it = it2;
-            	++traverse_it;
-            	for(;traverse_it!=it1; ++traverse_it){
-	                if(traverse_it->second->max_x >= temp_x ) connect = false;
-	            }
-	            if(connect) GP1->Add_edge(GP2, temp_x, temp_y1, temp_x, temp_y2);
-            }
-
-
-    	}
-
-
-
-
-        //#######check
-        for (it1 = bound_map.begin();it1 != bound_map.end();++it1){
-            //cout << "y: " << it1->first <<" , max_x: " << it1->second->max_x << ", upper:" <<  it1->second->up_edge_x << ",down:" <<it1->second->down_edge_x << endl;
+            if(connect) GP1->Add_edge(GP2, temp_x, temp_y1, temp_x, temp_y2, Layer_pos, 0);
         }
         
-        it1 = bound_map.begin();
-        int pre = it1->second->up_edge_x;
-        int temp_x;
-        ++it1;
-        for (;it1 != bound_map.end();++it1){
-            temp_x = it1->second->down_edge_x;
-            if(temp_x!=pre){
-                cerr << "fuck u " << s << endl;
-                cerr << it1->first;
-                cin.get();
+        
+        //############delete mid
+
+        traverse_it = it2;
+        ++traverse_it;
+        for(;traverse_it!=it1; ++traverse_it){
+
+            if(traverse_it->second->max_x <= temp_max_x ) {
+                bound_map.erase(traverse_it++);//traverse_it = bound_map.erase(traverse_it);
+                --traverse_it;
+
             }
-            pre = it1->second->up_edge_x;
+            else{
+                if(traverse_it->second->up_edge_x < temp_max_x)   traverse_it->second->up_edge_x   = temp_max_x;
+                if(traverse_it->second->down_edge_x < temp_max_x) traverse_it->second->down_edge_x = temp_max_x;
+                traverse_it->second->Gp = NULL;
+            }
+        }
+        if(it1->second->down_edge_x < temp_max_x) it1->second->down_edge_x = temp_max_x;// && status1.second==false 
+        if(it2->second->up_edge_x < temp_max_x) it2->second->up_edge_x = temp_max_x;// && status2.second==false
+        
+        //############ bug?
+        if(status1.second==false){
+            if(it1->second->max_x <= temp_x){
+                it1->second->point_x = temp_x;
+                it1->second->point_y = temp_y1;
+            }
+            if(it1->second->max_x<temp_max_x)
+                it1->second->max_x = temp_max_x;
+        }
+        if(status2.second==false) {
+            if(it2->second->max_x <= temp_x){
+                it2->second->point_x = temp_x;
+                it2->second->point_y = temp_y2;
+            }
+            if(it2->second->max_x<temp_max_x)
+                it2->second->max_x = temp_max_x;
         }
 
-        //#####
+        //
+        if(p1==false) bound_map.erase(it1);
+        else{
+            traverse_it = it1;
+            ++traverse_it;
+            if(traverse_it!=bound_map.end())
+                it1->second->up_edge_x = traverse_it->second->down_edge_x;
+        }
+        if(p2==false) bound_map.erase(it2);
+        else{
+            if(it2!=bound_map.begin()) {
+                traverse_it = it2;
+                --traverse_it;
+                it2->second->down_edge_x = traverse_it->second->up_edge_x;
+            }
+        }
+
+
+    }
+    else{ //RIGHT
+        p1 = p2 = false;
+
+        it1 = bound_map.lower_bound(temp_y1);
+        it2 = bound_map.lower_bound(temp_y2);
+        //############check it2 whether exist
+        for (traverse_it = it2; traverse_it!=bound_map.end();++traverse_it){
+            if(traverse_it->first > temp_y2) break;
+            if(traverse_it->first == temp_y2 && traverse_it->second->max_x == temp_x ){
+                p2 = true;
+                break;
+            }
+        }            
+        if(p2){
+            GP2 = temp_clu->Add_GP(LLine, DOWN, G_point_num);
+            //1 construct edge
+            temp_bound_x =  LLine->S->coords->x1;
+            traverse_it = it2;
+            if(it2!=bound_map.begin()) --traverse_it;
+            while(1){
+                if(temp_bound_x > temp_x) break;
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
+
+                }
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+                if(traverse_it==bound_map.begin()) break;
+                --traverse_it;
+            }
+
+            //construct Obstacle edge
+            if(LLine->S->Shape_type!=RSHAPE && it2->second->point_x==LLine->S->coords->x1 && it2->second->Gp)
+                GP2->Add_edge(it2->second->Gp, temp_x, temp_y2, it2->second->point_x, temp_y2, Layer_pos, 0);
+
+            it2->second->Gp = GP2;
+            it2->second->point_x = temp_x;
+        }
+
+        //############check it1  whether exist
+        for (traverse_it = it1; traverse_it!=bound_map.end();++traverse_it){
+            if(traverse_it->first > temp_y1) break;
+            if(traverse_it->first == temp_y1 && traverse_it->second->max_x == temp_x ){
+                p1 = true;
+                break;
+            }
+        }            
+        if(p1){
+            GP1 = temp_clu->Add_GP(LLine, UP, G_point_num);
+            //5 construct edge
+            temp_bound_x = LLine->S->coords->x1;
+            traverse_it = it1;
+            ++traverse_it;
+            for(;traverse_it!=bound_map.end();++traverse_it){
+                if(temp_bound_x > temp_x) break;
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
+                }
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+            }
+
+            //construct Obstacle edge
+            if(LLine->S->Shape_type!=RSHAPE && it1->second->point_x==LLine->S->coords->x1 && it1->second->Gp!=NULL)
+                GP1->Add_edge(it1->second->Gp, temp_x, temp_y1, it1->second->point_x, temp_y1, Layer_pos, 0);
+
+            it1->second->Gp = GP1;
+            it1->second->point_x = temp_x;
+        }
+
+        //############Obstacle right 2 point connect
+        bool connect = true;
+        if(p1 && p2 && LLine->S->Shape_type!=RSHAPE){
+            traverse_it = it2;
+            ++traverse_it;
+            for(;traverse_it!=it1; ++traverse_it){
+                if(traverse_it->second->max_x >= temp_x ) connect = false;
+            }
+            if(connect) GP1->Add_edge(GP2, temp_x, temp_y1, temp_x, temp_y2, Layer_pos, 0);
+        }
+
 
     }
 
-    //### 3. directed graph convert to undirected grpah
-    ConvertToUndirectedG();
+    return pair<GraphPoint*, GraphPoint*>(GP1, GP2);
+}
 
-    //### 4. Print 
-    cout << "point:" <<G_point_num << endl;
-    cout << "shape count:" << Layer_Shape_num << endl;
+void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
+	
+	if(GP1==NULL && GP2==NULL) return;
+
+    map< int , BoundLine_info* , less<int> >::iterator it1,it2, low_it,traverse_it;
+    pair<map< int , BoundLine_info* , less<int> >::iterator,bool> status1,status2;
+    GraphPoint *_GP;
+    bool p1,p2; //t_shape_type,
+    int temp_x,temp_max_x, temp_bound_x,temp_y1,temp_y2;
+    Cluster *temp_clu;
+
+    /*
+                    |
+              5     |
+        ---------------------------- p1 (temp_x, temp_y1) UP
+              3     |               |
+     del 4          |  L (shape)    |              
+              2     |               |
+        ---------------------------- p2 (temp_x, temp_y2) DOWN
+              1     |
+                    |
+
+    */
+
+    temp_x = LLine->x;
+    temp_max_x = LLine->S->coords->x2;
+    temp_clu = LLine->S->clu;
+    temp_y1 = LLine->y+LLine->length;
+    temp_y2 = LLine->y;
+
+    if(LLine->S->Shape_type==VIA || GP1==NULL || GP2==NULL){
+    	if(GP1==NULL) {
+    		_GP = GP2;
+    		temp_y1 = temp_y2;
+    	}
+    	else {
+    		 _GP = GP1;
+    	}
+
+        it1 = bound_map.lower_bound(temp_y1);
+        cout << "yo";
+        //1 and 5 construct edge
+        temp_bound_x = -1;
+        traverse_it = it1;
+        for(;traverse_it!=bound_map.end();++traverse_it){
+            if(temp_bound_x >= temp_x) break;
+            if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                _GP->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
+
+            }
+            if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+        }
+
+        //1
+        temp_bound_x = -1;
+        traverse_it = it1;
+        while(1){
+            if(temp_bound_x >= temp_x) break;
+            if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                _GP->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
+            }
+            if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+            if(traverse_it==bound_map.begin()) break;
+            --traverse_it;
+        }
+
+        
+    }
+    return;
+    /*else if(LLine->LR==LEFT){ //LEFT
+        p1 = p2 = true;
+
+        it2 = bound_map.lower_bound(temp_y2);//
+        
+        //1 and 2 construct edge
+        temp_bound_x = -1;
+        traverse_it = it2;
+        if(status2.second==false){
+            if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
+            }
+            if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+        }
+        if(it2!=bound_map.begin()) --traverse_it;
+        while(1){
+            if(temp_bound_x >= temp_x) break;
+            if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
+            }
+            if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+            if(traverse_it==bound_map.begin()) break;
+            --traverse_it;
+        }
+        //2
+        temp_bound_x = -1;
+        traverse_it = it2;
+        ++traverse_it;
+        for(;traverse_it!=it1;++traverse_it){
+            if(temp_bound_x >= temp_x) break;
+            if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
+            }
+            if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+        }
+
+        it2->second->Gp = GP2;
+
+        
+
+        //############check it1  whether need to insert
+        traverse_it = it1;
+        ++traverse_it;
+
+        if(status1.second==false && it1->second->max_x >= temp_x ){ //same y 
+            //up point no need 
+        }
+        else if(status1.second!=false && traverse_it!=bound_map.end() && traverse_it->second->down_edge_x >= temp_x){
+            //up point no need 
+            if( traverse_it->second->down_edge_x >= temp_max_x) p1 = false;//this point need to delete
+        }
+        else{
+            GP1 = temp_clu->Add_GP(LLine, UP, G_point_num);
+            
+            //3 and 5 construct edge
+            temp_bound_x = -1;
+            traverse_it = it1;
+            ++traverse_it;
+            for(;traverse_it!=bound_map.end();++traverse_it){
+                if(temp_bound_x >= temp_x) break;
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
+
+                }
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+            }
+            //3
+            temp_bound_x = -1;
+            traverse_it = it1;
+            if(status1.second==false){
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
+                }
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+            }
+            --traverse_it;
+            for(;traverse_it!=it2;--traverse_it){
+                if(temp_bound_x >= temp_x) break;
+                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
+                }
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+            }
+
+            it1->second->Gp = GP1;//////
+
+        }
+
+    }*/
+
 
 }
+
+
+
 
 void
 Layer::ConvertToUndirectedG(){
@@ -521,7 +701,7 @@ Layer::ConvertToUndirectedG(){
                 distance = map_gp_itr->second->distance;
             	map_gp_status = temp_gp->map_edge.insert(pair< int , Edge_info*>((*gp_itr)->idx, E1) );
             	if(map_gp_status.second==true){
-					E1 = new Edge_info((*gp_itr), x2, y2, x1, y1, distance);
+					E1 = new Edge_info((*gp_itr), x2, y2, x1, y1, distance, Layer_pos);
 					map_gp_status.first->second = E1;
 				}
 				else{
@@ -531,6 +711,7 @@ Layer::ConvertToUndirectedG(){
 						map_gp_status.first->second->point_x2 = x1;
 						map_gp_status.first->second->point_y2 = y1;
 						map_gp_status.first->second->distance = distance;
+						map_gp_status.first->second->layer    = Layer_pos;
 					}
 				}
 
@@ -767,22 +948,6 @@ void Layer::ExtendedKruskal() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //int convert to string
 string itos(int a) {
     string sign = a<0?"-":"";
@@ -791,52 +956,6 @@ string itos(int a) {
     return sign+result;
  }
 
-void
-Layer::check_cluster(){
-    //system("mkdir Gnuplot");
-    int count = 0;
-    for(size_t i = 0; i < all_cluster.size(); i++){
-        //cout << i <<":\n";
-        count += all_cluster[i]->shape_list.size();
-
-
-        /*string num = itos(i);
-        string a1 = string("Gnuplot/data")+num+string(".txt");
-        string gnu = string("Gnuplot/gnu")+num;
-        ofstream a(a1.c_str());
-        ofstream b(gnu.c_str());
-
-        it_shape it = all_cluster[i]->shape_list.begin();
-        //cout<<"elements:"<<endl;
-        int idx = 1;
-        for(; it != all_cluster[i]->shape_list.end(); it++){
-            int x1 = (*it)->coords->x1;
-            int x2 = (*it)->coords->x2;
-            int y1 = (*it)->coords->y1;
-            int y2 = (*it)->coords->y2;
-            a<<x1<<" "<<y1<<endl;
-            a<<x2<<" "<<y2<<endl;
-            b<<"set object " << idx << " rect from "<<x1<<","<<y1<<" to "<<x2<<","<<y2<<" fc lt 2 fs pattern 1 lw 3"<<endl;
-            b<<"set label \""<< idx++ <<"\" at "<<(x1+x2)/2<<","<<(y1+y2)/2<<" front center font \",10\""<<endl;
-            cout<<(*it)->coords->x1<<", "<<(*it)->coords->y1<<"; "
-            <<(*it)->coords->x2<<", "<<(*it)->coords->y2<<endl;
-
-        }
-    a<<10000<<" "<<10000<<endl;
-    b<<"set arrow from 0,"<<10000<<" to "<<10000<<","<<10000<<" nohead lc 3 lw 5"<<endl;
-    b<<"set arrow from "<<10000<<",0 to "<<10000<<","<<10000<<" nohead lc 3 lw 5"<<endl;
-    b<<"set term png size 2000,2000"<<endl;
-    b<<"set output \'"<<""<<"out"<<num<<".png"<<"\'"<<endl;
-    b<<"plot \'"<< a1 <<"\' using 1:2 with points"<<endl;
-    a.close();
-    b.close();
-    string command ="gnuplot "+gnu; 
-    system(command.c_str());*/
-
-    }
-    cout << "count:" <<count << endl;
-
-}
 
 
 void 
@@ -885,15 +1004,18 @@ Layer::check_point_svg(){
         }
     }
     //Via
-    list < Via* >::iterator via_itr;
+    list < Shape* >::iterator via_itr;
     for(via_itr = Via_list.begin(); via_itr != Via_list.end(); ++via_itr){
         //cout << "via"<<endl;
-        a<< "<circle cx=\"" << (*via_itr)->x/size << "\" cy=\""<< (*via_itr)->y/size << "\" r=\"10\" style=\"fill:black;stroke:black;stroke-width:4;fill-opacity:1;stroke-opacity:1\" />" << endl;
-
+        if ((*via_itr)->clu->shape_list.size()>1)
+        a<< "<circle cx=\"" << (*via_itr)->coords->x1/size << "\" cy=\""<< (*via_itr)->coords->y1/size << "\" r=\"5\" style=\"fill:red;stroke:red;stroke-width:4;fill-opacity:1;stroke-opacity:1\" />" << endl;
+        else
+        a<< "<circle cx=\"" << (*via_itr)->coords->x1/size << "\" cy=\""<< (*via_itr)->coords->y1/size << "\" r=\"5\" style=\"fill:black;stroke:black;stroke-width:4;fill-opacity:1;stroke-opacity:1\" />" << endl;
+            
     }
 
     //edge
-   /* int x1,y1,x2,y2;
+    int x1,y1,x2,y2;
     for(size_t i = 0; i < all_cluster.size(); i++){
         begin_itr = all_cluster[i]->GraphP_list.begin();
         end_itr = all_cluster[i]->GraphP_list.end();
@@ -908,10 +1030,12 @@ Layer::check_point_svg(){
                 if((*gp_itr)->Shape_type==OBSTACLE ){
                 	if(xx!=x1 || yy!=y1) cin.get();//test error
                 }
+                //cout << map_gp_itr->second->layer;
                 a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
+
             }
         }
-    }*/
+    }
     
     /*
     //check Extended Dijkstra's
@@ -937,15 +1061,14 @@ Layer::check_point_svg(){
     }*/
 
     //check Extended Kruskal's
-    int x1,y1,x2,y2;
+    /*int x1,y1,x2,y2;
     for (auto itr = MSTEdges.begin(); itr != MSTEdges.end(); ++itr) {
     	x1 = (*itr)._x1;
     	x2 = (*itr)._x2;
     	y1 = (*itr)._y1;
     	y2 = (*itr)._y2;
     	a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
-    }
-
+    }*/
 
 
     a << "</svg>" << endl;
@@ -994,7 +1117,7 @@ void Layer::Obstacle_list_append(Shape *temp_shape){
 	//Y_msort_shape.insert(MAP_Shape::value_type(temp_shape->coords->y2, temp_shape));
 }
 
-void Layer::Via_list_append(Via *temp_via){
+void Layer::Via_list_append(Shape *temp_via){
 	Via_num++;
 	Via_list.push_back(temp_via);
 }
@@ -1010,4 +1133,40 @@ int Layer::get_Obstacle_num(){
 int Layer::get_Via_num(){
 	return Via_num;
 }
+
+/*
+void //old version
+Layer::SGconstruct(){
+
+        //#######check
+        for (it1 = bound_map.begin();it1 != bound_map.end();++it1){
+            //cout << "y: " << it1->first <<" , max_x: " << it1->second->max_x << ", upper:" <<  it1->second->up_edge_x << ",down:" <<it1->second->down_edge_x << endl;
+        }
+        
+        it1 = bound_map.begin();
+        int pre = it1->second->up_edge_x;
+        int temp_x;
+        ++it1;
+        for (;it1 != bound_map.end();++it1){
+            temp_x = it1->second->down_edge_x;
+            if(temp_x!=pre){
+                cerr << "fuck u " << s << endl;
+                cerr << it1->first;
+                cin.get();
+            }
+            pre = it1->second->up_edge_x;
+        }
+
+        //#####
+
+    //### 3. directed graph convert to undirected grpah
+    ConvertToUndirectedG();
+
+    //### 4. Print 
+    cout << "point:" <<G_point_num << endl;
+    cout << "shape count:" << Layer_Shape_num << endl;
+
+}
+*/
+
 
