@@ -1145,10 +1145,10 @@ Layer::check_point_svg(string name){
                 }
                 else{
                     if((*edge_itr)->Gp->Layer_pos==Layer_pos+1){
-                        a<< "<circle cx=\"" << x2/size << "\" cy=\""<< y2/size << "\" r=\"5\" style=\"fill:red;stroke:red;stroke-width:4;fill-opacity:0.8;stroke-opacity:0.8\" />" << endl;
+                        a<< "<circle cx=\"" << x1/size << "\" cy=\""<< y1/size << "\" r=\"5\" style=\"fill:black;stroke:black;stroke-width:4;fill-opacity:0.8;stroke-opacity:0.8\" />" << endl;
                     }
                     else if((*edge_itr)->Gp->Layer_pos==Layer_pos-1){
-                         a<< "<circle cx=\"" << x2/size << "\" cy=\""<< y2/size << "\" r=\"5\" style=\"fill:Black;stroke:Black;stroke-width:4;fill-opacity:0.8;stroke-opacity:0.8\" />" << endl;
+                         a<< "<circle cx=\"" << x1/size << "\" cy=\""<< y1/size << "\" r=\"5\" style=\"fill:red;stroke:red;stroke-width:4;fill-opacity:0.8;stroke-opacity:0.8\" />" << endl;
 
                     }
                 }
