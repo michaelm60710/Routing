@@ -254,6 +254,10 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
 
     }
     else if(LLine->LR==LEFT){ //LEFT
+        if(temp_y1==temp_y2){
+            cerr << temp_x<<" " << temp_y1;
+            cin.get();
+        }
         p1 = p2 = true;
         GP1 = GP2 = NULL;
         BoundLine_info* b1 = new BoundLine_info(LLine->LR, temp_max_x, temp_x, UP, temp_y1);
@@ -300,13 +304,14 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             temp_bound_x = -1;
             traverse_it = it2;
             ++traverse_it;
-            for(;traverse_it!=it1;++traverse_it){
-                if(temp_bound_x >= temp_x) break;
-                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                    GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
+            if(it2->first!=it1->first)//if the shape is not a wire
+                for(;traverse_it!=it1;++traverse_it){
+                    if(temp_bound_x >= temp_x) break;
+                    if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                        GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
+                    }
+                    if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
                 }
-                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
-            }
 
             it2->second->Gp = GP2;
 
@@ -348,13 +353,14 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
                 if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
             }
             --traverse_it;
-            for(;traverse_it!=it2;--traverse_it){
-                if(temp_bound_x >= temp_x) break;
-                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
+            if(it2->first!=it1->first)//if the shape is not a wire
+                for(;traverse_it!=it2;--traverse_it){
+                    if(temp_bound_x >= temp_x) break;
+                    if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                        GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
+                    }
+                    if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
                 }
-                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
-            }
 
             it1->second->Gp = GP1;//////
 
@@ -373,22 +379,22 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         
         
         //############delete mid
-
         traverse_it = it2;
         ++traverse_it;
-        for(;traverse_it!=it1; ++traverse_it){
+        if(it2->first!=it1->first)//if the shape is not a wire
+            for(;traverse_it!=it1; ++traverse_it){
 
-            if(traverse_it->second->max_x <= temp_max_x ) {
-                bound_map.erase(traverse_it++);//traverse_it = bound_map.erase(traverse_it);
-                --traverse_it;
+                if(traverse_it->second->max_x <= temp_max_x ) {
+                    bound_map.erase(traverse_it++);//traverse_it = bound_map.erase(traverse_it);
+                    --traverse_it;
 
+                }
+                else{
+                    if(traverse_it->second->up_edge_x < temp_max_x)   traverse_it->second->up_edge_x   = temp_max_x;
+                    if(traverse_it->second->down_edge_x < temp_max_x) traverse_it->second->down_edge_x = temp_max_x;
+                    traverse_it->second->Gp = NULL;
+                }
             }
-            else{
-                if(traverse_it->second->up_edge_x < temp_max_x)   traverse_it->second->up_edge_x   = temp_max_x;
-                if(traverse_it->second->down_edge_x < temp_max_x) traverse_it->second->down_edge_x = temp_max_x;
-                traverse_it->second->Gp = NULL;
-            }
-        }
         if(it1->second->down_edge_x < temp_max_x) it1->second->down_edge_x = temp_max_x;// && status1.second==false 
         if(it2->second->up_edge_x < temp_max_x) it2->second->up_edge_x = temp_max_x;// && status2.second==false
         
