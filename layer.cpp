@@ -254,10 +254,6 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
 
     }
     else if(LLine->LR==LEFT){ //LEFT
-        if(temp_y1==temp_y2){
-            cerr << temp_x<<" " << temp_y1;
-            cin.get();
-        }
         p1 = p2 = true;
         GP1 = GP2 = NULL;
         BoundLine_info* b1 = new BoundLine_info(LLine->LR, temp_max_x, temp_x, UP, temp_y1);
@@ -527,7 +523,6 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
     map< int , BoundLine_info* , less<int> >::iterator it1,it2, low_it,traverse_it;
     pair<map< int , BoundLine_info* , less<int> >::iterator,bool> status1,status2;
     GraphPoint *_GP;
-    bool p1,p2; //t_shape_type,
     int temp_x,temp_max_x, temp_bound_x,temp_y1,temp_y2;
     Cluster *temp_clu;
 
@@ -550,7 +545,7 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
     temp_y1 = LLine->y+LLine->length;
     temp_y2 = LLine->y;
 
-    if(LLine->S->Shape_type==VIA || GP1==NULL || GP2==NULL){
+    if(LLine->S->Shape_type==VIA || GP1==NULL || GP2==NULL || temp_y1==temp_y2){ //just one point
     	if(GP1==NULL) {
     		_GP = GP2;
     		temp_y1 = temp_y2;
@@ -560,7 +555,6 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
     	}
 
         it1 = bound_map.lower_bound(temp_y1);
-        cout << "yo";
         //1 and 5 construct edge
         temp_bound_x = -1;
         traverse_it = it1;
@@ -588,21 +582,14 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
 
         
     }
-    return;
-    /*else if(LLine->LR==LEFT){ //LEFT
-        p1 = p2 = true;
-
-        it2 = bound_map.lower_bound(temp_y2);//
+    else{ 
+        cerr << "blabla";
+        it1 = bound_map.lower_bound(temp_y1);
+        it2 = bound_map.lower_bound(temp_y2);
         
         //1 and 2 construct edge
         temp_bound_x = -1;
         traverse_it = it2;
-        if(status2.second==false){
-            if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
-            }
-            if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
-        }
         if(it2!=bound_map.begin()) --traverse_it;
         while(1){
             if(temp_bound_x >= temp_x) break;
@@ -625,59 +612,38 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
             if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
         }
 
-        it2->second->Gp = GP2;
-
-        
-
-        //############check it1  whether need to insert
+        //3 and 5 construct edge
+        temp_bound_x = -1;
         traverse_it = it1;
         ++traverse_it;
+        for(;traverse_it!=bound_map.end();++traverse_it){
+            if(temp_bound_x >= temp_x) break;
+            if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
 
-        if(status1.second==false && it1->second->max_x >= temp_x ){ //same y 
-            //up point no need 
+            }
+            if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
         }
-        else if(status1.second!=false && traverse_it!=bound_map.end() && traverse_it->second->down_edge_x >= temp_x){
-            //up point no need 
-            if( traverse_it->second->down_edge_x >= temp_max_x) p1 = false;//this point need to delete
+        //3
+        temp_bound_x = -1;
+        traverse_it = it1;
+        if(status1.second==false){
+            if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
+            }
+            if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
         }
-        else{
-            GP1 = temp_clu->Add_GP(LLine, UP, G_point_num);
-            
-            //3 and 5 construct edge
-            temp_bound_x = -1;
-            traverse_it = it1;
-            ++traverse_it;
-            for(;traverse_it!=bound_map.end();++traverse_it){
-                if(temp_bound_x >= temp_x) break;
-                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
-
-                }
-                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+        --traverse_it;
+        for(;traverse_it!=it2;--traverse_it){
+            if(temp_bound_x >= temp_x) break;
+            if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
+                GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
             }
-            //3
-            temp_bound_x = -1;
-            traverse_it = it1;
-            if(status1.second==false){
-                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
-                }
-                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
-            }
-            --traverse_it;
-            for(;traverse_it!=it2;--traverse_it){
-                if(temp_bound_x >= temp_x) break;
-                if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
-                    GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
-                }
-                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
-            }
-
-            it1->second->Gp = GP1;//////
-
+            if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
         }
 
-    }*/
+
+    }
 
 
 }
@@ -965,9 +931,9 @@ string itos(int a) {
 
 
 void 
-Layer::check_point_svg(){
+Layer::check_point_svg(string name){
 	cout << "START PLOT"<<endl;
-    string a1 = string("Point_test")+string(".svg");
+    string a1 = string("Print")+name+string(".svg");
     ofstream a(a1.c_str());
     int size = 1;
     if(Width>10000) size = Width/10000;
@@ -1034,11 +1000,17 @@ Layer::check_point_svg(){
                 x2 = map_gp_itr->second->point_x2;
                 y2 = map_gp_itr->second->point_y2;
                 if((*gp_itr)->Shape_type==OBSTACLE ){
-                	if(xx!=x1 || yy!=y1) cin.get();//test error
+                    if(xx!=x1 || yy!=y1) {
+                        cout << "s";//omething strange...";
+                        //cin.get();//test error
+                    }
                 }
-                //cout << map_gp_itr->second->layer;
-                a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
-
+                /*if(map_gp_itr->second->layer==Layer_pos)
+                    a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
+                else */if(map_gp_itr->second->layer==Layer_pos-1)
+                    a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"blue\"/>" << endl;
+                //else if(map_gp_itr->second->layer==Layer_pos+1)
+                //    a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"purple\"/>" << endl;
             }
         }
     }

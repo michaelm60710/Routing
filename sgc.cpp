@@ -46,22 +46,20 @@ void Manager::SpanningGraphConstruct(){
 
     //###3.
     for(size_t s = 0; s < all_line.size(); s++){
-    	/*if(all_line[s]->S->layer_position==0){
-    		GP_result = all_layer[all_line[s]->S->layer_position].SGconstruct(all_line[s]);
-    	}
-        else if(all_line[s]->S->layer_position==1){
-            GP_result = all_layer[all_line[s]->S->layer_position].SGconstruct(all_line[s]);
-        }
-        else */if(all_line[s]->S->layer_position==2){
-            cerr << s << " ";
-            if(all_line[s]->S->Shape_type==VIA) continue;
-            GP_result = all_layer[all_line[s]->S->layer_position].SGconstruct(all_line[s]);
+    	GP_result = all_layer[all_line[s]->S->layer_position].SGconstruct(all_line[s]);
+        if(all_line[s]->S->layer_position==1){
+            all_layer[all_line[s]->S->layer_position-1].SGconstruct_search(all_line[s], GP_result.first, GP_result.second);
         }
     }
 
     
-    
-    //ConvertToUndirectedG();
+    for(int i =0;i<MetalLayers;i++) all_layer[i].ConvertToUndirectedG();
     // plot test
-    all_layer[0].check_point_svg();
+    all_layer[0].check_point_svg("0");
+    all_layer[1].check_point_svg("1");
 }
+
+
+
+
+

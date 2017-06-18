@@ -34,7 +34,7 @@ public:
     void ConvertToUndirectedG();
     void ExtendedDijkstra();
     void ExtendedKruskal();
-    void check_point_svg();
+    void check_point_svg(string name="x");
 
 	//for private use
 	void Rshape_list_append(Shape *);

@@ -78,14 +78,8 @@ void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_
 	if (insert_gp->clu == clu && clu->GetShapeType()==RSHAPE) return;//same cluster
 	int distance = abs(my_x-insert_x) + abs(my_y-insert_y) + via_cost;
 	MAP_GP_Status status1;//,status2;
-	Edge_info *E1;//, *E2;
-	//E1 = new Edge_info(insert_gp, my_x, my_y, insert_x, insert_y, distance);
+	Edge_info *E1;
 	status1 = map_edge.insert(MAP_GP_edge::value_type(insert_gp->idx, E1 ) );
-	//check
-	/*if(status1.second != status2.second){
-		cerr << "bug";
-		cin.get();
-	}*/
 
 	if(status1.second==true){
 		E1 = new Edge_info(insert_gp, my_x, my_y, insert_x, insert_y, distance, layer);
