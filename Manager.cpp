@@ -18,15 +18,10 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 
 	// plot test
-    for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
-	
-	//all_layer[1].SpanningGraphConstruct();
-	//all_layer[1].SpanningTreeConstruct();
-	/*for(size_t s = 0; s < all_layer.size(); s++){
-		cout<<"layer "<<s+1<<endl;
-		all_layer[s].SpanningGraphConstruct();
-	}*/
+    //for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
 
+    //OutputFile
+    Output(Output_file);
 
 }
 
@@ -157,4 +152,97 @@ Coords* Manager::Parsing_via(string coor1){ // ex: (8,523)
 	//cout << temp_via->x << " "<< temp_via->y << endl;
 
 	return temp_coords;
+}
+
+
+void Manager::Output(const char *Output_file){
+
+	list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
+	list<Edge_info*>::iterator edge_itr;
+    int layer_pos, XX, YY, x1, x2, y1, y2;
+	
+	ofstream ofile;
+	ofile.open(Output_file,ios::out);
+
+	//Greedy steiner point
+	for(size_t i = 0; i < all_cluster.size(); i++){
+        begin_itr = all_cluster[i]->GraphP_list.begin();
+        end_itr = all_cluster[i]->GraphP_list.end();
+        if(begin_itr==end_itr) continue;
+        layer_pos = (*begin_itr)->Layer_pos;
+        for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
+            for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
+                x1 = (*edge_itr)->point_x1;
+                y1 = (*edge_itr)->point_y1;
+                x2 = (*edge_itr)->point_x2;
+                y2 = (*edge_itr)->point_y2;
+                
+                XX = x2 - x1;
+				YY = y2 - y1;
+				
+				//Edge
+				if(XX==0 && YY==0);
+				else if(XX!=0 && YY!=0){ // add steiner_point
+					ofile << "V-line M" << (*edge_itr)->layer + 1 << " ("<< x2 << "," << y2 << ") (" << x2 << "," << y1 << ")" << endl;
+					ofile << "H-line M" << (*edge_itr)->layer + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y1 << ")" << endl;
+
+				}
+				else if(XX==0){ //it is already vertical or H
+					ofile << "V-line M" << (*edge_itr)->layer + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y2 << ")" << endl;				
+				}
+				else{ //YY==0
+					ofile << "H-line M" << (*edge_itr)->layer + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y2 << ")" << endl;
+				}
+
+				//Via
+				if((*edge_itr)->layer==layer_pos){
+					if ((*edge_itr)->Gp->Layer_pos==layer_pos+1)
+						ofile << "Via V" << layer_pos + 1 << " ("<< x2 << "," << y2 << ")" << endl;
+					else if((*edge_itr)->Gp->Layer_pos==layer_pos-1)
+						ofile << "Via V" << layer_pos << " ("<< x2 << "," << y2 << ")" << endl;
+				}
+				else{ // ((*edge_itr)->layer!=layer_pos)
+					if((*edge_itr)->Gp->Layer_pos==layer_pos+1)
+                    	ofile << "Via V" << layer_pos + 1 << " ("<< x1 << "," << y1 << ")" << endl;
+                    else if((*edge_itr)->Gp->Layer_pos==layer_pos-1)
+                    	ofile << "Via V" << layer_pos << " ("<< x1 << "," << y1 << ")" << endl;	
+				} 
+					
+
+                /*if((*edge_itr)->layer==layer_pos){
+                    if((*edge_itr)->Gp->Layer_pos==layer_pos+1){
+                        //Via
+                        ofile << "Via V" << layer_pos + 1 << " ("<< x2 << "," << y2 << ")" << endl;
+                        //a<< "<circle cx=\"" << x2 << "\" cy=\""<< y2 << "\" r=\"5\" style=\"fill:black;stroke:black;stroke-width:4;fill-opacity:0.8;stroke-opacity:0.8\" />" << endl;
+                    }
+                    XX = x2 - x1;
+					YY = y2 - y1;
+					if(XX!=0 && YY!=0){ // add steiner_point
+						ofile << "V-line M" << layer_pos + 1 << " ("<< x2 << "," << y2 << ") (" << x2 << "," << y1 << ")" << endl;
+						ofile << "H-line M" << layer_pos + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y1 << ")" << endl;
+
+					}
+					else if(XX==0){ //it is already vertical or H
+						ofile << "V-line M" << layer_pos + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y2 << ")" << endl;				
+					}
+					else{ //YY==0
+						ofile << "H-line M" << layer_pos + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y2 << ")" << endl;
+					}
+
+                    //a << "<line x1=\"" << x1 << "\" y1=\"" << y1 << "\" x2=\"" << x2 << "\" y2=\"" << y2 << "\"\nstroke-width=\"3\" stroke=\"red\"/>" << endl;
+                }
+                else if((*edge_itr)->Gp->Layer_pos==layer_pos+1){
+                	 	//Via
+                        ofile << "Via V" << layer_pos + 1 << " ("<< x1 << "," << y1 << ")" << endl;
+                        //a<< "<circle cx=\"" << x1 << "\" cy=\""<< y1 << "\" r=\"5\" style=\"fill:black;stroke:black;stroke-width:4;fill-opacity:0.8;stroke-opacity:0.8\" />" << endl;
+                }*/
+
+            }
+        }
+
+
+
+        
+    }
+
 }

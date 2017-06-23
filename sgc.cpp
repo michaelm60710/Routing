@@ -17,6 +17,7 @@ void Manager::SpanningGraphConstruct(){
     list < Shape* >::iterator itr1,itr2;
     GraphPoint *gp1, *gp2;
     int x,y;
+    size_t clu_end;
 
     //###1. Initialize
     for(int i =0;i<MetalLayers;i++) all_layer[i].SpanningGraphConstruct();
@@ -46,8 +47,20 @@ void Manager::SpanningGraphConstruct(){
     }
     sort(all_line.begin(), all_line.end(), sort_linex);
 
+    //###2.2 
+    clu_end = all_line.size() - 1;
+    for(size_t s = all_line.size()-1; s > 0; s--){
+    	if(all_line[s]->x <= Boundary->x2){
+    		clu_end = s;
+    		break;
+    	}
+    }
+    /*cout << "bound :" << Boundary->x1 << " ,x2:" << Boundary->x2 << endl; 
+    cout << "origin clu size:" << all_line.size() << endl;
+    cout << "first: " << clu_begin << ", end: " << clu_end << endl;*/
+
     //###3. Construct global graph
-    for(size_t s = 0; s < all_line.size(); s++){
+    for(size_t  s = 0; s <= clu_end; s++){//s =0; s < all_line.size(); s++){//
     	GP_result = all_layer[all_line[s]->S->layer_position].SGconstruct(all_line[s]);
 
         if(all_line[s]->S->layer_position>0){
@@ -67,7 +80,7 @@ void Manager::SpanningGraphConstruct(){
             y = (*itr1)->coords->y1;
             gp1 = *((*itr1)->clu->GraphP_list.begin());
             gp2 = *((*itr2)->clu->GraphP_list.begin());
-            gp1->Add_edge(gp2, x, y, x, y,i, 0);
+            gp1->Add_edge(gp2, x, y, x, y,i, 0);// bug: need to check gp1 & gp2 aren't NULL
             ++itr1;
             ++itr2;
         }
@@ -92,7 +105,7 @@ void Manager::SpanningTreeConstruct(){
     ExtendedKruskal();
 
     //###4. Undirected Graph (for plot )
-    for(int i =0;i<MetalLayers;i++) all_layer[i].ConvertFinalToUndirectedG();
+    //for(int i =0;i<MetalLayers;i++) all_layer[i].ConvertFinalToUndirectedG();
 
 
 
@@ -155,27 +168,35 @@ void Manager::ExtendedDijkstra(){
     }
 
     //### 3. Find Set
-    int num_vertex=0;
+    int num_vertex=0, isolate_obstacle_num=0, isolate_num=0;
     for(size_t i = 0; i < all_cluster.size(); i++){
         begin_itr = all_cluster[i]->GraphP_list.begin();
         end_itr = all_cluster[i]->GraphP_list.end();
         for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
              (*gp_itr)->root = (*gp_itr)->Find_Set();
              num_vertex++;
-             //bug
+             //debug
              if((*gp_itr)->root==NULL){
+             	isolate_num++;
                 string sshape;
                 if((*gp_itr)->Shape_type==RSHAPE)   sshape = "RSHAPE";
                 else if((*gp_itr)->Shape_type==VIA) sshape = "VIA";
-                else                                sshape = "OBSTACLE"; 
-                cerr << "A " << sshape << "'s vertex is isolated\n";
-                for(map_gp_itr = (*gp_itr)->map_edge.begin();map_gp_itr!=(*gp_itr)->map_edge.end(); ++map_gp_itr){
-                    cout << "a"<< (*gp_itr)->idx;
-                    cout <<"\n" <<  map_gp_itr->second->distance << endl;
+                else                                {
+                	sshape = "OBSTACLE"; 
+                	isolate_obstacle_num++;
                 }
-                cout << endl;
+                //cerr << "A " << sshape << "'s vertex is isolated ";
+                for(map_gp_itr = (*gp_itr)->map_edge.begin();map_gp_itr!=(*gp_itr)->map_edge.end(); ++map_gp_itr){
+                    //cout << "a"<< (*gp_itr)->idx;
+                    //cout <<"\n" <<  map_gp_itr->second->distance << endl;
+                }
+                //cout << endl;
              }
         }
+    }
+    if(isolate_num!=0){
+    	cerr << isolate_num << " vertex are isolated\n";
+    	cerr << isolate_obstacle_num << " OBSTACLE vertex are isolated\n";
     }
 
     //#check
@@ -204,13 +225,13 @@ void Manager::unionSet( GraphPoint *s1, GraphPoint *s2 ) {
 
 void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2) {
     GraphPoint *p = p1;
-    int x1,y1,x2,y2;
+    //int x1,y1,x2,y2;
     MAP_GP_edge::iterator map_gp_itr, map_begin_itr, map_end_itr;
     for(map_gp_itr = p1->map_edge.begin();map_gp_itr!=p1->map_edge.end(); ++map_gp_itr){
-        x1 = map_gp_itr->second->point_x1;
+        /*x1 = map_gp_itr->second->point_x1;
         y1 = map_gp_itr->second->point_y1;
         x2 = map_gp_itr->second->point_x2;
-        y2 = map_gp_itr->second->point_y2;
+        y2 = map_gp_itr->second->point_y2;*/
         if(p2==map_gp_itr->second->Gp ) {
             //MSTEdges.push_back( Edge(x1, x2, y1, y2) );
             p1->final_edge.push_back(map_gp_itr->second);
@@ -219,10 +240,10 @@ void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2) {
 
     while (p != p->parent) {
         for(map_gp_itr = p->map_edge.begin();map_gp_itr!=p->map_edge.end(); ++map_gp_itr){
-            x1 = map_gp_itr->second->point_x1;
+            /*x1 = map_gp_itr->second->point_x1;
             y1 = map_gp_itr->second->point_y1;
             x2 = map_gp_itr->second->point_x2;
-            y2 = map_gp_itr->second->point_y2;
+            y2 = map_gp_itr->second->point_y2;*/
             if(p->parent==map_gp_itr->second->Gp ) {
                 //MSTEdges.push_back( Edge(x1, x2, y1, y2) );
                 p->final_edge.push_back(map_gp_itr->second);
@@ -233,10 +254,10 @@ void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2) {
     p = p2;
     while (p != p->parent) {
         for(map_gp_itr = p->map_edge.begin();map_gp_itr!=p->map_edge.end(); ++map_gp_itr){
-            x1 = map_gp_itr->second->point_x1;
+            /*x1 = map_gp_itr->second->point_x1;
             y1 = map_gp_itr->second->point_y1;
             x2 = map_gp_itr->second->point_x2;
-            y2 = map_gp_itr->second->point_y2;
+            y2 = map_gp_itr->second->point_y2;*/
             if(p->parent==map_gp_itr->second->Gp ) {
                 //MSTEdges.push_back( Edge(x1, x2, y1, y2) );
                  p->final_edge.push_back(map_gp_itr->second);

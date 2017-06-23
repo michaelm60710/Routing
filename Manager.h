@@ -24,7 +24,9 @@ public:
 	void ExtendedKruskal();
 	void addMSTEdges(GraphPoint *p1, GraphPoint *p2);
 	void unionSet( GraphPoint *, GraphPoint *);
-	GraphPoint* findSet(GraphPoint *);  
+	GraphPoint* findSet(GraphPoint *);
+
+	void Output(const char* );
 
 	string itos1(int);//integer convert to string
 private:

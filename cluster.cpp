@@ -50,7 +50,7 @@ GraphPoint* Cluster::Add_GP(Line* L, int UPorDown, int &_idx){
 	//check
 	if(Shape_type==RSHAPE && GraphP_list.size()>1){
 		cerr << "bug";
-		cin.get();
+		//cin.get();
 	}
 	return gp;
 }
@@ -102,7 +102,7 @@ GraphPoint* GraphPoint::Find_Set(){
 
 
 	if(parent==NULL){//bug?
-		cout << "parent = NULL"<<endl;
+		//cout << "parent = NULL"<<endl;
 		root = NULL;
 		return root;
 	}

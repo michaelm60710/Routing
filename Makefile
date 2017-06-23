@@ -1,4 +1,4 @@
-CFLAGS = -std=c++11 -g  -Wall
+CFLAGS = -std=c++11 -O3  -Wall
 main.exe: main.o Manager.o layer.o cluster.o sgc.o
 	g++ -o main.exe main.o Manager.o layer.o cluster.o sgc.o
 

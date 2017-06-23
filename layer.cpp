@@ -37,21 +37,11 @@ void Layer::SpanningGraphConstruct(){
 	//#1 construct cluster
     clustering_shape();
 
-    /*cout << "Via:"<<endl;
-    for (it_shape it_s= Via_list.begin();it_s != Via_list.end();++it_s){
-        cout << (*it_s)->clu->Shape_type << ", num:" << (*it_s)->clu->shape_list.size()<<endl;
-    }
-    cout << "Upper_Via:"<<endl;
-    for (it_shape it_s= Upper_Via_list.begin();it_s != Upper_Via_list.end();++it_s){
-        cout << (*it_s)->clu->Shape_type << ", num:" << (*it_s)->clu->shape_list.size()<<endl;
-    }*/
-
-    //#2 construct graph 
-    //SGconstruct();
-
-    //check_cluster();
-	//for(MS_it it = X_msort_shape.begin();it!=X_msort_shape.end();++it)
-	
+    //#2 Init y_upper bound and x_lower bound
+    BoundLine_info* b_down  = new BoundLine_info(LEFT, Width, 0, UP, -1);
+    BoundLine_info* b_upper = new BoundLine_info(LEFT, Width, 0, DOWN, Height+1);
+    bound_map.insert(pair< int , BoundLine_info*>(-1, b_down) );
+    bound_map.insert(pair< int , BoundLine_info*>(Height+1, b_upper) );
 
 }
 
@@ -164,11 +154,11 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
     /*
                     |
               5     |
-        ---------------------------- p1
+        ----------- p1 ---------------
               3     |               |
      del 4          |  L (shape)    |              
               2     |               |
-        ---------------------------- p2
+        ------------p2 ---------------
               1     |
                     |
 
@@ -683,7 +673,6 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
 
 }
 
-
 void
 Layer::ConvertToUndirectedG(){
 	pair<MAP_GP_edge::iterator, bool> map_gp_status;
@@ -826,8 +815,8 @@ Layer::ExtendedDijkstra(){
                 else                              sshape = "OBSTACLE";
                 cerr << "A " << sshape << "'s vertex is isolated\n";
         	 	for(map_gp_itr = (*gp_itr)->map_edge.begin();map_gp_itr!=(*gp_itr)->map_edge.end(); ++map_gp_itr){
-        	 		cout << "a"<< (*gp_itr)->idx;
-        	 		cout <<"\n" <<  map_gp_itr->second->distance << endl;
+        	 		//cout << "a"<< (*gp_itr)->idx;
+        	 		//cout <<"\n" <<  map_gp_itr->second->distance << endl;
         	 	}
         	 	cout << endl;
         	 }
@@ -1025,7 +1014,7 @@ Layer::check_point_svg(string name){
         begin_itr = all_cluster[i]->GraphP_list.begin();
         end_itr = all_cluster[i]->GraphP_list.end();
         for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
-            //a<< "<circle cx=\"" << (*gp_itr)->x/size << "\" cy=\""<< (*gp_itr)->y/size << "\" r=\"2\" style=\"fill:red;stroke:red;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.8\" />" << endl;
+            a<< "<circle cx=\"" << (*gp_itr)->x/size << "\" cy=\""<< (*gp_itr)->y/size << "\" r=\"2\" style=\"fill:red;stroke:red;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.8\" />" << endl;
      
         }
     }
@@ -1041,7 +1030,7 @@ Layer::check_point_svg(string name){
             
     }
     //edge
-    /*int x1,y1,x2,y2;
+    int x1,y1,x2,y2;
     for(size_t i = 0; i < all_cluster.size(); i++){
         begin_itr = all_cluster[i]->GraphP_list.begin();
         end_itr = all_cluster[i]->GraphP_list.end();
@@ -1075,7 +1064,7 @@ Layer::check_point_svg(string name){
                 }
             }
         }
-    }*/
+    }
     
     
     //check Extended Dijkstra's
@@ -1111,7 +1100,7 @@ Layer::check_point_svg(string name){
     }*/
 
     //check Extended Kruskal's
-    int x1,y1,x2,y2;
+    /*int x1,y1,x2,y2;
     list<Edge_info*>::iterator edge_itr;
     for(size_t i = 0; i < all_cluster.size(); i++){
         begin_itr = all_cluster[i]->GraphP_list.begin();
@@ -1155,7 +1144,7 @@ Layer::check_point_svg(string name){
 
             }
         }
-    }
+    }*/
     //debug
 
 
