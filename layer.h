@@ -12,7 +12,7 @@ class Layer{
 public:
 	Layer();
 	void SpanningGraphConstruct();            //step 1
-	void SpanningTreeConstruct();             //step 2
+	//void SpanningTreeConstruct();             //step 2
 	void RectilinearSpanningTreeConstruct();  //step 3
 	void OARSMT();                            //step 4
 
@@ -29,8 +29,6 @@ public:
     void SGconstruct_search(Line*, GraphPoint*, GraphPoint*); //dif layer shape
     void ConvertToUndirectedG();
     void ConvertFinalToUndirectedG();
-    void ExtendedDijkstra();
-    void ExtendedKruskal();
     void check_point_svg(string name="x");
 
 	//for private use

@@ -113,7 +113,7 @@ void Manager::SpanningTreeConstruct(){
 
 void Manager::ExtendedDijkstra(){
 
-    FibQueue<int> Fq;
+    FibHeap<int> FibH;// FibH;
     FibHeap<int>::FibNode *temp_fibn;
     list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
     MAP_GP_edge::iterator map_gp_itr;
@@ -128,29 +128,29 @@ void Manager::ExtendedDijkstra(){
         if(all_cluster[i]->GetShapeType()==RSHAPE || all_cluster[i]->GetShapeType()==VIA){
             (*begin_itr)->parent = (*begin_itr); //SET root
             (*begin_itr)->terminal_dis = 0;
-            (*begin_itr)->Fnode = Fq.push(0, (*begin_itr));
+            (*begin_itr)->Fnode = FibH.push(0, (*begin_itr));
             (*begin_itr)->select = false;
         }
         else{
             for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
                 (*gp_itr)->parent = NULL;
                 (*gp_itr)->terminal_dis = INT_MAX;
-                (*gp_itr)->Fnode = Fq.push(INT_MAX, (*gp_itr));
+                (*gp_itr)->Fnode = FibH.push(INT_MAX, (*gp_itr));
                 (*gp_itr)->select = false;
             }
         }
     }
 
     //### 2. Shortest path terminal forest construct
-    while(!Fq.empty()){
-        temp_fibn = Fq.topNode();
+    while(!FibH.empty()){
+        temp_fibn = FibH.topNode();
         temp_dis = temp_fibn->key;
         temp_gp = (GraphPoint*)temp_fibn->payload;
         temp_gp->select = true;
         //cout << "Top: " << temp_dis << endl;
 
         //# pop the target vertex
-        Fq.pop();
+        FibH.pop();
 
         //# update edge   // map_gp_itr->second->Gp .... not good
         for(map_gp_itr = temp_gp->map_edge.begin();map_gp_itr!=temp_gp->map_edge.end(); ++map_gp_itr){
@@ -160,7 +160,7 @@ void Manager::ExtendedDijkstra(){
                 temp_gp2->terminal_dis = temp_dis2;
                 temp_gp2->parent = temp_gp;
 
-                Fq.decrease_key(temp_gp2->Fnode, temp_dis2);
+                FibH.decrease_key(temp_gp2->Fnode, temp_dis2);
             }
 
         }

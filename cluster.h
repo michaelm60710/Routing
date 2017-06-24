@@ -10,7 +10,6 @@
 #include <climits>
 
 #include "fiboheap.h"
-#include "fiboqueue.h"
 
 
 #define RSHAPE   0
