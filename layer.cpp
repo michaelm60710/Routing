@@ -37,7 +37,7 @@ void Layer::SpanningGraphConstruct(){
 	//#1 construct cluster
     clustering_shape();
 
-    //#2 Init y_upper bound and x_lower bound
+    //#2 Init y_upper bound and y_lower bound
     BoundLine_info* b_down  = new BoundLine_info(LEFT, Width, 0, UP, -1);
     BoundLine_info* b_upper = new BoundLine_info(LEFT, Width, 0, DOWN, Height+1);
     bound_map.insert(pair< int , BoundLine_info*>(-1, b_down) );
@@ -501,8 +501,6 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
 }
 
 void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
-	
-	if((GP1==NULL && GP2==NULL) || LLine->S->Shape_type==VIA ) return;
 
     map< int , BoundLine_info* , less<int> >::iterator it1,it2, low_it,traverse_it;
     map< int , BoundLine_info* , less<int> >::reverse_iterator ritr;
@@ -525,17 +523,33 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
     temp_x = LLine->x;
     temp_y1 = LLine->y+LLine->length;
     temp_y2 = LLine->y;
+    it1 = bound_map.lower_bound(temp_y1);
+    it2 = bound_map.lower_bound(temp_y2);
 
+    //### 1.find the overlapping
+    if(LLine->S->Shape_type==RSHAPE){
+    	_GP = LLine->S->clu->Add_GP(LLine, 9487 , G_point_num); 
+    	//incomplete
+    	//p2
+    	if(it2 != bound_map.end() && it2->second->down_edge_x >= temp_x && it2->second->max_x == it2->second->down_edge_x && it2->second->Gp->Shape_type==RSHAPE){
+    		_GP->Add_edge(it2->second->Gp, temp_x, temp_y2, temp_x, temp_y2, Layer_pos, Via_cost);
+    	}
+
+    }
+
+
+    //### 2.Search  
+    if((GP1==NULL && GP2==NULL) || LLine->S->Shape_type==VIA ) return;
     if(GP1==NULL || GP2==NULL || temp_y1==temp_y2){ //just one point
     	if(GP1==NULL) {
     		_GP = GP2;
     		temp_y1 = temp_y2;
+    		it1 = it2;
     	}
     	else {
     		 _GP = GP1;
     	}
 
-        it1 = bound_map.lower_bound(temp_y1);
         //1 and 5 construct edge
         //5
         temp_bound_x = -1;
@@ -578,9 +592,6 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
         
     }
     else{ //bug: it1 it2 is lower bound
-        it1 = bound_map.lower_bound(temp_y1);
-        it2 = bound_map.lower_bound(temp_y2);
-        
         //1 and 2 construct edge
         temp_bound_x = -1;
         traverse_it = it2;
@@ -796,7 +807,7 @@ Layer::check_point_svg(string name){
             
     }
     //edge
-    int x1,y1,x2,y2;
+    /*int x1,y1,x2,y2;
     for(size_t i = 0; i < all_cluster.size(); i++){
         begin_itr = all_cluster[i]->GraphP_list.begin();
         end_itr = all_cluster[i]->GraphP_list.end();
@@ -811,12 +822,6 @@ Layer::check_point_svg(string name){
                 if((*gp_itr)->Shape_type==OBSTACLE ){
                     if(xx!=x1 || yy!=y1) {
                         cout << "error";//omething strange...";
-                        //cout << (*gp_itr)->x << " " <<(*gp_itr)->y << endl;
-                        //cout << x1 << " " << y1 << " " << x2 << " " << y2 << endl;
-                        //cout << (*gp_itr)->Layer_pos << " " << map_gp_itr->second->Gp->Layer_pos << endl;
-                        //cout << (*gp_itr)->idx << " " << map_gp_itr->second->Gp->idx <<endl;
-                        //cin.get();//test error
-                        //a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"red\"/>" << endl;                        continue;
                     }
                 }
                 if(map_gp_itr->second->layer==Layer_pos){
@@ -830,8 +835,27 @@ Layer::check_point_svg(string name){
                 }
             }
         }
-    }
+    }*/
     
+    //check overlapping via
+    int x1,y1,x2,y2;
+    for(size_t i = 0; i < all_cluster.size(); i++){
+        begin_itr = all_cluster[i]->GraphP_list.begin();
+        end_itr = all_cluster[i]->GraphP_list.end();
+        for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
+            for(map_gp_itr = (*gp_itr)->map_edge.begin();map_gp_itr!=(*gp_itr)->map_edge.end(); ++map_gp_itr){
+                x1 = map_gp_itr->second->point_x1;
+                y1 = map_gp_itr->second->point_y1;
+                x2 = map_gp_itr->second->point_x2;
+                y2 = map_gp_itr->second->point_y2;
+                if(x1!=x2 || y1!=y2) continue;
+
+                if(map_gp_itr->second->layer==Layer_pos){
+                    a<< "<circle cx=\"" << x2/size << "\" cy=\""<< y2/size << "\" r=\"5\" style=\"fill:black;stroke:black;stroke-width:4;fill-opacity:0.8;stroke-opacity:0.8\" />" << endl;
+                }
+            }
+        }
+    }
     
     //check Extended Dijkstra's
     /*int x1,y1,x2,y2;

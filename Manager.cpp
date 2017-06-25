@@ -18,7 +18,7 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 
 	// plot test
-    //for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
+    for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
 
     //OutputFile
     Output(Output_file);
