@@ -18,7 +18,7 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 
 	// plot test
-    for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
+    //for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
 
     //OutputFile
     Output(Output_file);
@@ -57,7 +57,7 @@ void Manager::Parsing(const char* Input_file){
 	}
 
 	//###2. read RoutedShape
-	cout << "read RoutedShape..." << endl;
+	//cout << "read RoutedShape..." << endl;
 	for(int i = 0; i < RoutedShapes;i++){
 		i_file>>garbage>>layer>>coor1>>coor2;//ex: RoutedShape>> M1>> (6469,2552)>> (6504,2558)
 		l = int(layer[1]) - 49; // M1 -> l = 0, M2 -> l = 1
@@ -68,7 +68,7 @@ void Manager::Parsing(const char* Input_file){
 	}
 
 	//###3. read RoutedVias
-	cout << "read RoutedVias..." << endl;
+	//cout << "read RoutedVias..." << endl;
 	for(int i = 0; i < RoutedVias;i++){
 		i_file>>garbage>>layer>>coor1;
 		l = int(layer[1]) - 49; // V1 -> 0, V2 -> 1
@@ -83,7 +83,7 @@ void Manager::Parsing(const char* Input_file){
 	}
 
 	//###2. read Obstacles
-	cout << "read Obstaclese..." << endl;
+	//cout << "read Obstaclese..." << endl;
 	for(int i = 0; i < Obstacles;i++){
 		i_file>>garbage>>layer>>coor1>>coor2;
 		l = int(layer[1]) - 49; // M1 -> 0, M2 -> 1
@@ -106,13 +106,13 @@ void Manager::Parsing(const char* Input_file){
 	cout << "MetalLayers: " <<MetalLayers << endl;
 	cout << "RoutedShapes: " <<RoutedShapes << endl;
 	cout << "RoutedVias: " <<RoutedVias << endl;
-	cout << "Obstacles: " <<Obstacles << endl;
-	for(int i=0;i<MetalLayers;i++){
+	cout << "Obstacles: " <<Obstacles << endl << endl;
+	/*for(int i=0;i<MetalLayers;i++){
 		cout << "LAYER " << i << ":"<<endl;
 		cout << "   Rshape size: " << all_layer[i].get_Rshape_num() << endl;
 		cout << "   Via size: " << all_layer[i].get_Via_num() << endl;
 		cout << "   Obstacle size: " << all_layer[i].get_Obstacle_num() << endl;
-	}
+	}*/
 
 }
 
@@ -131,8 +131,6 @@ Coords* Manager::Parsing_coordinate(string coor1, string coor2){ //ex: (4159,294
 
 	ss >> temp_coords->x1 >> temp_coords->y1 >> temp_coords->x2 >> temp_coords->y2;
 
-	//cout << temp_coords->x1 << " " << temp_coords->y1 << " " << temp_coords->x2 << " " << temp_coords->y2<<endl;
-
 	return temp_coords;
 }
 
@@ -148,8 +146,6 @@ Coords* Manager::Parsing_via(string coor1){ // ex: (8,523)
 	ss >> temp_coords->x1 >> temp_coords->y1;
 	temp_coords->x2 = temp_coords->x1;
 	temp_coords->y2 = temp_coords->y1;
-
-	//cout << temp_via->x << " "<< temp_via->y << endl;
 
 	return temp_coords;
 }

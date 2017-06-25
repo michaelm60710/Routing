@@ -54,16 +54,13 @@ sort_func_x1(Shape* S1, Shape* S2){
 
 void
 Layer::clustering_shape(){
-	cout<<"Clustering..."<<endl;
+	//cout<<"Clustering..."<<endl;
 	for(size_t s = 0; s < all_shape_vec.size(); s++){
 		all_shape_vec[s]->clu = NULL;
 		sort_by_x1.push_back(all_shape_vec[s]);
 	}
     sort(sort_by_x1.begin(), sort_by_x1.end(), sort_func_x1);
-    cout<<"layer:"<<endl;
-    /*cout<<"sort by x1:"<<endl;
-    for(size_t s = 0; s < sort_by_x1.size(); s++)
-    	cout<<s<<": "<<sort_by_x1[s]->coords->x1<<", "<<sort_by_x1[s]->coords->y1<<endl;*/
+    //cout<<"layer:"<<endl;
     
     for(size_t s = 0; s < sort_by_x1.size(); s++){
         if(sort_by_x1[s]->clu == NULL){
@@ -76,17 +73,11 @@ Layer::clustering_shape(){
     size_t count_O = 0;
     size_t count_S = 0;
     for(size_t i = 0; i < all_cluster.size(); i++){
-    	//cout<<"C"<<i<<": ";
     	Shape* S = all_cluster[i]->shape_list.front();
-    	//cout<<S->coords->x1<<", "<<S->coords->y1<<"  "<<all_cluster[i]->shape_list.size()<<endl;
     	if(S->Shape_type == RSHAPE)count_S ++;
     	else count_O ++;
-    	/*it_shape it = all_cluster[i]->shape_list.begin();
-    	cout<<"elements:"<<endl;
-    	for(; it != all_cluster[i]->shape_list.end(); it++)
-    		cout<<(*it)->coords->x1<<", "<<(*it)->coords->y1<<"; "
-    	    <<(*it)->coords->x2<<", "<<(*it)->coords->y2<<endl;*/
     }
+    cout << "Rshape size: " <<  Rshape_list.size() << ", Via size: " << Via_list.size() << ", Obstacle size: " << Obstacle_list.size() << endl;
     cout<<"total cluster: "<<all_cluster.size();
     cout<<" ( # of Obstacle cluster = "<<count_O;
     cout<<", # of Rshape cluster = "<<count_S<<" )"<<endl;
@@ -528,12 +519,16 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
 
     //### 1.find the overlapping
     if(LLine->S->Shape_type==RSHAPE){
-    	_GP = LLine->S->clu->Add_GP(LLine, 9487 , G_point_num); 
+    	_GP = LLine->S->clu->Add_GP(LLine, UP, G_point_num); 
     	//incomplete
     	//p2
-    	if(it2 != bound_map.end() && it2->second->down_edge_x >= temp_x && it2->second->max_x == it2->second->down_edge_x && it2->second->Gp->Shape_type==RSHAPE){
-    		_GP->Add_edge(it2->second->Gp, temp_x, temp_y2, temp_x, temp_y2, Layer_pos, Via_cost);
+    	if(it2 != bound_map.end() && it2->second->down_edge_x >= temp_x && it2->second->max_x == it2->second->down_edge_x && it2->second->Gp!=NULL && it2->second->Gp->Shape_type==RSHAPE){
+            _GP->Add_edge(it2->second->Gp, temp_x, temp_y2, temp_x, temp_y2, Layer_pos, Via_cost);
     	}
+        //p1
+        if(it1 != bound_map.end() && it1->second->down_edge_x >= temp_x && it1->second->max_x == it1->second->down_edge_x && it1->second->Gp!=NULL && it1->second->Gp->Shape_type==RSHAPE){
+            _GP->Add_edge(it1->second->Gp, temp_x, temp_y1, temp_x, temp_y1, Layer_pos, Via_cost);
+        }
 
     }
 
@@ -676,7 +671,7 @@ Layer::ConvertToUndirectedG(){
     list<Edge_info*>::iterator edge_itr;
     MAP_GP_edge::iterator map_gp_itr;
     GraphPoint *temp_gp;
-    Edge_info *E1;
+    Edge_info *E1 = NULL;
     int x1,y1,x2,y2,distance;
     //status1 = bound_map.insert(pair< int , BoundLine_info*>(temp_y1, b1) );
  	for(size_t i = 0; i < all_cluster.size(); i++){

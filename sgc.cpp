@@ -11,7 +11,6 @@ sort_linex(Line* L1, Line* L2){
 }
 
 void Manager::SpanningGraphConstruct(){
-	cout << "test" << endl;
     pair<GraphPoint*, GraphPoint*> GP_result;
 	int l_idx=0;
     list < Shape* >::iterator itr1,itr2;
@@ -20,7 +19,11 @@ void Manager::SpanningGraphConstruct(){
     size_t clu_end;
 
     //###1. Initialize
-    for(int i =0;i<MetalLayers;i++) all_layer[i].SpanningGraphConstruct();
+    for(int i =0;i<MetalLayers;i++) {
+        cout << "LAYER " << i << ":" << endl;
+        all_layer[i].SpanningGraphConstruct();
+    }
+    cout << endl;
 
     //###2. Sort all shape line
 	all_line.resize((RoutedShapes+Obstacles+RoutedVias)*2 );
@@ -104,7 +107,7 @@ void Manager::SpanningTreeConstruct(){
     //###3. Extended Kruskal's Algorithm
     ExtendedKruskal();
 
-    //###4. Undirected Graph (for plot )
+    //###4. Undirected Graph (just only for plot )
     //for(int i =0;i<MetalLayers;i++) all_layer[i].ConvertFinalToUndirectedG();
 
 
