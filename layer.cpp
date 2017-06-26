@@ -669,6 +669,7 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
             if(traverse_it->second->Gp!=NULL && traverse_it->second->max_x <= temp_x && traverse_it->second->point_x > temp_bound_x && temp_bound_x < temp_x){
                 GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
             }
+            //add
             else if(traverse_it->second->Gp!=NULL && traverse_it->second->max_x >= temp_x && LLine->LR == LEFT &&
                     traverse_it->second->point_y >= temp_y2 && traverse_it->second->point_y <= temp_y1){
                 GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, Via_cost);
