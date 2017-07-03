@@ -19,9 +19,7 @@ bool Sort_Shape(Shape* a, Shape* b){
 
 
 void Layer::SpanningGraphConstruct(){
-	/* 1.1 construct cluster
 
-	   */
 	//#1.0 construct all_shape_vec
 	int pos = 0;
 	Layer_Shape_num = Rshape_num+Obstacle_num+Via_num+Upper_Via_num;
@@ -34,8 +32,18 @@ void Layer::SpanningGraphConstruct(){
         all_shape_vec[pos++] = (*it_s);    
     for (it_shape it_s= Upper_Via_list.begin();it_s != Upper_Via_list.end();++it_s)
         all_shape_vec[pos++] = (*it_s);  	
-	//#1 construct cluster
+	
+	//#1.1 construct cluster
     clustering_shape();
+
+    //#1.2 obstacle add spacing
+    for (it_shape it_s= Obstacle_list.begin();it_s != Obstacle_list.end();++it_s){
+    	(*it_s)->coords->x1 -= Spacing;
+		(*it_s)->coords->x2 += Spacing;
+		(*it_s)->coords->y1 -= Spacing;
+		(*it_s)->coords->y2 += Spacing;
+    }
+
 
     //#2 Init y_upper bound and y_lower bound
     BoundLine_info* b_down  = new BoundLine_info(LEFT, Width, 0, UP, -1);
@@ -60,7 +68,6 @@ Layer::clustering_shape(){
 		sort_by_x1.push_back(all_shape_vec[s]);
 	}
     sort(sort_by_x1.begin(), sort_by_x1.end(), sort_func_x1);
-    //cout<<"layer:"<<endl;
     
     for(size_t s = 0; s < sort_by_x1.size(); s++){
         if(sort_by_x1[s]->clu == NULL){
@@ -532,7 +539,6 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
 
     }
 
-
     //### 2.Search  
     if((GP1==NULL && GP2==NULL) || LLine->S->Shape_type==VIA ) return;
     if(GP1==NULL || GP2==NULL || temp_y1==temp_y2){ //just one point
@@ -802,7 +808,7 @@ Layer::check_point_svg(string name){
             
     }
     //edge
-    /*int x1,y1,x2,y2;
+    int x1,y1,x2,y2;
     for(size_t i = 0; i < all_cluster.size(); i++){
         begin_itr = all_cluster[i]->GraphP_list.begin();
         end_itr = all_cluster[i]->GraphP_list.end();
@@ -821,19 +827,19 @@ Layer::check_point_svg(string name){
                 }
                 if(map_gp_itr->second->layer==Layer_pos){
                     if(map_gp_itr->second->Gp->Layer_pos==Layer_pos+1)
-                       ;// a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"blue\"/>" << endl;
+                       a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"blue\"/>" << endl;
                     else if(map_gp_itr->second->Gp->Layer_pos==Layer_pos)
-                       a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
+                       ;//a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
                     else{
                        ;//a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"purple\"/>" << endl;
                     }
                 }
             }
         }
-    }*/
+    }
     
     //check overlapping via
-    int x1,y1,x2,y2;
+    /*int x1,y1,x2,y2;
     for(size_t i = 0; i < all_cluster.size(); i++){
         begin_itr = all_cluster[i]->GraphP_list.begin();
         end_itr = all_cluster[i]->GraphP_list.end();
@@ -850,7 +856,7 @@ Layer::check_point_svg(string name){
                 }
             }
         }
-    }
+    }*/
     
     //check Extended Dijkstra's
     /*int x1,y1,x2,y2;

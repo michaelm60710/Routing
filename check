@@ -1,0 +1,3 @@
+./eval_2 cases/case1 o_case1
+./eval_2 cases/case2 o_case2
+./eval_2 cases/case3 o_case3

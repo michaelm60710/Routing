@@ -95,7 +95,7 @@ public:
 
 	//Extended Kruskal's
 	GraphPoint *parentKK;
-	bool visit, chosen;
+	bool visit;
 	unsigned rank;
 
 	//final edge

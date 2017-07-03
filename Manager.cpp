@@ -14,11 +14,11 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 	
 	//test
 	SpanningGraphConstruct();
-	SpanningTreeConstruct();
+	//SpanningTreeConstruct();
 
 
 	// plot test
-    //for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
+    for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
 
     //OutputFile
     Output(Output_file);
@@ -90,10 +90,10 @@ void Manager::Parsing(const char* Input_file){
 		Shape *temp_shape = new Shape(OBSTACLE, l);
 		temp_shape->coords = Parsing_coordinate(coor1,coor2);
 		//Add Spacing
-		temp_shape->coords->x1 -= Spacing;
+		/*temp_shape->coords->x1 -= Spacing;
 		temp_shape->coords->x2 += Spacing;
 		temp_shape->coords->y1 -= Spacing;
-		temp_shape->coords->y2 += Spacing;
+		temp_shape->coords->y2 += Spacing;*/
 		
 		all_layer[l].Obstacle_list_append(temp_shape);
 		all_shape[all++] = temp_shape;

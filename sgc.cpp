@@ -58,12 +58,9 @@ void Manager::SpanningGraphConstruct(){
     		break;
     	}
     }
-    /*cout << "bound :" << Boundary->x1 << " ,x2:" << Boundary->x2 << endl; 
-    cout << "origin clu size:" << all_line.size() << endl;
-    cout << "first: " << clu_begin << ", end: " << clu_end << endl;*/
 
     //###3. Construct global graph
-    for(size_t  s = 0; s <= clu_end; s++){//s =0; s < all_line.size(); s++){//
+    for(size_t  s = 0; s <= clu_end; s++){
     	GP_result = all_layer[all_line[s]->S->layer_position].SGconstruct(all_line[s]);
 
         if(all_line[s]->S->layer_position>0){
@@ -95,6 +92,7 @@ void Manager::SpanningGraphConstruct(){
 }
 
 void Manager::SpanningTreeConstruct(){
+    
     //###1. Init all_cluster
     size_t all_cluster_size = 0;
     for(int i =0;i<MetalLayers;i++) all_cluster_size += all_layer[i].all_cluster.size();
@@ -228,27 +226,17 @@ void Manager::unionSet( GraphPoint *s1, GraphPoint *s2 ) {
 
 void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2) {
     GraphPoint *p = p1;
-    //int x1,y1,x2,y2;
+
     MAP_GP_edge::iterator map_gp_itr, map_begin_itr, map_end_itr;
     for(map_gp_itr = p1->map_edge.begin();map_gp_itr!=p1->map_edge.end(); ++map_gp_itr){
-        /*x1 = map_gp_itr->second->point_x1;
-        y1 = map_gp_itr->second->point_y1;
-        x2 = map_gp_itr->second->point_x2;
-        y2 = map_gp_itr->second->point_y2;*/
         if(p2==map_gp_itr->second->Gp ) {
-            //MSTEdges.push_back( Edge(x1, x2, y1, y2) );
             p1->final_edge.push_back(map_gp_itr->second);
         }
     }
 
     while (p != p->parent) {
         for(map_gp_itr = p->map_edge.begin();map_gp_itr!=p->map_edge.end(); ++map_gp_itr){
-            /*x1 = map_gp_itr->second->point_x1;
-            y1 = map_gp_itr->second->point_y1;
-            x2 = map_gp_itr->second->point_x2;
-            y2 = map_gp_itr->second->point_y2;*/
             if(p->parent==map_gp_itr->second->Gp ) {
-                //MSTEdges.push_back( Edge(x1, x2, y1, y2) );
                 p->final_edge.push_back(map_gp_itr->second);
             }
         }
@@ -257,12 +245,7 @@ void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2) {
     p = p2;
     while (p != p->parent) {
         for(map_gp_itr = p->map_edge.begin();map_gp_itr!=p->map_edge.end(); ++map_gp_itr){
-            /*x1 = map_gp_itr->second->point_x1;
-            y1 = map_gp_itr->second->point_y1;
-            x2 = map_gp_itr->second->point_x2;
-            y2 = map_gp_itr->second->point_y2;*/
             if(p->parent==map_gp_itr->second->Gp ) {
-                //MSTEdges.push_back( Edge(x1, x2, y1, y2) );
                  p->final_edge.push_back(map_gp_itr->second);
             }
         }
@@ -292,18 +275,17 @@ void Manager::ExtendedKruskal() {
         for (gp_itr = begin1; gp_itr != end1; ++gp_itr) {
             temp_gp1 = (*gp_itr);
             temp_gp1->parentKK = temp_gp1;
-            //temp_gp1->visit = true;
+            temp_gp1->visit = true;
             begin2 = temp_gp1->map_edge.begin();
             end2 = temp_gp1->map_edge.end();
 
             for (map_gp_itr = begin2; map_gp_itr != end2; ++map_gp_itr) {
                 temp_gp2 = map_gp_itr->second->Gp;
-                //if (temp_gp2->visit == true) continue;
-                edgeLength = map_gp_itr->second->distance;
-                dis1 = temp_gp1->terminal_dis;
-                dis2 = temp_gp2->terminal_dis;
-
+                if (temp_gp2->visit == true) continue;
                 if (temp_gp1->root != temp_gp2->root) {
+                	edgeLength = map_gp_itr->second->distance;
+	                dis1 = temp_gp1->terminal_dis;
+	                dis2 = temp_gp2->terminal_dis;
                     map_gp_itr->second->source = temp_gp1;
                     HeapBE.insert(  pair <int, Edge_info*> ( dis1 + edgeLength + dis2, map_gp_itr->second )  );
                 }
@@ -312,9 +294,8 @@ void Manager::ExtendedKruskal() {
     }
 
     // choose MST points
-    while (!HeapBE.empty()) {
-        curEdge = HeapBE.begin();
-        temp_gp1 = curEdge->second->source;
+    for(curEdge = HeapBE.begin(); curEdge != HeapBE.end(); ++curEdge){
+    	temp_gp1 = curEdge->second->source;
         temp_gp2 = curEdge->second->Gp;
         GraphPoint *set1 = findSet(temp_gp1->root);
         GraphPoint *set2 = findSet(temp_gp2->root);
@@ -322,8 +303,9 @@ void Manager::ExtendedKruskal() {
             unionSet(set1, set2);
             addMSTEdges(temp_gp1, temp_gp2);
         }
-        HeapBE.erase(curEdge);
+
     }
+
 
 }
 

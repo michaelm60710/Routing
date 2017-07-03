@@ -70,7 +70,7 @@ GraphPoint::GraphPoint(Line* L, int UPorDown, int _idx){
 	}
 	idx = _idx;
 	// initialization for Extended Kruskal's
-	visit = chosen = false;
+	visit = false;
 	rank = 0;
 }
 
