@@ -49,11 +49,20 @@ void Manager::SpanningGraphConstruct(){
         }
     }
     sort(all_line.begin(), all_line.end(), sort_linex);
+    
+    //test for case4
+    /*Line *temp_line = all_line[8];
+    all_line[8] = all_line[9];
+    all_line[9] =  temp_line;
+    cout << all_line[8]->LR << endl;
+    cout << all_line[9]->LR << endl;*/
+    //
 
     //###2.2 
     clu_end = all_line.size() - 1;
+    int max_x = Boundary->x2 - Spacing + 1;
     for(size_t s = all_line.size()-1; s > 0; s--){
-    	if(all_line[s]->x <= Boundary->x2){
+    	if(all_line[s]->x <= max_x){
     		clu_end = s;
     		break;
     	}

@@ -46,10 +46,24 @@ void Layer::SpanningGraphConstruct(){
 
 
     //#2 Init y_upper bound and y_lower bound
-    BoundLine_info* b_down  = new BoundLine_info(LEFT, Width, 0, UP, -1);
-    BoundLine_info* b_upper = new BoundLine_info(LEFT, Width, 0, DOWN, Height+1);
-    bound_map.insert(pair< int , BoundLine_info*>(-1, b_down) );
+    /*
+    ------------  b_upper
+                |
+    ------------  b_upper1
+    |
+    |
+    ------------  b_down
+                |
+    ------------  b_down1
+    */
+    BoundLine_info* b_down  = new BoundLine_info(Width, 0, UP, Spacing-1, min_x);
+    BoundLine_info* b_down1 = new BoundLine_info(Width, 0, DOWN, -1, min_x);//
+    BoundLine_info* b_upper = new BoundLine_info(Width, 0, UP, Height+1, min_x);//
+    BoundLine_info* b_upper1= new BoundLine_info(Width, 0, DOWN, Height+1-Spacing, min_x);
+    bound_map.insert(pair< int , BoundLine_info*>(Spacing-1, b_down) );
+    bound_map.insert(pair< int , BoundLine_info*>(-1, b_down1) );
     bound_map.insert(pair< int , BoundLine_info*>(Height+1, b_upper) );
+    bound_map.insert(pair< int , BoundLine_info*>(Height+1-Spacing, b_upper1) );
 
 }
 
@@ -138,9 +152,9 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
                     |
               5     |
         ----------- p1 ---------------
-              3     |               |
-     del 4          |  L (shape)    |              
-              2     |               |
+              3     |                |
+     del 4          |  L (shape)     |              
+              2     |                |
         ------------p2 ---------------
               1     |
                     |
@@ -156,17 +170,17 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
     if(LLine->S->Shape_type==VIA){
         p1 = true;
         GP1 = NULL;
-        BoundLine_info* b1 = new BoundLine_info(LLine->LR, temp_max_x, temp_x, UP, temp_y1);
-        b1->up_edge_x = b1->down_edge_x = -1;
-
+        BoundLine_info* b1 = new BoundLine_info(temp_max_x, temp_x, UP, temp_y1, min_x);
+        b1->up_edge_x = b1->down_edge_x = min_x;
         status1 = bound_map.insert(pair< int , BoundLine_info*>(temp_y1, b1) );
+
         it1 = status1.first;
         
         //############check point whether need to insert
         traverse_it = it1;
         ++traverse_it;
 
-        if(status1.second==false && it1->second->max_x >= temp_x ){ //same y 
+        if(status1.second==false && it1->second->max_x > temp_x ){ //same y 
             //up point no need 
         }
         else if(status1.second!=false && traverse_it!=bound_map.end() && traverse_it->second->down_edge_x >= temp_x){
@@ -176,7 +190,7 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         else{
             GP1 = temp_clu->Add_GP(LLine, UP, G_point_num);
             //1 and 5 construct edge
-            temp_bound_x = -1;
+            temp_bound_x = min_x;
             traverse_it = it1;
             ++traverse_it;
             for(;traverse_it!=bound_map.end();++traverse_it){
@@ -189,7 +203,7 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             }
 
             //1
-           temp_bound_x = -1;
+            temp_bound_x = min_x;
             traverse_it = it1;
             if(status1.second==false){
                 if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
@@ -213,10 +227,8 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         }
         
         if(status1.second==false){
-            if(it1->second->max_x <= temp_x){
+            if(it1->second->max_x < temp_x)
                 it1->second->point_x = temp_x;
-                it1->second->point_y = temp_y1;
-            }
             if(it1->second->max_x<temp_max_x)
                 it1->second->max_x = temp_max_x;
         }
@@ -238,8 +250,8 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
     else if(LLine->LR==LEFT){ //LEFT
         p1 = p2 = true;
         GP1 = GP2 = NULL;
-        BoundLine_info* b1 = new BoundLine_info(LLine->LR, temp_max_x, temp_x, UP, temp_y1);
-        BoundLine_info* b2 = new BoundLine_info(LLine->LR, temp_max_x, temp_x, DOWN, temp_y2);
+        BoundLine_info* b1 = new BoundLine_info(temp_max_x, temp_x, UP, temp_y1, min_x);
+        BoundLine_info* b2 = new BoundLine_info(temp_max_x, temp_x, DOWN, temp_y2, min_x);
 
         status1 = bound_map.insert(pair< int , BoundLine_info*>(temp_y1, b1) );
         it1 = status1.first;
@@ -250,7 +262,7 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         traverse_it = it2;
         if(traverse_it!=bound_map.begin()) --traverse_it;
 
-        if(status2.second==false && it2->second->max_x >= temp_x ){ //same y 
+        if(status2.second==false && it2->second->max_x > temp_x ){ //same y 
             //Down point no need 
         }
         else if(status2.second!=false && it2!=bound_map.begin() && traverse_it->second->up_edge_x >= temp_x){
@@ -260,13 +272,14 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         else{
             GP2 = temp_clu->Add_GP(LLine, DOWN, G_point_num);
             //1 and 2 construct edge
-            temp_bound_x = -1;
+            temp_bound_x = min_x;
             traverse_it = it2;
             if(status2.second==false){
                 if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
                     GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
                 }
-                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+                if(traverse_it->second->max_x == temp_x); //trivial cases.... = =
+                else if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
             }
             if(it2!=bound_map.begin()) --traverse_it;
             while(1){
@@ -279,7 +292,8 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
                 --traverse_it;
             }
             //2
-            temp_bound_x = -1;
+            if(status2.second==false) temp_bound_x = it2->second->max_x;
+            else                      temp_bound_x = min_x;
             traverse_it = it2;
             ++traverse_it;
             if(it2->first!=it1->first)//if the shape is not a wire
@@ -299,7 +313,7 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         traverse_it = it1;
         ++traverse_it;
 
-        if(status1.second==false && it1->second->max_x >= temp_x ){ //same y 
+        if(status1.second==false && it1->second->max_x > temp_x ){ //same y 
             //up point no need 
         }
         else if(status1.second!=false && traverse_it!=bound_map.end() && traverse_it->second->down_edge_x >= temp_x){
@@ -310,7 +324,7 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             GP1 = temp_clu->Add_GP(LLine, UP, G_point_num);
             
             //3 and 5 construct edge
-            temp_bound_x = -1;
+            temp_bound_x = min_x;
             traverse_it = it1;
             ++traverse_it;
             for(;traverse_it!=bound_map.end();++traverse_it){
@@ -322,13 +336,16 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
                 if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
             }
             //3
-            temp_bound_x = -1;
+            if(status1.second==false) temp_bound_x = it1->second->max_x;
+            else                      temp_bound_x = min_x;
+            temp_bound_x = min_x;
             traverse_it = it1;
             if(status1.second==false){
                 if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
                     GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
                 }
-                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+                if(traverse_it->second->max_x == temp_x); //trivial cases.... = =
+                else if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
             }
             --traverse_it;
             if(it2->first!=it1->first)//if the shape is not a wire
@@ -350,22 +367,21 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             traverse_it = it2;
             ++traverse_it;
             for(;traverse_it!=it1; ++traverse_it){
-                if(traverse_it->second->max_x >= temp_x ) connect = false;
+                if(traverse_it->second->max_x > temp_x ) connect = false;
             }
             if(connect) GP1->Add_edge(GP2, temp_x, temp_y1, temp_x, temp_y2, Layer_pos, 0);
         }
         
         
-        //############delete mid
+        //############delete mid (refrech bound info)
         traverse_it = it2;
         ++traverse_it;
         if(it2->first!=it1->first)//if the shape is not a wire
             for(;traverse_it!=it1; ++traverse_it){
 
                 if(traverse_it->second->max_x <= temp_max_x ) {
-                    bound_map.erase(traverse_it++);//traverse_it = bound_map.erase(traverse_it);
+                    bound_map.erase(traverse_it++);
                     --traverse_it;
-
                 }
                 else{
                     if(traverse_it->second->up_edge_x < temp_max_x)   traverse_it->second->up_edge_x   = temp_max_x;
@@ -376,25 +392,21 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         if(it1->second->down_edge_x < temp_max_x) it1->second->down_edge_x = temp_max_x;// && status1.second==false 
         if(it2->second->up_edge_x < temp_max_x) it2->second->up_edge_x = temp_max_x;// && status2.second==false
         
-        //############ bug?
+        //############ bug? >max_x <= temp_x
         if(status1.second==false){
-            if(it1->second->max_x <= temp_x){
+            if(it1->second->max_x <= temp_x)
                 it1->second->point_x = temp_x;
-                it1->second->point_y = temp_y1;
-            }
-            if(it1->second->max_x<temp_max_x)
+            if(it1->second->max_x < temp_max_x)
                 it1->second->max_x = temp_max_x;
         }
         if(status2.second==false) {
-            if(it2->second->max_x <= temp_x){
+            if(it2->second->max_x <= temp_x)
                 it2->second->point_x = temp_x;
-                it2->second->point_y = temp_y2;
-            }
-            if(it2->second->max_x<temp_max_x)
+            if(it2->second->max_x < temp_max_x)
                 it2->second->max_x = temp_max_x;
         }
 
-        //
+        //############
         if(p1==false) bound_map.erase(it1);
         else{
             traverse_it = it1;
@@ -553,7 +565,7 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
 
         //1 and 5 construct edge
         //5
-        temp_bound_x = -1;
+        temp_bound_x = min_x;
         traverse_it = it1;
         for(;traverse_it!=bound_map.end();++traverse_it){
             if(temp_bound_x >= temp_x) break;
@@ -565,7 +577,7 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
         }
 
         //1
-        temp_bound_x = -1;
+        temp_bound_x = min_x;
         if(it1!=bound_map.end()){//iterator -- 
             traverse_it = it1;
             while(1){
@@ -594,7 +606,7 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
     }
     else{ //bug: it1 it2 is lower bound
         //1 and 2 construct edge
-        temp_bound_x = -1;
+        temp_bound_x = min_x;
         traverse_it = it2;
         if(it2!=bound_map.end()){
             if(it2!=bound_map.begin()) --traverse_it;
@@ -620,7 +632,7 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
         }
 
         //2
-        temp_bound_x = -1;
+        temp_bound_x = min_x;
         traverse_it = it2;
         for(;traverse_it!=it1;++traverse_it){
             if(temp_bound_x >= temp_x) break;
@@ -631,7 +643,7 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
         }
 
         //5 and 3 construct edge
-        temp_bound_x = -1;
+        temp_bound_x = min_x;
         traverse_it = it1;
         for(;traverse_it!=bound_map.end();++traverse_it){
             if(temp_bound_x >= temp_x) break;
@@ -642,7 +654,7 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
             if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
         }
         //3
-        temp_bound_x = -1;
+        temp_bound_x = min_x;
         if(it1!=bound_map.end() ){
             traverse_it = it1;
             for(;traverse_it!=it2 && traverse_it!=bound_map.begin();--traverse_it){
@@ -822,14 +834,14 @@ Layer::check_point_svg(string name){
                 y2 = map_gp_itr->second->point_y2;
                 if((*gp_itr)->Shape_type==OBSTACLE ){
                     if(xx!=x1 || yy!=y1) {
-                        cout << "error";//omething strange...";
+                        cout << "error! ";//something strange...";
                     }
                 }
                 if(map_gp_itr->second->layer==Layer_pos){
                     if(map_gp_itr->second->Gp->Layer_pos==Layer_pos+1)
-                       a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"blue\"/>" << endl;
+                       ; //a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"blue\"/>" << endl;
                     else if(map_gp_itr->second->Gp->Layer_pos==Layer_pos)
-                       ;//a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
+                       a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
                     else{
                        ;//a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"purple\"/>" << endl;
                     }

@@ -50,6 +50,7 @@ void Manager::Parsing(const char* Input_file){
 	all_shape.resize(RoutedShapes+RoutedVias*2+Obstacles);
 	for(int i = 0;i<MetalLayers;i++) {
 		all_layer[i].Spacing = Spacing;
+		all_layer[i].min_x   = Spacing - 1;
 		all_layer[i].Width   = Boundary->x2 - Boundary->x1;
 		all_layer[i].Height  = Boundary->y2 - Boundary->y1;
 		all_layer[i].Layer_pos = i;

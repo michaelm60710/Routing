@@ -102,27 +102,31 @@ public:
 	list<Edge_info*> final_edge;
 };
 
+
 struct BoundLine_info{
-	BoundLine_info(bool lr, int m_x, int temp_x, int flag, int P_y):Gp(NULL),LR(lr),max_x(m_x),point_x(temp_x),pos_flag(flag),point_y(P_y)
+	BoundLine_info(int m_x, int temp_x, int flag, int P_y, int min_x):Gp(NULL),max_x(m_x),point_x(temp_x),pos_flag(flag),point_y(P_y)
 	{
+		//min_x = spacing - 1
+		up_edge_GP = down_edge_GP = NULL;
 		if(flag & UP) {
 			down_edge_x = m_x;
-			up_edge_x   = -1;
+			up_edge_x   = min_x;
 		}
 		else{
-			down_edge_x = -1;
+			down_edge_x = min_x;
 			up_edge_x   = m_x;
 		}
 	}
 	
 	GraphPoint* Gp;
-	bool LR; // no use
 	int max_x;
 	int point_x;
 	int pos_flag; // no use
 	int point_y;
 	int up_edge_x;
+	GraphPoint* up_edge_GP;
 	int down_edge_x;
+	GraphPoint* down_edge_GP;
 
 
 };

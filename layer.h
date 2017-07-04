@@ -43,6 +43,7 @@ public:
 	//Extended Kruskal's
 	void addMSTEdges(GraphPoint *p1, GraphPoint *p2);
 	int Spacing;
+	int min_x;
 	int Width;
 	int Height;
 	int Layer_pos;
