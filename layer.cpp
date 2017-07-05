@@ -323,8 +323,9 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         else{
             GP1 = temp_clu->Add_GP(LLine, UP, G_point_num);
             
-            //3 and 5 construct edge
-            temp_bound_x = min_x;
+            // 5 and 3 construct edge
+            if(status1.second==false && it1->second->max_x != temp_x) temp_bound_x = it1->second->max_x;//trivial cases
+            else                      								  temp_bound_x = min_x;
             traverse_it = it1;
             ++traverse_it;
             for(;traverse_it!=bound_map.end();++traverse_it){
@@ -336,16 +337,13 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
                 if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
             }
             //3
-            if(status1.second==false) temp_bound_x = it1->second->max_x;
-            else                      temp_bound_x = min_x;
             temp_bound_x = min_x;
             traverse_it = it1;
             if(status1.second==false){
                 if(traverse_it->second->Gp!=NULL && traverse_it->second->point_x > temp_bound_x ){
                     GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, traverse_it->second->point_x, traverse_it->second->point_y, Layer_pos, 0);
                 }
-                if(traverse_it->second->max_x == temp_x); //trivial cases.... = =
-                else if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
+                if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
             }
             --traverse_it;
             if(it2->first!=it1->first)//if the shape is not a wire
@@ -725,34 +723,6 @@ Layer::ConvertToUndirectedG(){
 
 }
 
-void 
-Layer::ConvertFinalToUndirectedG(){
-    list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
-    list<Edge_info*>::iterator edge_itr;
-    MAP_GP_edge::iterator map_gp_itr;
-    GraphPoint *temp_gp;
-    Edge_info *E1;
-    int x1,y1,x2,y2,distance;
-    //status1 = bound_map.insert(pair< int , BoundLine_info*>(temp_y1, b1) );
-    for(size_t i = 0; i < all_cluster.size(); i++){
-        begin_itr = all_cluster[i]->GraphP_list.begin();
-        end_itr = all_cluster[i]->GraphP_list.end();
-        for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
-            for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
-                temp_gp = (*edge_itr)->Gp;
-                x1 = (*edge_itr)->point_x1;
-                y1 = (*edge_itr)->point_y1;
-                x2 = (*edge_itr)->point_x2;
-                y2 = (*edge_itr)->point_y2;
-                distance = (*edge_itr)->distance;
-                E1 = new Edge_info((*gp_itr), x2, y2, x1, y1, distance, (*edge_itr)->layer);
-                temp_gp->final_edge.push_back(E1);
-            }
-        }
-    }
-}
-
-
 //int convert to string
 string itos(int a) {
     string sign = a<0?"-":"";
@@ -1053,6 +1023,34 @@ Layer::SGconstruct(){
     cout << "shape count:" << Layer_Shape_num << endl;
 
 }
+
+void 
+Layer::ConvertFinalToUndirectedG(){
+    list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
+    list<Edge_info*>::iterator edge_itr;
+    MAP_GP_edge::iterator map_gp_itr;
+    GraphPoint *temp_gp;
+    Edge_info *E1;
+    int x1,y1,x2,y2,distance;
+    //status1 = bound_map.insert(pair< int , BoundLine_info*>(temp_y1, b1) );
+    for(size_t i = 0; i < all_cluster.size(); i++){
+        begin_itr = all_cluster[i]->GraphP_list.begin();
+        end_itr = all_cluster[i]->GraphP_list.end();
+        for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
+            for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
+                temp_gp = (*edge_itr)->Gp;
+                x1 = (*edge_itr)->point_x1;
+                y1 = (*edge_itr)->point_y1;
+                x2 = (*edge_itr)->point_x2;
+                y2 = (*edge_itr)->point_y2;
+                distance = (*edge_itr)->distance;
+                E1 = new Edge_info((*gp_itr), x2, y2, x1, y1, distance, (*edge_itr)->layer);
+                temp_gp->final_edge.push_back(E1);
+            }
+        }
+    }
+}
+
 */
 
 

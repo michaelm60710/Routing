@@ -100,6 +100,8 @@ public:
 
 	//final edge
 	list<Edge_info*> final_edge;
+	list<Edge_info*> ftemp_edge;
+	GraphPoint *path; //Opt1
 };
 
 
@@ -183,6 +185,13 @@ public:
 };
 
 
+struct via_pos{
+	via_pos(int _x, int _y, int _vial, bool ud):x(_x),y(_y),via_layer(_vial),up_or_down(ud){}
+	int x;
+	int y;
+	int via_layer;
+	bool up_or_down; //up = true
+};
 
 
 

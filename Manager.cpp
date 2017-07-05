@@ -12,13 +12,17 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 	//Parsing
 	Parsing(Input_file);
 	
-	//test
+	//Step 1
 	SpanningGraphConstruct();
-	//SpanningTreeConstruct();
-
+	//Step 2
+	SpanningTreeConstruct();
+	//Step 3
+	Optimize1();
 
 	// plot test
-    for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
+    //for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
+
+
 
     //OutputFile
     Output(Output_file);
@@ -156,90 +160,96 @@ void Manager::Output(const char *Output_file){
 
 	list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
 	list<Edge_info*>::iterator edge_itr;
+	multimap< int , via_pos* > via_map;
+	multimap< int , via_pos* >::iterator via_itr,via_itr2;
+   	bool via_up, via_down;
     int layer_pos, XX, YY, x1, x2, y1, y2;
 	
 	ofstream ofile;
 	ofile.open(Output_file,ios::out);
 
-	//Greedy steiner point
-	for(size_t i = 0; i < all_cluster.size(); i++){
-        begin_itr = all_cluster[i]->GraphP_list.begin();
-        end_itr = all_cluster[i]->GraphP_list.end();
-        if(begin_itr==end_itr) continue;
-        layer_pos = (*begin_itr)->Layer_pos;
-        for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
-            for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
-                x1 = (*edge_itr)->point_x1;
-                y1 = (*edge_itr)->point_y1;
-                x2 = (*edge_itr)->point_x2;
-                y2 = (*edge_itr)->point_y2;
-                
-                XX = x2 - x1;
-				YY = y2 - y1;
-				
-				//Edge
-				if(XX==0 && YY==0);
-				else if(XX!=0 && YY!=0){ // add steiner_point
-					ofile << "V-line M" << (*edge_itr)->layer + 1 << " ("<< x2 << "," << y2 << ") (" << x2 << "," << y1 << ")" << endl;
-					ofile << "H-line M" << (*edge_itr)->layer + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y1 << ")" << endl;
+    //### 1. init select = false
+    for(gp_itr = gp_list.begin();gp_itr != gp_list.end(); ++gp_itr) (*gp_itr)->select = false;
 
-				}
-				else if(XX==0){ //it is already vertical or H
-					ofile << "V-line M" << (*edge_itr)->layer + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y2 << ")" << endl;				
-				}
-				else{ //YY==0
-					ofile << "H-line M" << (*edge_itr)->layer + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y2 << ")" << endl;
-				}
+    //### 2. Greedy steiner point
+    for(gp_itr = gp_list.begin();gp_itr != gp_list.end(); ++gp_itr){
+    	layer_pos = (*gp_itr)->Layer_pos;
+    	(*gp_itr)->select = true;
+    	via_up = via_down = false;
+        for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
+        	//Via check
+        	if ((*edge_itr)->layer!=layer_pos){
+				if((*edge_itr)->Gp->Layer_pos==layer_pos+1) via_up = true;
+                else if((*edge_itr)->Gp->Layer_pos==layer_pos-1) via_down = true;
+			} 
 
-				//Via
-				if((*edge_itr)->layer==layer_pos){
-					if ((*edge_itr)->Gp->Layer_pos==layer_pos+1)
-						ofile << "Via V" << layer_pos + 1 << " ("<< x2 << "," << y2 << ")" << endl;
-					else if((*edge_itr)->Gp->Layer_pos==layer_pos-1)
-						ofile << "Via V" << layer_pos << " ("<< x2 << "," << y2 << ")" << endl;
-				}
-				else{ // ((*edge_itr)->layer!=layer_pos)
-					if((*edge_itr)->Gp->Layer_pos==layer_pos+1)
-                    	ofile << "Via V" << layer_pos + 1 << " ("<< x1 << "," << y1 << ")" << endl;
-                    else if((*edge_itr)->Gp->Layer_pos==layer_pos-1)
-                    	ofile << "Via V" << layer_pos << " ("<< x1 << "," << y1 << ")" << endl;	
+        	if((*edge_itr)->Gp->select) continue;
+            x1 = (*edge_itr)->point_x1;
+            y1 = (*edge_itr)->point_y1;
+            x2 = (*edge_itr)->point_x2;
+            y2 = (*edge_itr)->point_y2;
+            
+            XX = x2 - x1;
+			YY = y2 - y1;
+			
+			//####Edge output
+			if(XX==0 && YY==0);
+			else if(XX!=0 && YY!=0){ // add steiner_point
+				ofile << "V-line M" << (*edge_itr)->layer + 1 << " ("<< x2 << "," << y2 << ") (" << x2 << "," << y1 << ")" << endl;
+				ofile << "H-line M" << (*edge_itr)->layer + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y1 << ")" << endl;
+
+			}
+			else if(XX==0){ //it is already vertical or H
+				ofile << "V-line M" << (*edge_itr)->layer + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y2 << ")" << endl;				
+			}
+			else{ //YY==0
+				ofile << "H-line M" << (*edge_itr)->layer + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y2 << ")" << endl;
+			}
+
+        }
+        //####VIA output
+        if((*gp_itr)->Shape_type==OBSTACLE){
+        	if(via_up)  ofile << "Via V" << layer_pos + 1 << " ("<< (*gp_itr)->x << "," << (*gp_itr)->y << ")" << endl;
+        	if(via_down)ofile << "Via V" << layer_pos     << " ("<< (*gp_itr)->x << "," << (*gp_itr)->y << ")" << endl;
+        }
+        else{//RSHAPE or VIA (remove same via)
+        	via_map.clear();
+        	for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
+        		if ((*edge_itr)->layer!=layer_pos){
+        			x1 = (*edge_itr)->point_x1;
+            		y1 = (*edge_itr)->point_y1;
+					if((*edge_itr)->Gp->Layer_pos==layer_pos+1){
+						via_pos *tmp_vc = new via_pos(x1, y1, layer_pos + 1, true);
+						via_map.insert(pair<int, via_pos*>(tmp_vc->x, tmp_vc));
+					}
+	                else if((*edge_itr)->Gp->Layer_pos==layer_pos-1){
+						via_pos *tmp_vc = new via_pos(x1, y1, layer_pos, false);
+						via_map.insert(pair<int, via_pos*>(tmp_vc->x, tmp_vc));
+	                }
 				} 
-					
+        	}
+        	for(via_itr = via_map.begin();via_itr != via_map.end(); ++via_itr){
+        		bool out = true;
+        		int temp_x = via_itr->second->x;
+        		int temp_y = via_itr->second->y;
+        		via_itr2 = via_itr;
+        		++via_itr2;
+        		for(;via_itr2 != via_map.end(); ++via_itr2){
+        			if(via_itr2->second->x != temp_x) break;
+        			if(via_itr2->second->y == temp_y && via_itr2->second->up_or_down==via_itr->second->up_or_down) {
+        				out = false;
+        				break;
+        			}
+        		}
+        		if(out){
+        			ofile << "Via V" << via_itr->second->via_layer << " ("<< temp_x << "," << temp_y << ")" << endl;
+        		}
+        	}
 
-                /*if((*edge_itr)->layer==layer_pos){
-                    if((*edge_itr)->Gp->Layer_pos==layer_pos+1){
-                        //Via
-                        ofile << "Via V" << layer_pos + 1 << " ("<< x2 << "," << y2 << ")" << endl;
-                        //a<< "<circle cx=\"" << x2 << "\" cy=\""<< y2 << "\" r=\"5\" style=\"fill:black;stroke:black;stroke-width:4;fill-opacity:0.8;stroke-opacity:0.8\" />" << endl;
-                    }
-                    XX = x2 - x1;
-					YY = y2 - y1;
-					if(XX!=0 && YY!=0){ // add steiner_point
-						ofile << "V-line M" << layer_pos + 1 << " ("<< x2 << "," << y2 << ") (" << x2 << "," << y1 << ")" << endl;
-						ofile << "H-line M" << layer_pos + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y1 << ")" << endl;
 
-					}
-					else if(XX==0){ //it is already vertical or H
-						ofile << "V-line M" << layer_pos + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y2 << ")" << endl;				
-					}
-					else{ //YY==0
-						ofile << "H-line M" << layer_pos + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y2 << ")" << endl;
-					}
 
-                    //a << "<line x1=\"" << x1 << "\" y1=\"" << y1 << "\" x2=\"" << x2 << "\" y2=\"" << y2 << "\"\nstroke-width=\"3\" stroke=\"red\"/>" << endl;
-                }
-                else if((*edge_itr)->Gp->Layer_pos==layer_pos+1){
-                	 	//Via
-                        ofile << "Via V" << layer_pos + 1 << " ("<< x1 << "," << y1 << ")" << endl;
-                        //a<< "<circle cx=\"" << x1 << "\" cy=\""<< y1 << "\" r=\"5\" style=\"fill:black;stroke:black;stroke-width:4;fill-opacity:0.8;stroke-opacity:0.8\" />" << endl;
-                }*/
-
-            }
         }
 
-
-
-        
     }
 
 }

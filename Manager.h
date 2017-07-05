@@ -20,9 +20,12 @@ public:
 
 	void SpanningGraphConstruct(); //Step 1
 	void SpanningTreeConstruct();  //Step 2
+	void Optimize1();
+	void Recur_parent_opt1(GraphPoint* );
 	void ExtendedDijkstra();
 	void ExtendedKruskal();
 	void addMSTEdges(GraphPoint *p1, GraphPoint *p2);
+	void add_Final_GP(GraphPoint *p1, GraphPoint *p2, bool);
 	void unionSet( GraphPoint *, GraphPoint *);
 	GraphPoint* findSet(GraphPoint *);
 
@@ -47,8 +50,9 @@ private:
 	vector < Line*  > all_line;
 	vector <Cluster*> all_cluster;
 	
-	//Extended Kruskal's
-	list <Edge> MSTEdges;
+	//GP has final edge
+	list < pair<GraphPoint*, GraphPoint*> > ExtendedKruskal_info;
+	list < GraphPoint* > gp_list;
 
 };
 

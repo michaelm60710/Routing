@@ -28,7 +28,6 @@ public:
     pair<GraphPoint*, GraphPoint*> SGconstruct(Line*); //same layer shape
     void SGconstruct_search(Line*, GraphPoint*, GraphPoint*); //dif layer shape
     void ConvertToUndirectedG();
-    void ConvertFinalToUndirectedG();
     void check_point_svg(string name="x");
 
 	//for private use
@@ -66,10 +65,10 @@ private:
 	int Layer_Shape_num;
 	static int G_point_num;
 
-	//Extended Kruskal's
-	list <Edge> MSTEdges;
-
 	map< int , BoundLine_info* , less<int> > bound_map;
+
+	
+
 
 };
 

@@ -114,8 +114,15 @@ void Manager::SpanningTreeConstruct(){
     //###3. Extended Kruskal's Algorithm
     ExtendedKruskal();
 
-    //###4. Undirected Graph (just only for plot )
-    //for(int i =0;i<MetalLayers;i++) all_layer[i].ConvertFinalToUndirectedG();
+    //###4. Final GP list construct
+    GraphPoint *r_gp;
+    for(size_t i = 0; i < all_cluster.size(); i++){
+    	if(all_cluster[i]->GetShapeType()==OBSTACLE) continue;
+    	r_gp = *(all_cluster[i]->GraphP_list.begin());
+    	if(r_gp->select) continue;
+    	r_gp->select = true;
+    	gp_list.push_back(r_gp);
+    }
 
 
 
@@ -215,53 +222,6 @@ void Manager::ExtendedDijkstra(){
 
 }
 
-GraphPoint* Manager::findSet(GraphPoint *p) {
-    if (p != p->parentKK)
-        p->parentKK = findSet(p->parentKK);
-    return p->parentKK;
-}
-
-void Manager::unionSet( GraphPoint *s1, GraphPoint *s2 ) {
-
-    if (s1->rank >= s2->rank)
-        s2->parentKK = s1;
-    else 
-        s1->parentKK = s2;
-
-    if (s1->rank == s2->rank)
-        s1->rank++;
-
-}
-
-void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2) {
-    GraphPoint *p = p1;
-
-    MAP_GP_edge::iterator map_gp_itr, map_begin_itr, map_end_itr;
-    for(map_gp_itr = p1->map_edge.begin();map_gp_itr!=p1->map_edge.end(); ++map_gp_itr){
-        if(p2==map_gp_itr->second->Gp ) {
-            p1->final_edge.push_back(map_gp_itr->second);
-        }
-    }
-
-    while (p != p->parent) {
-        for(map_gp_itr = p->map_edge.begin();map_gp_itr!=p->map_edge.end(); ++map_gp_itr){
-            if(p->parent==map_gp_itr->second->Gp ) {
-                p->final_edge.push_back(map_gp_itr->second);
-            }
-        }
-        p = p->parent;
-    }
-    p = p2;
-    while (p != p->parent) {
-        for(map_gp_itr = p->map_edge.begin();map_gp_itr!=p->map_edge.end(); ++map_gp_itr){
-            if(p->parent==map_gp_itr->second->Gp ) {
-                 p->final_edge.push_back(map_gp_itr->second);
-            }
-        }
-        p = p->parent;
-    }
-}
-
 void Manager::ExtendedKruskal() {
     cout << "...Start Kruskal's" << endl;
     list <GraphPoint*>::iterator gp_itr, begin1, end1;
@@ -283,6 +243,7 @@ void Manager::ExtendedKruskal() {
         }
         for (gp_itr = begin1; gp_itr != end1; ++gp_itr) {
             temp_gp1 = (*gp_itr);
+            temp_gp1->select = false; // final edge need to init
             temp_gp1->parentKK = temp_gp1;
             temp_gp1->visit = true;
             begin2 = temp_gp1->map_edge.begin();
@@ -317,6 +278,133 @@ void Manager::ExtendedKruskal() {
 
 
 }
+
+
+GraphPoint* Manager::findSet(GraphPoint *p) {
+    if (p != p->parentKK)
+        p->parentKK = findSet(p->parentKK);
+    return p->parentKK;
+}
+
+void Manager::unionSet( GraphPoint *s1, GraphPoint *s2 ) {
+
+    if (s1->rank >= s2->rank)
+        s2->parentKK = s1;
+    else 
+        s1->parentKK = s2;
+
+    if (s1->rank == s2->rank)
+        s1->rank++;
+
+}
+
+void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2) { //need to optimize! use map search
+    GraphPoint *p = p1;
+
+    //test //if(!((p1->root->Layer_pos!=p2->root->Layer_pos && !(p1->Shape_type!=OBSTACLE && p2->Shape_type!=OBSTACLE)) )) return;
+
+    MAP_GP_edge::iterator map_gp_itr, map_begin_itr, map_end_itr;
+    add_Final_GP(p1,p2, false);
+
+    while (p != p->parent) {
+    	if(!p->select){
+    		add_Final_GP(p,p->parent, true);
+    		p->select = true;
+    	}
+    	else break;
+
+        p = p->parent;
+    }
+    p = p2;
+    while (p != p->parent) {
+    	if(!p->select){
+    		add_Final_GP(p,p->parent, true);
+    		p->select = true;
+    	}
+    	else break;
+
+        p = p->parent;
+    }
+
+    //store info
+    if(p1->root->Layer_pos!=p2->root->Layer_pos && !(p1->Shape_type!=OBSTACLE && p2->Shape_type!=OBSTACLE)) ExtendedKruskal_info.push_back(pair<GraphPoint*, GraphPoint*>(p1, p2) );
+   
+}
+
+void Manager::add_Final_GP(GraphPoint *p1, GraphPoint *p2, bool insert_gp_list) {
+	MAP_GP_edge::iterator it1 = p1->map_edge.find(p2->idx);
+	Edge_info* temp_edge;
+	Edge_info *E1;
+	if(it1 == p1->map_edge.end() ) cout <<"??\n";
+	else {
+		if(insert_gp_list) gp_list.push_back(p1);
+		temp_edge = it1->second;
+		p1->final_edge.push_back(temp_edge);
+		E1 = new Edge_info(p1, temp_edge->point_x2, temp_edge->point_y2, temp_edge->point_x1, temp_edge->point_y1, temp_edge->distance, temp_edge->layer);
+		p2->final_edge.push_back(E1);
+	}
+
+}
+
+void Manager::Optimize1(){
+	list < pair<GraphPoint*, GraphPoint*> >::iterator K_itr;
+	GraphPoint *p1, *p2, *temp_p, *p_begin, *p_end;
+
+	cout << "diff length: " << ExtendedKruskal_info.size() << endl;
+	
+	//ftemp_edge
+	for(K_itr = ExtendedKruskal_info.begin();K_itr != ExtendedKruskal_info.end(); ++K_itr){
+		p1 = K_itr->first;
+		p2 = K_itr->second;
+		p_begin = p1->root;
+		p_end = p2->root;
+		//###1.1 construct path & init ftemp_edge
+		Recur_parent_opt1(p1);
+		p1->path = temp_p = p2;
+		p1->ftemp_edge.clear();
+		while(temp_p != temp_p->parent){
+			temp_p->path = temp_p->parent;
+			temp_p->ftemp_edge.clear();
+			temp_p = temp_p->parent;
+		}
+
+		//###1.2 find ftemp_edge
+		for(temp_p = p_begin;temp_p != p_end; temp_p = temp_p->path){
+
+
+
+		}
+
+
+	}
+
+
+
+}
+
+void Manager::Recur_parent_opt1(GraphPoint* gp1){
+
+
+	if(gp1 != gp1->parent) {
+		if(gp1->parent==NULL){
+			cout << "errorQQ" << endl;
+			cin.get();
+		}
+		gp1->parent->path = gp1;
+		gp1->parent->ftemp_edge.clear();
+		Recur_parent_opt1(gp1->parent);
+	}
+
+}
+
+
+
+
+
+
+
+
+
 
 
 
