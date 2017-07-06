@@ -73,6 +73,7 @@ struct Line{
 class GraphPoint{//Only consider same layer
 public:
 	GraphPoint(Line*, int, int);
+	GraphPoint(int, int, int);
 	void Add_edge(GraphPoint*, int, int, int, int, int, int);
 	GraphPoint* Find_Set();
 	Cluster *clu;
@@ -90,7 +91,7 @@ public:
 	FibHeap<int>::FibNode *Fnode;
 	GraphPoint *parent;//no null
 	GraphPoint *root; //no null
-	int terminal_dis;
+	int terminal_dis; // Extended Dijkstra's & Opt1 use
 	bool select;
 
 	//Extended Kruskal's
@@ -102,6 +103,7 @@ public:
 	list<Edge_info*> final_edge;
 	list<Edge_info*> ftemp_edge;
 	GraphPoint *path; //Opt1
+	GraphPoint *path_opt; //Opt1
 };
 
 

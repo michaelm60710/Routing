@@ -301,7 +301,12 @@ void Manager::unionSet( GraphPoint *s1, GraphPoint *s2 ) {
 void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2) { //need to optimize! use map search
     GraphPoint *p = p1;
 
-    //test //if(!((p1->root->Layer_pos!=p2->root->Layer_pos && !(p1->Shape_type!=OBSTACLE && p2->Shape_type!=OBSTACLE)) )) return;
+    //test 
+    if((p1->root->Layer_pos!=p2->root->Layer_pos && !(p1->Shape_type!=OBSTACLE && p2->Shape_type!=OBSTACLE)) ) { //bug: roots are same layer
+        Optimize1(p1, p2);
+        return;
+    }
+    //else return;
 
     MAP_GP_edge::iterator map_gp_itr, map_begin_itr, map_end_itr;
     add_Final_GP(p1,p2, false);
@@ -326,9 +331,6 @@ void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2) { //need to optimize! 
         p = p->parent;
     }
 
-    //store info
-    if(p1->root->Layer_pos!=p2->root->Layer_pos && !(p1->Shape_type!=OBSTACLE && p2->Shape_type!=OBSTACLE)) ExtendedKruskal_info.push_back(pair<GraphPoint*, GraphPoint*>(p1, p2) );
-   
 }
 
 void Manager::add_Final_GP(GraphPoint *p1, GraphPoint *p2, bool insert_gp_list) {
@@ -346,37 +348,161 @@ void Manager::add_Final_GP(GraphPoint *p1, GraphPoint *p2, bool insert_gp_list) 
 
 }
 
-void Manager::Optimize1(){
-	list < pair<GraphPoint*, GraphPoint*> >::iterator K_itr;
-	GraphPoint *p1, *p2, *temp_p, *p_begin, *p_end;
+void Manager::Optimize1(GraphPoint *p1, GraphPoint* p2){
+	GraphPoint *temp_p, *temp_p1, *p_begin, *p_end, *insert_gp;	
+    MAP_GP_edge::iterator it1;
+    list<Edge_info*>::iterator edge_itr;
+    Edge_info *temp_edge, *temp_edge1, *E1;
+    FibHeap<int> FibH;// FibH;
+    FibHeap<int>::FibNode *temp_fibn;
+    int temp_layer;
+    int x1,y1,x2,y2, xx1, yy1, xx2, yy2 ,bound_x1, bound_x2, bound_y1, bound_y2, new_x, new_y, dis;
+    int nearest_point;
+    //  2------3
+    //  0------1
 
-	cout << "diff length: " << ExtendedKruskal_info.size() << endl;
-	
 	//ftemp_edge
-	for(K_itr = ExtendedKruskal_info.begin();K_itr != ExtendedKruskal_info.end(); ++K_itr){
-		p1 = K_itr->first;
-		p2 = K_itr->second;
-		p_begin = p1->root;
-		p_end = p2->root;
-		//###1.1 construct path & init ftemp_edge
-		Recur_parent_opt1(p1);
-		p1->path = temp_p = p2;
-		p1->ftemp_edge.clear();
-		while(temp_p != temp_p->parent){
-			temp_p->path = temp_p->parent;
-			temp_p->ftemp_edge.clear();
-			temp_p = temp_p->parent;
-		}
+    p_begin = p1->root;
+    p_end = p2->root;
 
-		//###1.2 find ftemp_edge
-		for(temp_p = p_begin;temp_p != p_end; temp_p = temp_p->path){
+    //###1.1 construct path & init ftemp_edge
+    Recur_parent_opt1(p1);
+    p1->path = temp_p = p2;
+    while(temp_p != temp_p->parent){
+        temp_p->path = temp_p->parent;
+        temp_p = temp_p->parent;
+    }
 
+    //###1.2 find ftemp_edge
+    p_end->terminal_dis = INT_MAX;
+    p_end->Fnode = FibH.push(INT_MAX, temp_p);
+    p_end->ftemp_edge.clear();
+    for(temp_p = p_begin;temp_p != p_end; temp_p = temp_p->path){
+        it1 = temp_p->map_edge.find(temp_p->path->idx);
+        temp_p->ftemp_edge.clear();
+        temp_p->ftemp_edge.push_back(it1->second);
+        temp_p->terminal_dis = INT_MAX;
+        temp_p->Fnode = FibH.push(INT_MAX, temp_p);
+    }
+    //###1.3 construct new overlap via
+    temp_layer = (*(p_begin->ftemp_edge.begin()))->layer;
+    GraphPoint *same_l_gp = p_begin;
+    for(temp_p = p_begin;temp_p != p_end; temp_p = temp_p->path){
+    	temp_edge = *(temp_p->ftemp_edge.begin()); 
+    	if(temp_layer!=temp_edge->layer){
+            if(abs(temp_layer-temp_edge->layer)>1);
+            else{
+                opt1_shape(temp_edge,x1,y1,x2,y2);//cout << "x1: " << temp_edge->point_x1 << ", y1: " <<temp_edge->point_y1 << ", x2:" << temp_edge->point_x2 << ", y2: "<< temp_edge->point_y2 << ", pos:" << nearest_point << endl;
+                for(temp_p1 = same_l_gp; temp_p1!=temp_p; temp_p1 = temp_p1->path){//main part: consider overlap
+                    temp_edge1 =  *(temp_p1->ftemp_edge.begin()); 
+                    nearest_point = opt1_shape(temp_edge1,xx1,yy1,xx2,yy2);
+                    
+                    //###Find overlap bound begin
+                    if(xx1 < x1){
+                        bound_x1 = x1;
+                        if(xx2 < x1) continue;
+                        else if(xx2 > x2) bound_x2 = x2;                        
+                        else              bound_x2 = xx2;
+                    }
+                    else if(xx1 > x2) continue;
+                    else{//x1 <= xx1 <= x2
+                        bound_x1 = xx1;
+                        if(xx2 > x2) bound_x2 = x2;
+                        else         bound_x2 = xx2;
+                    }
 
+                    if(yy1 < y1){
+                        bound_y1 = y1;
+                        if(yy2 < y1) continue;
+                        else if(yy2 > y2) bound_y2 = y2;                        
+                        else              bound_y2 = yy2;
+                    }
+                    else if(yy1 > y2) continue;
+                    else{//y1 <= yy1 <= y2
+                        bound_y1 = yy1;
+                        if(yy2 > y2) bound_y2 = y2;
+                        else         bound_y2 = yy2;
+                    }
+                    if(bound_x1==bound_x2 && bound_y1==bound_y2) continue;
+                    if(nearest_point==0){
+                        new_x = bound_x1;
+                        new_y = bound_y1;
+                    }    
+                    else if(nearest_point==1){
+                        new_x = bound_x2;
+                        new_y = bound_y1;
+                    }
+                    else if(nearest_point==2){
+                        new_x = bound_x1;
+                        new_y = bound_y2;
+                    }
+                    else if(nearest_point==3){
+                        new_x = bound_x2;
+                        new_y = bound_y2;
+                    }
+                    //###Insert 2 edge
+                    insert_gp = new GraphPoint(temp_layer, new_x, new_y);
+                    insert_gp->Fnode = FibH.push(INT_MAX, insert_gp);
+                    dis = abs(temp_edge->point_x2 - new_x) + abs(temp_edge->point_y2 - new_y);
+                    E1 = new Edge_info(temp_edge->Gp, new_x, new_y, temp_edge->point_x2, temp_edge->point_y2, dis, temp_edge->layer);
+                    insert_gp->ftemp_edge.push_back(E1);
+                    dis = abs(temp_edge1->point_x1 - new_x) + abs(temp_edge1->point_y1 - new_y);
+                    E1 = new Edge_info(insert_gp, temp_edge1->point_x1, temp_edge1->point_y1 ,new_x, new_y, dis, temp_edge1->layer);
+                    temp_p1->ftemp_edge.push_back(E1);
+                }
+            }
+    		
+    		temp_layer = temp_edge->layer;
+    		same_l_gp = temp_p;
+    	}
+    }
 
-		}
+    //###1.4 find shortest path (dijkstra's)
+    FibH.decrease_key(p_begin->Fnode, 0);
+    p_begin->terminal_dis = 0;
+    while(!FibH.empty()){
+        temp_fibn = FibH.topNode();
+        temp_p = (GraphPoint*)temp_fibn->payload;
+        if(temp_p==p_end) break;
+        FibH.pop();
 
+        for(edge_itr = temp_p->ftemp_edge.begin(); edge_itr != temp_p->ftemp_edge.end(); ++edge_itr){
+            dis = temp_p->terminal_dis + (*edge_itr)->distance;
+            temp_p1 = (*edge_itr)->Gp;
+            if(temp_p1->terminal_dis > dis){
+            	temp_p1->terminal_dis = dis;
+            	temp_p1->path_opt = temp_p;
+            	FibH.decrease_key(temp_p1->Fnode, dis);
+            }
+        }
 
-	}
+    }
+
+    //###2 construct the final edge
+    for(temp_p1 = p_end; temp_p1 != p_begin; temp_p1 = temp_p1->path_opt){ ////bug
+    	temp_edge = NULL;
+    	temp_p = temp_p1->path_opt;
+        for(edge_itr = temp_p->ftemp_edge.begin(); edge_itr != temp_p->ftemp_edge.end(); ++edge_itr){
+            if((*edge_itr)->Gp==temp_p1){
+                temp_edge = (*edge_itr);
+                break;
+            }
+        }
+        if(temp_edge==NULL) { cerr << "error!"<< endl; continue;}//bug
+        
+        temp_p->final_edge.push_back(temp_edge);
+        E1 = new Edge_info(temp_p, temp_edge->point_x2, temp_edge->point_y2, temp_edge->point_x1, temp_edge->point_y1, temp_edge->distance, temp_edge->layer);
+        temp_p1->final_edge.push_back(E1);
+
+    }
+
+    //###2.1 add to graph list
+    for(temp_p = p_end;temp_p != p_begin; temp_p = temp_p->path_opt){
+        if(!temp_p->select){
+            gp_list.push_back(temp_p);
+            temp_p->select = true;
+        }
+    }
 
 
 
@@ -388,15 +514,31 @@ void Manager::Recur_parent_opt1(GraphPoint* gp1){
 	if(gp1 != gp1->parent) {
 		if(gp1->parent==NULL){
 			cout << "errorQQ" << endl;
-			cin.get();
+			//cin.get();
 		}
 		gp1->parent->path = gp1;
-		gp1->parent->ftemp_edge.clear();
 		Recur_parent_opt1(gp1->parent);
 	}
 
 }
 
+int Manager::opt1_shape(Edge_info *E, int &x1, int &y1, int &x2, int &y2){
+	int nearest_pos = 0;
+	x1 = E->point_x1;
+	x2 = E->point_x2;
+	y1 = E->point_y1;
+	y2 = E->point_y2;
+	if(x1 > x2){
+		swap(x1, x2);
+		nearest_pos++;
+	}
+	if(y1 > y2){
+		swap(y1, y2);
+		nearest_pos+=2;
+	}
+
+	return nearest_pos;
+}
 
 
 

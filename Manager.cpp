@@ -16,8 +16,6 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 	SpanningGraphConstruct();
 	//Step 2
 	SpanningTreeConstruct();
-	//Step 3
-	Optimize1();
 
 	// plot test
     //for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
@@ -179,8 +177,8 @@ void Manager::Output(const char *Output_file){
         for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
         	//Via check
         	if ((*edge_itr)->layer!=layer_pos){
-				if((*edge_itr)->Gp->Layer_pos==layer_pos+1) via_up = true;
-                else if((*edge_itr)->Gp->Layer_pos==layer_pos-1) via_down = true;
+				if((*edge_itr)->layer==layer_pos+1) via_up = true;
+                else if((*edge_itr)->layer==layer_pos-1) via_down = true;
 			} 
 
         	if((*edge_itr)->Gp->select) continue;
@@ -218,11 +216,11 @@ void Manager::Output(const char *Output_file){
         		if ((*edge_itr)->layer!=layer_pos){
         			x1 = (*edge_itr)->point_x1;
             		y1 = (*edge_itr)->point_y1;
-					if((*edge_itr)->Gp->Layer_pos==layer_pos+1){
+					if((*edge_itr)->layer==layer_pos+1){
 						via_pos *tmp_vc = new via_pos(x1, y1, layer_pos + 1, true);
 						via_map.insert(pair<int, via_pos*>(tmp_vc->x, tmp_vc));
 					}
-	                else if((*edge_itr)->Gp->Layer_pos==layer_pos-1){
+	                else if((*edge_itr)->layer==layer_pos-1){
 						via_pos *tmp_vc = new via_pos(x1, y1, layer_pos, false);
 						via_map.insert(pair<int, via_pos*>(tmp_vc->x, tmp_vc));
 	                }
