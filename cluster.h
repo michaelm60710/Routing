@@ -28,7 +28,7 @@ struct Coords;
 class Shape;
 struct Line;
 class GraphPoint;
-struct BoundLine_info;
+class BoundLine_info;
 struct Edge_info;
 class Cluster;
 
@@ -107,8 +107,9 @@ public:
 };
 
 
-struct BoundLine_info{
-	BoundLine_info(int m_x, int temp_x, int flag, int P_y, int min_x):Gp(NULL),max_x(m_x),point_x(temp_x),pos_flag(flag),point_y(P_y)
+class BoundLine_info{
+public:
+	BoundLine_info(int m_x, int temp_x, int flag, int P_y, int min_x):Gp(NULL),max_x(m_x),point_x(temp_x),point_y(P_y)
 	{
 		//min_x = spacing - 1
 		up_edge_GP = down_edge_GP = NULL;
@@ -116,17 +117,23 @@ struct BoundLine_info{
 			down_edge_x = m_x;
 			up_edge_x   = min_x;
 		}
-		else{
+		else if(flag & DOWN){
 			down_edge_x = min_x;
 			up_edge_x   = m_x;
 		}
+		else { //VIA
+			down_edge_x = min_x;
+			up_edge_x   = min_x;
+		}
 	}
-	
+	int Get_up_edge_x()  { return up_edge_x;}
+	int Get_down_edge_x(){ return down_edge_x;}
+
 	GraphPoint* Gp;
 	int max_x;
 	int point_x;
-	int pos_flag; // no use
 	int point_y;
+
 	int up_edge_x;
 	GraphPoint* up_edge_GP;
 	int down_edge_x;
@@ -174,15 +181,7 @@ public:
 	int Shape_type;//Rshape or Obstacle or via
 	int shape_num;
 	list < Shape* > shape_list;
-	list < Point* > boundary; //counterclkwise
 	list < GraphPoint* > GraphP_list; //routed shape cluster only one GP
-
-	Point *TopLCorner;
-	Point *TopRCorner;
-	Point *DownLCorner;
-	Point *DOwnRCorner;
-
-	//int
 
 };
 

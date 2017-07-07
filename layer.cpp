@@ -170,8 +170,7 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
     if(LLine->S->Shape_type==VIA){
         p1 = true;
         GP1 = NULL;
-        BoundLine_info* b1 = new BoundLine_info(temp_max_x, temp_x, UP, temp_y1, min_x);
-        b1->up_edge_x = b1->down_edge_x = min_x;
+        BoundLine_info* b1 = new BoundLine_info(temp_max_x, temp_x, VIA, temp_y1, min_x);
         status1 = bound_map.insert(pair< int , BoundLine_info*>(temp_y1, b1) );
 
         it1 = status1.first;
@@ -242,7 +241,7 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             if(it1!=bound_map.begin()) {
                 traverse_it = it1;
                 --traverse_it;
-                it1->second->down_edge_x = traverse_it->second->up_edge_x;
+                it1->second->down_edge_x = traverse_it->second->Get_up_edge_x();
             }
         }
 
@@ -265,9 +264,9 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         if(status2.second==false && it2->second->max_x > temp_x ){ //same y 
             //Down point no need 
         }
-        else if(status2.second!=false && it2!=bound_map.begin() && traverse_it->second->up_edge_x >= temp_x){
+        else if(status2.second!=false && it2!=bound_map.begin() && traverse_it->second->Get_up_edge_x() >= temp_x){
             //Down point no need 
-            if(traverse_it->second->up_edge_x >= temp_max_x) p2 = false;//dont inert this x line 
+            if(traverse_it->second->Get_up_edge_x() >= temp_max_x) p2 = false;//dont inert this x line 
         }
         else{
             GP2 = temp_clu->Add_GP(LLine, DOWN, G_point_num);
@@ -378,26 +377,29 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             for(;traverse_it!=it1; ++traverse_it){
 
                 if(traverse_it->second->max_x <= temp_max_x ) {
+                	delete traverse_it->second;
                     bound_map.erase(traverse_it++);
                     --traverse_it;
                 }
                 else{
-                    if(traverse_it->second->up_edge_x < temp_max_x)   traverse_it->second->up_edge_x   = temp_max_x;
+                    if(traverse_it->second->Get_up_edge_x() < temp_max_x)   traverse_it->second->up_edge_x   = temp_max_x;
                     if(traverse_it->second->down_edge_x < temp_max_x) traverse_it->second->down_edge_x = temp_max_x;
                     traverse_it->second->Gp = NULL;
                 }
             }
         if(it1->second->down_edge_x < temp_max_x) it1->second->down_edge_x = temp_max_x;// && status1.second==false 
-        if(it2->second->up_edge_x < temp_max_x) it2->second->up_edge_x = temp_max_x;// && status2.second==false
+        if(it2->second->Get_up_edge_x() < temp_max_x) it2->second->up_edge_x = temp_max_x;// && status2.second==false
         
         //############ bug? >max_x <= temp_x
         if(status1.second==false){
+        	delete b1;
             if(it1->second->max_x <= temp_x)
                 it1->second->point_x = temp_x;
             if(it1->second->max_x < temp_max_x)
                 it1->second->max_x = temp_max_x;
         }
         if(status2.second==false) {
+        	delete b2;
             if(it2->second->max_x <= temp_x)
                 it2->second->point_x = temp_x;
             if(it2->second->max_x < temp_max_x)
@@ -405,19 +407,25 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         }
 
         //############
-        if(p1==false) bound_map.erase(it1);
+        if(p1==false) {
+        	delete it1->second;
+        	bound_map.erase(it1);
+        }
         else{
             traverse_it = it1;
             ++traverse_it;
             if(traverse_it!=bound_map.end())
                 it1->second->up_edge_x = traverse_it->second->down_edge_x;
         }
-        if(p2==false) bound_map.erase(it2);
+        if(p2==false) {
+        	delete it2->second;
+        	bound_map.erase(it2);
+        }
         else{
             if(it2!=bound_map.begin()) {
                 traverse_it = it2;
                 --traverse_it;
-                it2->second->down_edge_x = traverse_it->second->up_edge_x;
+                it2->second->down_edge_x = traverse_it->second->Get_up_edge_x();
             }
         }
 
@@ -504,7 +512,7 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
 
 
     }
-
+ 	
     return pair<GraphPoint*, GraphPoint*>(GP1, GP2);
 }
 
@@ -989,68 +997,3 @@ int Layer::get_Obstacle_num(){
 int Layer::get_Via_num(){
 	return Via_num;
 }
-
-/*
-void //old version
-Layer::SGconstruct(){
-
-        //#######check
-        for (it1 = bound_map.begin();it1 != bound_map.end();++it1){
-            //cout << "y: " << it1->first <<" , max_x: " << it1->second->max_x << ", upper:" <<  it1->second->up_edge_x << ",down:" <<it1->second->down_edge_x << endl;
-        }
-        
-        it1 = bound_map.begin();
-        int pre = it1->second->up_edge_x;
-        int temp_x;
-        ++it1;
-        for (;it1 != bound_map.end();++it1){
-            temp_x = it1->second->down_edge_x;
-            if(temp_x!=pre){
-                cerr << "fuck u " << s << endl;
-                cerr << it1->first;
-                cin.get();
-            }
-            pre = it1->second->up_edge_x;
-        }
-
-        //#####
-
-    //### 3. directed graph convert to undirected grpah
-    ConvertToUndirectedG();
-
-    //### 4. Print 
-    cout << "point:" <<G_point_num << endl;
-    cout << "shape count:" << Layer_Shape_num << endl;
-
-}
-
-void 
-Layer::ConvertFinalToUndirectedG(){
-    list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
-    list<Edge_info*>::iterator edge_itr;
-    MAP_GP_edge::iterator map_gp_itr;
-    GraphPoint *temp_gp;
-    Edge_info *E1;
-    int x1,y1,x2,y2,distance;
-    //status1 = bound_map.insert(pair< int , BoundLine_info*>(temp_y1, b1) );
-    for(size_t i = 0; i < all_cluster.size(); i++){
-        begin_itr = all_cluster[i]->GraphP_list.begin();
-        end_itr = all_cluster[i]->GraphP_list.end();
-        for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
-            for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
-                temp_gp = (*edge_itr)->Gp;
-                x1 = (*edge_itr)->point_x1;
-                y1 = (*edge_itr)->point_y1;
-                x2 = (*edge_itr)->point_x2;
-                y2 = (*edge_itr)->point_y2;
-                distance = (*edge_itr)->distance;
-                E1 = new Edge_info((*gp_itr), x2, y2, x1, y1, distance, (*edge_itr)->layer);
-                temp_gp->final_edge.push_back(E1);
-            }
-        }
-    }
-}
-
-*/
-
-
