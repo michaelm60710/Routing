@@ -12,11 +12,13 @@ sort_linex(Line* L1, Line* L2){
 
 void Manager::SpanningGraphConstruct(){
     pair<GraphPoint*, GraphPoint*> GP_result;
-	int l_idx=0;
+	int l_idx=0, temp_layer;
     list < Shape* >::iterator itr1,itr2;
     GraphPoint *gp1, *gp2;
     int x,y;
     size_t clu_end;
+    GraphPoint *P1=NULL, *P2=NULL, *P3=NULL, *P4=NULL;
+    bool PP1 = false, PP2 = false, PP3=false, PP4=false;
 
     //###1. Initialize
     for(int i =0;i<MetalLayers;i++) {
@@ -70,14 +72,37 @@ void Manager::SpanningGraphConstruct(){
 
     //###3. Construct global graph
     for(size_t  s = 0; s <= clu_end; s++){
-    	GP_result = all_layer[all_line[s]->S->layer_position].SGconstruct(all_line[s]);
+    	temp_layer = all_line[s]->S->layer_position;
+    	GP_result = all_layer[temp_layer].SGconstruct(all_line[s]);
 
-        if(all_line[s]->S->layer_position>0){
-            all_layer[all_line[s]->S->layer_position-1].SGconstruct_search(all_line[s], GP_result.first, GP_result.second);
+    	// up down construct edge
+        if(temp_layer>0){
+            all_layer[temp_layer-1].SGconstruct_search(all_line[s], GP_result.first, GP_result.second);
         }
-        if(all_line[s]->S->layer_position<MetalLayers-1){
-            all_layer[all_line[s]->S->layer_position+1].SGconstruct_search(all_line[s], GP_result.first, GP_result.second);
+        if(temp_layer<MetalLayers-1){
+            all_layer[temp_layer+1].SGconstruct_search(all_line[s], GP_result.first, GP_result.second);
         }
+
+        //up down construct rshape via
+        P1 = P2 = P3 = P4 = NULL;
+    	PP1 = PP2 = PP3 = PP4 = false;
+    	if(all_line[s]->S->Shape_type==VIA) PP1 = PP2 = PP3 = PP4 = true;
+    	else if (all_line[s]->S->Shape_type==OBSTACLE){
+    		if(GP_result.first == NULL) 	 PP1 = PP3 = true;
+    		else if(GP_result.second == NULL)PP2 = PP4 = true;
+
+    	}
+        for(int i = temp_layer+1;i<=MetalLayers-1;i++) {
+            all_layer[i].SGcons_RshapeOverlap(all_line[s], P1, P2, PP1, PP2);
+            if(PP1 && PP2) break;
+        }
+        //down
+        for(int i = temp_layer-1; i>=0;i--) {
+            all_layer[i].SGcons_RshapeOverlap(all_line[s], P3, P4, PP3, PP4);
+            if(PP3 && PP4) break;
+        }
+        all_layer[0].diff_layer_via(all_line[s],P1,P2,P3,P4);
+
     }
 
     //###4. Update Via length (Cluster of Via must be only 1 Gp)
@@ -278,6 +303,7 @@ void Manager::ExtendedKruskal() {
 
 
 }
+
 
 
 GraphPoint* Manager::findSet(GraphPoint *p) {

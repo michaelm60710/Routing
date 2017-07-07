@@ -158,14 +158,16 @@ void Manager::Output(const char *Output_file){
 
 	list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
 	list<Edge_info*>::iterator edge_itr;
-	multimap< int , via_pos* > via_map;
 	multimap< int , via_pos* >::iterator via_itr,via_itr2;
    	bool via_up, via_down;
     int layer_pos, XX, YY, x1, x2, y1, y2;
 	
 	ofstream ofile;
 	ofile.open(Output_file,ios::out);
-
+	//test
+	vector <multimap< int , int > > via_checker;//test
+	via_checker.resize(MetalLayers);
+	list <via_pos*>::iterator check_itr1,check_itr2;
     //### 1. init select = false
     for(gp_itr = gp_list.begin();gp_itr != gp_list.end(); ++gp_itr) (*gp_itr)->select = false;
 
@@ -175,13 +177,14 @@ void Manager::Output(const char *Output_file){
     	(*gp_itr)->select = true;
     	via_up = via_down = false;
         for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
-        	//Via check
+			//Via check
         	if ((*edge_itr)->layer!=layer_pos){
+
 				if((*edge_itr)->layer==layer_pos+1) via_up = true;
                 else if((*edge_itr)->layer==layer_pos-1) via_down = true;
 			} 
-
         	if((*edge_itr)->Gp->select) continue;
+
             x1 = (*edge_itr)->point_x1;
             y1 = (*edge_itr)->point_y1;
             x2 = (*edge_itr)->point_x2;
@@ -189,7 +192,7 @@ void Manager::Output(const char *Output_file){
             
             XX = x2 - x1;
 			YY = y2 - y1;
-			
+
 			//####Edge output
 			if(XX==0 && YY==0);
 			else if(XX!=0 && YY!=0){ // add steiner_point
@@ -207,47 +210,56 @@ void Manager::Output(const char *Output_file){
         }
         //####VIA output
         if((*gp_itr)->Shape_type==OBSTACLE){
-        	if(via_up)  ofile << "Via V" << layer_pos + 1 << " ("<< (*gp_itr)->x << "," << (*gp_itr)->y << ")" << endl;
-        	if(via_down)ofile << "Via V" << layer_pos     << " ("<< (*gp_itr)->x << "," << (*gp_itr)->y << ")" << endl;
+        	if(via_up)  {
+        		via_checker[layer_pos + 1].insert(pair<int, int>( (*gp_itr)->x, (*gp_itr)->y) );
+        	}
+        	if(via_down){
+        		via_checker[layer_pos].insert(pair<int, int>( (*gp_itr)->x, (*gp_itr)->y) );
+        	}
         }
         else{//RSHAPE or VIA (remove same via)
-        	via_map.clear();
         	for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
         		if ((*edge_itr)->layer!=layer_pos){
         			x1 = (*edge_itr)->point_x1;
             		y1 = (*edge_itr)->point_y1;
-					if((*edge_itr)->layer==layer_pos+1){
-						via_pos *tmp_vc = new via_pos(x1, y1, layer_pos + 1, true);
-						via_map.insert(pair<int, via_pos*>(tmp_vc->x, tmp_vc));
-					}
-	                else if((*edge_itr)->layer==layer_pos-1){
-						via_pos *tmp_vc = new via_pos(x1, y1, layer_pos, false);
-						via_map.insert(pair<int, via_pos*>(tmp_vc->x, tmp_vc));
+
+	                if((*edge_itr)->layer > layer_pos ){
+	                	for(int i = (*edge_itr)->layer;i>layer_pos;i--){
+	                		via_checker[i].insert(pair<int, int>(x1, y1) );
+	                	}
+	                }
+	                else if((*edge_itr)->layer < layer_pos){
+						for(int i = (*edge_itr)->layer;i<layer_pos;i++){
+	                		via_checker[i+1].insert(pair<int, int>(x1, y1) );
+	                	}
 	                }
 				} 
         	}
-        	for(via_itr = via_map.begin();via_itr != via_map.end(); ++via_itr){
-        		bool out = true;
-        		int temp_x = via_itr->second->x;
-        		int temp_y = via_itr->second->y;
-        		via_itr2 = via_itr;
-        		++via_itr2;
-        		for(;via_itr2 != via_map.end(); ++via_itr2){
-        			if(via_itr2->second->x != temp_x) break;
-        			if(via_itr2->second->y == temp_y && via_itr2->second->up_or_down==via_itr->second->up_or_down) {
-        				out = false;
-        				break;
-        			}
-        		}
-        		if(out){
-        			ofile << "Via V" << via_itr->second->via_layer << " ("<< temp_x << "," << temp_y << ")" << endl;
-        		}
-        	}
-
-
 
         }
 
     }
 
+    //### 3. check via
+    //cout << "via num: " << via_checker.size() << endl;
+    multimap< int , int >::iterator itr, itr1;
+    int x;
+    bool out;
+    for(int i=0;i<MetalLayers;i++){
+    	for(itr = via_checker[i].begin();itr!=via_checker[i].end();++itr){
+    		itr1 = itr;
+    		x = itr1->first;
+    		++itr1;
+    		out = true;
+    		while(itr1!=via_checker[i].end()){
+    			if(itr1->first!=x) break;
+    			if(itr1->second==itr->second) out = false;
+    			++itr1;
+    		}
+    		if(out) ofile << "Via V" << i << " ("<< x << "," << itr->second << ")" << endl;
+    	}
+    }
+
 }
+
+

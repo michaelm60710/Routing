@@ -27,6 +27,8 @@ public:
     //
     pair<GraphPoint*, GraphPoint*> SGconstruct(Line*); //same layer shape
     void SGconstruct_search(Line*, GraphPoint*, GraphPoint*); //dif layer shape
+    void SGcons_RshapeOverlap(Line*, GraphPoint* &, GraphPoint* &, bool &, bool &);
+    void diff_layer_via(Line*, GraphPoint*, GraphPoint*, GraphPoint*, GraphPoint*);
     void ConvertToUndirectedG();
     void check_point_svg(string name="x");
 

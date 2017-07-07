@@ -109,17 +109,19 @@ public:
 
 class BoundLine_info{
 public:
-	BoundLine_info(int m_x, int temp_x, int flag, int P_y, int min_x):Gp(NULL),max_x(m_x),point_x(temp_x),point_y(P_y)
+	BoundLine_info(int m_x, int temp_x, int flag, int P_y, int min_x, GraphPoint *gpp):Gp(NULL),max_x(m_x),point_x(temp_x),point_y(P_y)
 	{
 		//min_x = spacing - 1
 		up_edge_GP = down_edge_GP = NULL;
 		if(flag & UP) {
 			down_edge_x = m_x;
+			down_edge_GP = gpp;
 			up_edge_x   = min_x;
 		}
 		else if(flag & DOWN){
 			down_edge_x = min_x;
 			up_edge_x   = m_x;
+			up_edge_GP = gpp;
 		}
 		else { //VIA
 			down_edge_x = min_x;
@@ -128,7 +130,16 @@ public:
 	}
 	int Get_up_edge_x()  { return up_edge_x;}
 	int Get_down_edge_x(){ return down_edge_x;}
-
+	void Change_up_edge(GraphPoint* gp1, int _x){
+		//if(gp1!=NULL && gp1->Shape_type!=RSHAPE){ cout << "error!";}
+		up_edge_GP = gp1;
+		up_edge_x = _x;
+	}
+	void Change_down_edge(GraphPoint* gp1, int _x){
+		//if(gp1!=NULL && gp1->Shape_type!=RSHAPE){ cout << "error!";}
+		down_edge_GP = gp1;
+		down_edge_x = _x;
+	}
 	GraphPoint* Gp;
 	int max_x;
 	int point_x;
@@ -187,12 +198,15 @@ public:
 
 
 struct via_pos{
-	via_pos(int _x, int _y, int _vial, bool ud):x(_x),y(_y),via_layer(_vial),up_or_down(ud){}
+	via_pos(int _x, int _y, int _vial, bool ud):x(_x),y(_y),via_layer(_vial),up_or_down(ud){}// for checker
+	//via_pos(int _x, int _y, int via_l1, int via_l2)
 	int x;
 	int y;
 	int via_layer;
 	bool up_or_down; //up = true
+	int via_num; //
 };
+
 
 
 
