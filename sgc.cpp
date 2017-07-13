@@ -22,10 +22,9 @@ void Manager::SpanningGraphConstruct(){
 
     //###1. Initialize
     for(int i =0;i<MetalLayers;i++) {
-        cout << "LAYER " << i << ":" << endl;
+        //cout << "LAYER " << i << ":" << endl;
         all_layer[i].SpanningGraphConstruct();
     }
-    cout << endl;
 
     //###2. Sort all shape line
 	all_line.resize((RoutedShapes+Obstacles+RoutedVias)*2 );
@@ -154,7 +153,7 @@ void Manager::SpanningTreeConstruct(){
 }
 
 void Manager::ExtendedDijkstra(){
-
+	cout << "...Start Dijkstra...\n";
     FibHeap<int> FibH;// FibH;
     FibHeap<int>::FibNode *temp_fibn;
     list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
@@ -248,7 +247,7 @@ void Manager::ExtendedDijkstra(){
 }
 
 void Manager::ExtendedKruskal() {
-    cout << "...Start Kruskal's" << endl;
+    cout << "...Start Kruskal's...\n";
     list <GraphPoint*>::iterator gp_itr, begin1, end1;
     MAP_GP_edge::iterator map_gp_itr, begin2, end2;
     GraphPoint *temp_gp1, *temp_gp2;
@@ -300,7 +299,6 @@ void Manager::ExtendedKruskal() {
         }
 
     }
-
 
 }
 

@@ -104,6 +104,10 @@ public:
 	list<Edge_info*> ftemp_edge;
 	GraphPoint *path; //Opt1
 	GraphPoint *path_opt; //Opt1
+
+	//test
+	static int construct_edge;
+	static int construct_min_edge;
 };
 
 

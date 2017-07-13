@@ -13,10 +13,11 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 	Parsing(Input_file);
 	
 	//Step 1
+	cout << "SGC...\n";
 	SpanningGraphConstruct();
 	//Step 2
+	cout << "STC...\n";
 	SpanningTreeConstruct();
-
 	// plot test
     //for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
 
@@ -25,6 +26,9 @@ Manager::Manager(const char* Input_file,const char* Output_file){
     //OutputFile
     Output(Output_file);
 
+    //test
+    cout << "all edge: " << (*(gp_list.begin()))->construct_edge << endl;
+    cout << "min edge: " << (*(gp_list.begin()))->construct_min_edge << endl;
 }
 
 

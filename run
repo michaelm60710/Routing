@@ -1,3 +1,4 @@
 ./net_open_finder cases/case1 o_case1
 ./net_open_finder cases/case2 o_case2
 ./net_open_finder cases/case3 o_case3
+./net_open_finder cases/caseA o_caseA

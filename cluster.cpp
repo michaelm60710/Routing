@@ -46,7 +46,8 @@ GraphPoint* Cluster::Add_GP(Line* L, int UPorDown, int &_idx){
 	return gp;
 }
 
-
+int GraphPoint::construct_edge = 0;
+int GraphPoint::construct_min_edge = 0;
 
 GraphPoint::GraphPoint(Line* L, int UPorDown, int _idx){
 	clu = L->S->clu;
@@ -98,8 +99,10 @@ void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_
 			status1.first->second->point_y2 = insert_y;
 			status1.first->second->distance = distance;
 			status1.first->second->layer    = layer;
+			construct_min_edge++; //static
 		}
 	}
+	construct_edge++; //static
 
 }
 
