@@ -34,7 +34,7 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 
 void Manager::Parsing(const char* Input_file){
-	cout << "Read Data:" << endl;
+	cout << "==================" << Input_file << "================" << endl;
 	string garbage,layer,coor1,coor2;
 	int l,all=0;
 	ifstream i_file;

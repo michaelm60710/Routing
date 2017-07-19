@@ -290,23 +290,29 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
                 else if(traverse_it->second->max_x > temp_bound_x) temp_bound_x = traverse_it->second->max_x;
             }
             if(it2!=bound_map.begin()) --traverse_it;
-            while(1){
-            	temp_bline = traverse_it->second;
-                if(temp_bound_x >= temp_x) break;
-                if(temp_bline->Gp!=NULL && temp_bline->point_x > temp_bound_x ){
-                    GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
-                }
-                if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
-                if(traverse_it==bound_map.begin()) break;
-                --traverse_it;
+            if(temp_bound_x <= temp_x){
+				while(1){
+	            	temp_bline = traverse_it->second;
+	                if(temp_bline->Gp!=NULL && temp_bline->point_x > temp_bound_x ){
+	                    GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
+	                }
+	                if(temp_bline->max_x > temp_bound_x) {
+	                	temp_bound_x = temp_bline->max_x;
+	                	if(temp_bound_x > temp_x) break;
+	                }
+	                if(traverse_it==bound_map.begin()) break;
+	                --traverse_it;
+	            }
             }
+            if(traverse_it->second->Gp!=NULL && traverse_it->second->Gp->Shape_type==RSHAPE && traverse_it->second->max_x >= temp_x)//vertical 
+            	GP2->Add_edge(traverse_it->second->Gp, temp_x, temp_y2, temp_x, traverse_it->second->point_y, Layer_pos, 0);
             //2
             if(status2.second==false) temp_bound_x = it2->second->max_x;
             else                      temp_bound_x = min_x;
             traverse_it = it2;
             ++traverse_it;
             if(it2->first!=it1->first){//if the shape is not a wire
-            	if(traverse_it->second->down_edge_GP !=NULL && traverse_it->second->Get_down_edge_x() <= temp_x)
+            	if(traverse_it->second->down_edge_GP !=NULL && traverse_it->second->Get_down_edge_x() <= temp_x)//bug : it1 = it2 + 2 && RSHAPE
             		GP2->Add_edge(traverse_it->second->down_edge_GP, temp_x, temp_y2, traverse_it->second->Get_down_edge_x(), temp_y2, Layer_pos, 0);
 
             	if(LLine->S->Shape_type!=RSHAPE ){
@@ -355,13 +361,19 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             ++traverse_it;
             for(;traverse_it!=bound_map.end();++traverse_it){
             	temp_bline = traverse_it->second;
-                if(temp_bound_x >= temp_x) break;
                 if(temp_bline->Gp!=NULL && temp_bline->point_x > temp_bound_x ){
                     GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
-
                 }
-                if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
+                if(temp_bline->max_x > temp_bound_x) {
+                	temp_bound_x = temp_bline->max_x;
+                	if(temp_bound_x > temp_x) {
+                		if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE && temp_bline->max_x >= temp_x)//vertical 
+        					GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, 0);   
+                		break;
+                	}
+                }
             }
+            
             //3
             temp_bound_x = min_x;
             traverse_it = it1;
@@ -398,6 +410,18 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
 	                    //if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
 	                }
             	}
+            }
+
+            //trivial cases: itr_gp1-1 = itr_gp2 
+            traverse_it = it1;
+            --traverse_it;
+            if(traverse_it==it2){
+            	traverse_it = it1;
+            	++traverse_it;
+            	if(traverse_it!=bound_map.end() && traverse_it->second->down_edge_GP !=NULL && traverse_it->second->Get_down_edge_x() <= temp_x){
+            		GP1->Add_edge(traverse_it->second->down_edge_GP, temp_x, temp_y1, traverse_it->second->Get_down_edge_x(), temp_y1, Layer_pos, 0);
+            	}
+
             }
 
             it1->second->Gp = GP1;//////
@@ -641,7 +665,7 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
 
     //### 1.Search  
     if((GP1==NULL && GP2==NULL) || LLine->S->Shape_type==VIA ) return;
-    if(GP1==NULL || GP2==NULL || temp_y1==temp_y2){ //just one point
+    if(GP1==NULL || GP2==NULL || temp_y1==temp_y2 ){ //just one point
     	if(GP1==NULL) {
     		_GP = GP2;
     		temp_y1 = temp_y2;
@@ -657,12 +681,13 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
         traverse_it = it1;
         for(;traverse_it!=bound_map.end();++traverse_it){
         	temp_bline = traverse_it->second;
-            if(temp_bound_x >= temp_x) break;
             if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
                 _GP->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
-
             }
-            if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
+            if(temp_bline->max_x > temp_bound_x) {
+            	temp_bound_x = temp_bline->max_x;
+            	if(temp_bound_x > temp_x) break;
+            }
         }
 
         //1
@@ -671,11 +696,13 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
             traverse_it = it1;
             while(1){
             	temp_bline = traverse_it->second;
-                if(temp_bound_x >= temp_x) break;
                 if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
                     _GP->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
                 }
-                if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
+                if(temp_bline->max_x > temp_bound_x) {
+                	temp_bound_x = temp_bline->max_x;
+                	if(temp_bound_x > temp_x) break;
+                }
                 if(traverse_it==bound_map.begin()) break;
                 --traverse_it;
             }
@@ -684,11 +711,13 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
             //cout << "1 point ritr";
             for(ritr = bound_map.rbegin();ritr!=bound_map.rend();++ritr){
             	temp_bline = ritr->second;
-                if(temp_bound_x >= temp_x) break;
                 if(temp_bline->Gp!=NULL && temp_bline->point_x > temp_bound_x ){
                     _GP->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
                 }
-                if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
+                if(temp_bline->max_x > temp_bound_x) {
+                	temp_bound_x = temp_bline->max_x;
+                	if(temp_bound_x > temp_x) break;
+                }
             }
         }
          
@@ -701,11 +730,13 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
             if(it2!=bound_map.begin()) --traverse_it;
             while(1){
             	temp_bline = traverse_it->second; 
-                if(temp_bound_x >= temp_x) break;
                 if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x &&  temp_bline->point_x > temp_bound_x ){
                     GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
                 }
-                if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
+                if(temp_bline->max_x > temp_bound_x) {
+                	temp_bound_x = temp_bline->max_x;
+                	if(temp_bound_x > temp_x) break;
+                }
                 if(traverse_it==bound_map.begin()) break;
                 --traverse_it;
             }
@@ -713,11 +744,13 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
         else{
             //cout << "ritr";
             for(ritr = bound_map.rbegin();ritr!=bound_map.rend();++ritr){
-                if(temp_bound_x >= temp_x) break;
                 if(ritr->second->Gp!=NULL && ritr->second->max_x <= temp_x &&  ritr->second->point_x > temp_bound_x ){
                     GP2->Add_edge(ritr->second->Gp, temp_x, temp_y1, ritr->second->point_x, ritr->second->point_y, Layer_pos, Via_cost);
                 }
-                if(ritr->second->max_x > temp_bound_x) temp_bound_x = ritr->second->max_x;
+                if(ritr->second->max_x > temp_bound_x) {
+                	temp_bound_x = ritr->second->max_x;
+                	if(temp_bound_x > temp_x) break;
+                }
             }  
         }
 
@@ -726,11 +759,13 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
         traverse_it = it2;
         for(;traverse_it!=it1;++traverse_it){
         	temp_bline = traverse_it->second;
-            if(temp_bound_x >= temp_x) break;
             if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
                 GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
             }
-            if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
+            if(temp_bline->max_x > temp_bound_x) {
+            	temp_bound_x = temp_bline->max_x;
+            	if(temp_bound_x > temp_x) break;
+            }
         }
 
         //5 and 3 construct edge
@@ -738,12 +773,14 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
         traverse_it = it1;
         for(;traverse_it!=bound_map.end();++traverse_it){
         	temp_bline = traverse_it->second;
-            if(temp_bound_x >= temp_x) break;
             if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
                 GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
 
             }
-            if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
+            if(temp_bline->max_x > temp_bound_x) {
+            	temp_bound_x = temp_bline->max_x;
+            	if(temp_bound_x > temp_x) break;
+            }
         }
         //3
         temp_bound_x = min_x;
@@ -751,18 +788,20 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
             traverse_it = it1;
             for(;traverse_it!=it2 && traverse_it!=bound_map.begin();--traverse_it){
             	temp_bline = traverse_it->second;
-                if(temp_bound_x >= temp_x) break;
                 if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
                     GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
                 }
-                if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
+                if(temp_bline->max_x > temp_bound_x) {
+                	temp_bound_x = temp_bline->max_x;
+                	if(temp_bound_x > temp_x) break;
+                }
             }
         }
         else{
             //cout << "ritr";
             for(ritr = bound_map.rbegin();ritr!=bound_map.rend();++ritr){
             	temp_bline = ritr->second;
-                if(temp_bound_x >= temp_x || ritr->first <= temp_y2) break;
+                if(temp_bound_x > temp_x || ritr->first <= temp_y2) break;
                 if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
                     GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
                 }
