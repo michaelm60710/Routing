@@ -642,6 +642,7 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
     pair<map< int , BoundLine_info* , less<int> >::iterator,bool> status1,status2;
     BoundLine_info *temp_bline;
     GraphPoint *_GP;
+    int LLine_shape = LLine->S->Shape_type;
     int temp_x, temp_bound_x,temp_y1,temp_y2;
 
     /*
@@ -663,9 +664,13 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
     it2 = bound_map.lower_bound(temp_y2);
 
 
+    if(LLine_shape==RSHAPE){ //RSHAPE, 2 point
+    	GP1 = GP2 = LLine->S->clu->Add_GP(LLine, UP, G_point_num);
+    }
+   
     //### 1.Search  
-    if((GP1==NULL && GP2==NULL) || LLine->S->Shape_type==VIA ) return;
-    if(GP1==NULL || GP2==NULL || temp_y1==temp_y2 ){ //just one point
+   	if((GP1==NULL && GP2==NULL) || LLine_shape==VIA) return;
+    else if(GP1==NULL || GP2==NULL || temp_y1==temp_y2 ){// 1 point ( only OBSATCLE)
     	if(GP1==NULL) {
     		_GP = GP2;
     		temp_y1 = temp_y2;
@@ -686,13 +691,22 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
             }
             if(temp_bline->max_x > temp_bound_x) {
             	temp_bound_x = temp_bline->max_x;
-            	if(temp_bound_x > temp_x) break;
+            	if(temp_bound_x > temp_x) {
+            		//obstacle point connect Rshape with vertical edge
+            		if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
+            			_GP->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, Via_cost); 
+            		break;	
+            	}
             }
         }
 
         //1
         temp_bound_x = min_x;
         if(it1!=bound_map.end()){//iterator -- 
+        	//horizental edge
+			if(it1->second->down_edge_GP !=NULL && it1->second->Get_down_edge_x() <= temp_x)//bug : it1 = it2 + 2 && RSHAPE(?)
+            	_GP->Add_edge(it1->second->down_edge_GP, temp_x, temp_y1, it1->second->Get_down_edge_x(), temp_y1, Layer_pos, Via_cost);
+
             traverse_it = it1;
             while(1){
             	temp_bline = traverse_it->second;
@@ -701,7 +715,14 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
                 }
                 if(temp_bline->max_x > temp_bound_x) {
                 	temp_bound_x = temp_bline->max_x;
-                	if(temp_bound_x > temp_x) break;
+                	if(temp_bound_x > temp_x) {
+                		//obstacle point connect Rshape with vertical edge
+                		if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
+                			_GP->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, Via_cost); 
+                		break;	
+                	}
+
+           
                 }
                 if(traverse_it==bound_map.begin()) break;
                 --traverse_it;
@@ -716,17 +737,25 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
                 }
                 if(temp_bline->max_x > temp_bound_x) {
                 	temp_bound_x = temp_bline->max_x;
-                	if(temp_bound_x > temp_x) break;
+                	if(temp_bound_x > temp_x){
+                		//obstacle point connect Rshape with vertical edge
+                		if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
+                			_GP->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, Via_cost); 
+                		break;	
+                	}
                 }
             }
         }
-         
     }
-    else{ //bug: it1 it2 is lower bound
-        //1 and 2 construct edge
+    else if(LLine->LR==RIGHT && LLine_shape==RSHAPE){
+		//###1
         temp_bound_x = min_x;
         traverse_it = it2;
         if(it2!=bound_map.end()){
+			//horizental edge
+			if(it2->second->down_edge_GP !=NULL && it2->second->Get_down_edge_x() <= temp_x)//bug : it1 = it2 + 2 && RSHAPE(?)
+            	GP2->Add_edge(it2->second->down_edge_GP, temp_x, temp_y2, it2->second->Get_down_edge_x(), temp_y2, Layer_pos, Via_cost);
+
             if(it2!=bound_map.begin()) --traverse_it;
             while(1){
             	temp_bline = traverse_it->second; 
@@ -735,7 +764,12 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
                 }
                 if(temp_bline->max_x > temp_bound_x) {
                 	temp_bound_x = temp_bline->max_x;
-                	if(temp_bound_x > temp_x) break;
+                	if(temp_bound_x > temp_x) {
+                	    //obstacle point connect Rshape with vertical edge
+	            		if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
+	            			GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_x, temp_bline->point_y, Layer_pos, Via_cost); 
+	            		break;	
+            		}
                 }
                 if(traverse_it==bound_map.begin()) break;
                 --traverse_it;
@@ -745,32 +779,26 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
             //cout << "ritr";
             for(ritr = bound_map.rbegin();ritr!=bound_map.rend();++ritr){
                 if(ritr->second->Gp!=NULL && ritr->second->max_x <= temp_x &&  ritr->second->point_x > temp_bound_x ){
-                    GP2->Add_edge(ritr->second->Gp, temp_x, temp_y1, ritr->second->point_x, ritr->second->point_y, Layer_pos, Via_cost);
+                    GP2->Add_edge(ritr->second->Gp, temp_x, temp_y2, ritr->second->point_x, ritr->second->point_y, Layer_pos, Via_cost);
                 }
                 if(ritr->second->max_x > temp_bound_x) {
                 	temp_bound_x = ritr->second->max_x;
-                	if(temp_bound_x > temp_x) break;
+                	if(temp_bound_x > temp_x) {
+                	    //obstacle point connect Rshape with vertical edge
+	            		if(ritr->second->Gp!=NULL && ritr->second->Gp->Shape_type==RSHAPE)
+	            			GP2->Add_edge(ritr->second->Gp, temp_x, temp_y2, temp_x, ritr->second->point_y, Layer_pos, Via_cost); 
+	            		break;	
+            		}
                 }
             }  
         }
 
-        //2
-        temp_bound_x = min_x;
-        traverse_it = it2;
-        for(;traverse_it!=it1;++traverse_it){
-        	temp_bline = traverse_it->second;
-            if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
-                GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
-            }
-            if(temp_bline->max_x > temp_bound_x) {
-            	temp_bound_x = temp_bline->max_x;
-            	if(temp_bound_x > temp_x) break;
-            }
-        }
-
-        //5 and 3 construct edge
+        //###5
         temp_bound_x = min_x;
         traverse_it = it1;
+        if(it1!=bound_map.end() && it1->second->down_edge_GP !=NULL && it1->second->Get_down_edge_x() <= temp_x )//horizental edge
+			GP1->Add_edge(it1->second->down_edge_GP, temp_x, temp_y1, it1->second->Get_down_edge_x(), temp_y1, Layer_pos, Via_cost);
+
         for(;traverse_it!=bound_map.end();++traverse_it){
         	temp_bline = traverse_it->second;
             if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
@@ -779,36 +807,142 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
             }
             if(temp_bline->max_x > temp_bound_x) {
             	temp_bound_x = temp_bline->max_x;
-            	if(temp_bound_x > temp_x) break;
+            	if(temp_bound_x > temp_x) {
+            		//obstacle point connect Rshape with vertical edge
+            		if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
+            			GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, Via_cost); 
+            		break;	
+            	}
             }
         }
-        //3
+	
+    }
+    else {// 2 point && OBSTACLE || LEFT 
+        //###1
         temp_bound_x = min_x;
-        if(it1!=bound_map.end() ){
-            traverse_it = it1;
-            for(;traverse_it!=it2 && traverse_it!=bound_map.begin();--traverse_it){
-            	temp_bline = traverse_it->second;
-                if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
-                    GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
+        traverse_it = it2;
+        if(it2!=bound_map.end()){
+			//horizental edge
+			if(it2->second->down_edge_GP !=NULL && it2->second->Get_down_edge_x() <= temp_x)//bug : it1 = it2 + 2 && RSHAPE(?)
+            	GP2->Add_edge(it2->second->down_edge_GP, temp_x, temp_y2, it2->second->Get_down_edge_x(), temp_y2, Layer_pos, Via_cost);
+
+            if(it2!=bound_map.begin()) --traverse_it;
+            while(1){
+            	temp_bline = traverse_it->second; 
+                if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x &&  temp_bline->point_x > temp_bound_x ){
+                    GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
                 }
                 if(temp_bline->max_x > temp_bound_x) {
                 	temp_bound_x = temp_bline->max_x;
-                	if(temp_bound_x > temp_x) break;
+                	if(temp_bound_x > temp_x) {
+                	    //obstacle point connect Rshape with vertical edge
+	            		if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
+	            			GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_x, temp_bline->point_y, Layer_pos, Via_cost); 
+	            		break;	
+            		}
                 }
+                if(traverse_it==bound_map.begin()) break;
+                --traverse_it;
             }
         }
         else{
             //cout << "ritr";
             for(ritr = bound_map.rbegin();ritr!=bound_map.rend();++ritr){
-            	temp_bline = ritr->second;
-                if(temp_bound_x > temp_x || ritr->first <= temp_y2) break;
-                if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
-                    GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
+                if(ritr->second->Gp!=NULL && ritr->second->max_x <= temp_x &&  ritr->second->point_x > temp_bound_x ){
+                    GP2->Add_edge(ritr->second->Gp, temp_x, temp_y2, ritr->second->point_x, ritr->second->point_y, Layer_pos, Via_cost);
                 }
-                if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
-            }              
+                if(ritr->second->max_x > temp_bound_x) {
+                	temp_bound_x = ritr->second->max_x;
+                	if(temp_bound_x > temp_x) {
+                	    //obstacle point connect Rshape with vertical edge
+	            		if(ritr->second->Gp!=NULL && ritr->second->Gp->Shape_type==RSHAPE)
+	            			GP2->Add_edge(ritr->second->Gp, temp_x, temp_y2, temp_x, ritr->second->point_y, Layer_pos, Via_cost); 
+	            		break;	
+            		}
+                }
+            }  
         }
+
+        //###2
+        if(LLine_shape==OBSTACLE){
+            temp_bound_x = min_x;
+	        traverse_it = it2;
+	        for(;traverse_it!=it1;++traverse_it){
+	        	temp_bline = traverse_it->second;
+	            if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
+	                GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
+	            }
+	            if(temp_bline->max_x > temp_bound_x) {
+	            	temp_bound_x = temp_bline->max_x;
+	            	if(temp_bound_x > temp_x) break;
+	            }
+	        }	
+        }
+        else{ //RSHAPE
+        	temp_bound_x = min_x;
+	        traverse_it = it2;
+	        for(;traverse_it!=it1;++traverse_it){
+	        	temp_bline = traverse_it->second;
+	            if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x  && temp_bline->point_x < temp_x ){
+	                GP2->Add_edge(temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
+	            }
+	        }
+        }
+
+
+        //###5
+        temp_bound_x = min_x;
+        traverse_it = it1;
+        if(it1!=bound_map.end() && it1->second->down_edge_GP !=NULL && it1->second->Get_down_edge_x() <= temp_x )//horizental edge
+			GP1->Add_edge(it1->second->down_edge_GP, temp_x, temp_y1, it1->second->Get_down_edge_x(), temp_y1, Layer_pos, Via_cost);
+
+        for(;traverse_it!=bound_map.end();++traverse_it){
+        	temp_bline = traverse_it->second;
+            if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
+                GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
+
+            }
+            if(temp_bline->max_x > temp_bound_x) {
+            	temp_bound_x = temp_bline->max_x;
+            	if(temp_bound_x > temp_x) {
+            		//obstacle point connect Rshape with vertical edge
+            		if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
+            			GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, Via_cost); 
+            		break;	
+            	}
+            }
+        }
+        //###3
+        temp_bound_x = min_x;
+        if(LLine_shape==OBSTACLE){
+            if(it1!=bound_map.end() ){
+	            traverse_it = it1;
+	            for(;traverse_it!=it2 && traverse_it!=bound_map.begin();--traverse_it){
+	            	temp_bline = traverse_it->second;
+	                if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
+	                    GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
+	                }
+	                if(temp_bline->max_x > temp_bound_x) {
+	                	temp_bound_x = temp_bline->max_x;
+	                	if(temp_bound_x > temp_x) break;
+	                }
+	            }
+	        }
+	        else{
+	            //cout << "ritr";
+	            for(ritr = bound_map.rbegin();ritr!=bound_map.rend();++ritr){
+	            	temp_bline = ritr->second;
+	                if(temp_bound_x > temp_x || ritr->first <= temp_y2) break;
+	                if(temp_bline->Gp!=NULL && temp_bline->max_x <= temp_x && temp_bline->point_x > temp_bound_x ){
+	                    GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost);
+	                }
+	                if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
+	            }              
+	        }	
+        }
+
     }
+   
 
 
 }
