@@ -18,6 +18,11 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 	//Step 2
 	cout << "STC...\n";
 	SpanningTreeConstruct();
+
+	//Step 1.2
+	cout << "SGC2...\n";
+	//SpanningGraphConstruct_2();
+
 	// plot test
     //for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
 

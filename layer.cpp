@@ -56,6 +56,7 @@ void Layer::SpanningGraphConstruct(){
                 |
     ------------  b_down1
     */
+    bound_map.clear();
     BoundLine_info* b_down  = new BoundLine_info(Width, 0, UP, Spacing-1, min_x, NULL);
     BoundLine_info* b_down1 = new BoundLine_info(Width, 0, DOWN, -1, min_x, NULL);//
     BoundLine_info* b_upper = new BoundLine_info(Width, 0, UP, Height+1, min_x, NULL);//

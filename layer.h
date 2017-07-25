@@ -12,6 +12,7 @@ class Layer{
 public:
 	Layer();
 	void SpanningGraphConstruct();            //step 1
+	void SpanningGraphConstruct_2();            //step 1.2
 	//void SpanningTreeConstruct();             //step 2
 	void RectilinearSpanningTreeConstruct();  //step 3
 	void OARSMT();                            //step 4
