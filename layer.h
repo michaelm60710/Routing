@@ -14,8 +14,6 @@ public:
 	void SpanningGraphConstruct();            //step 1
 	void SpanningGraphConstruct_2();            //step 1.2
 	//void SpanningTreeConstruct();             //step 2
-	void RectilinearSpanningTreeConstruct();  //step 3
-	void OARSMT();                            //step 4
 
 	//void MergeCluster(Cluster *, Cluster *);
 
@@ -27,8 +25,10 @@ public:
 
     //
     pair<GraphPoint*, GraphPoint*> SGconstruct(Line*); //same layer shape
+    GraphPoint* SGconstruct_2(Line*, GraphPoint*, bool); //same layer shape
     void SGconstruct_search(Line*, GraphPoint*, GraphPoint*); //dif layer shape
     void SGcons_RshapeOverlap(Line*, GraphPoint* &, GraphPoint* &, bool &, bool &);
+    void SGcons_RshapeOverlap_2(GraphPoint*);
     void diff_layer_via(Line*, GraphPoint*, GraphPoint*, GraphPoint*, GraphPoint*);
     void ConvertToUndirectedG();
     void check_point_svg(string name="x");
@@ -53,6 +53,10 @@ public:
 	vector<Cluster*> all_cluster;
 	list < Shape* > Via_list;
 	list < Shape* > Upper_Via_list;
+	static int G_point_num;
+
+	//for layout
+	vector <GraphPoint*> layer_gp_vec;
 
 private:
 	list < Shape* > Rshape_list;
@@ -66,7 +70,6 @@ private:
 	int Via_num;
 	int Upper_Via_num;
 	int Layer_Shape_num;
-	static int G_point_num;
 
 	map< int , BoundLine_info* , less<int> > bound_map;
 

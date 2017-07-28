@@ -21,8 +21,9 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 	//Step 1.2
 	cout << "SGC2...\n";
+	//Restruct();
 	//SpanningGraphConstruct_2();
-
+	//SpanningTreeConstruct_2();
 	// plot test
     //for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
 
@@ -165,7 +166,7 @@ Coords* Manager::Parsing_via(string coor1){ // ex: (8,523)
 
 void Manager::Output(const char *Output_file){
 
-	list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
+	list < GraphPoint* >::iterator gp_itr;
 	list<Edge_info*>::iterator edge_itr;
 	multimap< int , via_pos* >::iterator via_itr,via_itr2;
    	bool via_up, via_down;
@@ -176,7 +177,6 @@ void Manager::Output(const char *Output_file){
 	//test
 	vector <multimap< int , int > > via_checker;//test
 	via_checker.resize(MetalLayers);
-	list <via_pos*>::iterator check_itr1,check_itr2;
     //### 1. init select = false
     for(gp_itr = gp_list.begin();gp_itr != gp_list.end(); ++gp_itr) (*gp_itr)->select = false;
 
@@ -265,8 +265,148 @@ void Manager::Output(const char *Output_file){
     			if(itr1->second==itr->second) out = false;
     			++itr1;
     		}
-    		if(out) ofile << "Via V" << i << " ("<< x << "," << itr->second << ")" << endl;
+    		if(out) {
+    			//"check Via input" // not good enough
+    			list < Shape* >::iterator via_itr;
+    			bool out2 = true;
+    			for(via_itr = all_layer[i-1].Via_list.begin(); via_itr != all_layer[i-1].Via_list.end(); ++via_itr){
+    				if((*via_itr)->coords->x1 == x &&  (*via_itr)->coords->y1 == itr->second){
+    					out2 = false;
+    					break;
+    				}
+    			}
+    			//"check Via input" over
+    			if(out2)
+    				ofile << "Via V" << i << " ("<< x << "," << itr->second << ")" << endl;
+    		}
     	}
+    }
+
+}
+
+void Manager::Restruct(){
+	list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
+	list<Edge_info*>::iterator edge_itr;
+    int layer_pos, XX, YY, x1, x2, y1, y2;
+	
+	//xy position check
+	vector <multimap< int , int > > xy_checker;
+	xy_checker.resize(MetalLayers);
+
+	//### 1. init select = false
+    for(gp_itr = gp_list.begin();gp_itr != gp_list.end(); ++gp_itr) (*gp_itr)->select = false;
+
+    //### 2. insert xy_checker
+    for(gp_itr = gp_list.begin();gp_itr != gp_list.end(); ++gp_itr){
+    	layer_pos = (*gp_itr)->Layer_pos;
+    	(*gp_itr)->select = true;
+        for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
+			
+        	if((*edge_itr)->Gp->select) continue;
+
+            x1 = (*edge_itr)->point_x1;
+            y1 = (*edge_itr)->point_y1;
+            x2 = (*edge_itr)->point_x2;
+            y2 = (*edge_itr)->point_y2;
+            
+            XX = x2 - x1;
+			YY = y2 - y1;
+
+			//####Edge output : layer
+			if(XX==0 && YY==0){//(*edge_itr)->layer
+				xy_checker[(*gp_itr)->Layer_pos].insert(pair<int, int>(x1,y1) );
+				xy_checker[(*edge_itr)->Gp->Layer_pos].insert(pair<int, int>(x1,y1) );
+			}
+			else if(XX!=0 && YY!=0){ // add 2 steiner_point
+				xy_checker[(*gp_itr)->Layer_pos].insert(pair<int, int>(x1,y1) );
+				xy_checker[(*edge_itr)->Gp->Layer_pos].insert(pair<int, int>(x2,y2) );
+				xy_checker[(*edge_itr)->layer].insert(pair<int, int>(x1,y1) );
+				xy_checker[(*edge_itr)->layer].insert(pair<int, int>(x1,y2) );
+				xy_checker[(*edge_itr)->layer].insert(pair<int, int>(x2,y1) );
+				xy_checker[(*edge_itr)->layer].insert(pair<int, int>(x2,y2) );
+			}
+			else{ //it is already vertical or H
+				xy_checker[(*gp_itr)->Layer_pos].insert(pair<int, int>(x1,y1) );
+				xy_checker[(*edge_itr)->Gp->Layer_pos].insert(pair<int, int>(x2,y2) );
+				xy_checker[(*edge_itr)->layer].insert(pair<int, int>(x1,y1) );
+				xy_checker[(*edge_itr)->layer].insert(pair<int, int>(x2,y2) );
+			}
+
+        }
+        //####VIA output
+        if((*gp_itr)->Shape_type==OBSTACLE);
+        else{//RSHAPE or VIA (add VIA)
+        	for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
+        		if ((*edge_itr)->layer!=layer_pos){
+        			x1 = (*edge_itr)->point_x1;
+            		y1 = (*edge_itr)->point_y1;
+		            // bug XX YY != 0 (0728)
+
+	                if((*edge_itr)->layer > layer_pos ){
+	                	for(int i = (*edge_itr)->layer;i>layer_pos;i--){
+	                		xy_checker[i].insert(pair<int, int>(x1, y1));
+	                	}
+	                }
+	                else if((*edge_itr)->layer < layer_pos){
+						for(int i = (*edge_itr)->layer;i<layer_pos;i++){
+							xy_checker[i+1].insert(pair<int, int>(x1, y1));
+	                	}
+	                }
+				}
+        	}
+
+        }
+
+    }
+
+    //### 3. remove the point which have same xy & 
+    multimap< int , int >::iterator itr, itr1;
+    vector<GraphPoint* >::iterator vec_itr;
+    int x = 0, gp_len = 0;
+    bool out;
+    for(int i=0;i<MetalLayers;i++){
+    	itr = xy_checker[i].begin();
+    	while(itr!=xy_checker[i].end()){
+    		itr1 = itr;
+    		x = itr1->first;
+    		++itr1;
+    		out = true;
+    		while(itr1!=xy_checker[i].end()){
+    			if(itr1->first!=x) break;
+    			if(itr1->second==itr->second) {
+    				out = false;
+    				break;
+    			}
+    			++itr1;
+    		}
+    		if(!out) {//have same xy, need to be deleted
+    			xy_checker[i].erase(itr1);
+    		}
+    		else
+    			++itr;
+    	}
+    	gp_len += xy_checker[i].size();
+    }
+    //### 4.  construct gp_vec in each layer
+    cout << gp_len << endl;
+    gp_vec.resize(gp_len);
+    vec_itr = gp_vec.begin();
+    for(int i=0;i<MetalLayers;i++)
+    	for(itr = xy_checker[i].begin();itr!=xy_checker[i].end();++itr){
+    		*vec_itr = new GraphPoint(i , itr->first, itr->second, all_layer[i].G_point_num);
+    		//test ( for plot)
+    		all_layer[i].layer_gp_vec.push_back(*vec_itr);
+
+    		++vec_itr;
+    	}
+    //### 5. remove all gp map_edge
+    for(size_t i = 0; i < all_cluster.size(); i++){
+        begin_itr = all_cluster[i]->GraphP_list.begin();
+        end_itr = all_cluster[i]->GraphP_list.end();
+        for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
+        	(*gp_itr)->map_edge.clear();
+        }
+
     }
 
 }

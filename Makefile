@@ -1,6 +1,6 @@
 CFLAGS = -O3 -Wall 
-net_open_finder: main.o Manager.o layer.o layer2.o cluster.o sgc.o
-	g++ -o net_open_finder main.o Manager.o layer.o layer2.o cluster.o sgc.o
+net_open_finder: main.o Manager.o layer.o layer2.o cluster.o sgc.o sgc2.o
+	g++ -o net_open_finder main.o Manager.o layer.o layer2.o cluster.o sgc.o sgc2.o
 
 main.o: main.cpp Manager.h
 	g++ -c $(CFLAGS) main.cpp
@@ -20,6 +20,8 @@ Manager.o: Manager.cpp Manager.h layer.h
 sgc.o:sgc.cpp Manager.h
 	g++ -c $(CFLAGS) sgc.cpp
 
+sgc2.o:sgc2.cpp Manager.h 
+	g++ -c $(CFLAGS) sgc2.cpp
 
 clean:
 	rm -f *.o 

@@ -68,7 +68,6 @@ GraphPoint::GraphPoint(Line* L, int UPorDown, int _idx){
 
 GraphPoint::GraphPoint(int _layer_pos, int _x, int _y){ // for opt1
 	clu = NULL;
-	Shape_type = 0;
 	Layer_pos = _layer_pos;
 	idx = -1;
 	x = _x;
@@ -80,8 +79,22 @@ GraphPoint::GraphPoint(int _layer_pos, int _x, int _y){ // for opt1
 	Shape_type = OBSTACLE; //Output file need to use QQ
 }
 
+GraphPoint::GraphPoint(int _layer_pos, int _x, int _y, int &_idx){ // for SGC_2
+	clu = NULL;
+	Layer_pos = _layer_pos;
+	idx = _idx++;
+	x = _x;
+	y = _y;
+	visit = false;
+	select = false;
+	rank = 0;
+	terminal_dis = INT_MAX;
+	Shape_type = OBSTACLE;
+}
+
+
 void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_x, int insert_y, int layer, int via_cost){ //add_dis = 0 or Viacost
-	if (insert_gp->clu == clu && clu->GetShapeType()==RSHAPE) return;//same cluster
+	if (insert_gp->clu == clu && Shape_type==RSHAPE) return;//same cluster
 	int distance = abs(my_x-insert_x) + abs(my_y-insert_y) + via_cost;
 	MAP_GP_Status status1;//,status2;
 	Edge_info *E1;

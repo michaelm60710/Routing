@@ -74,7 +74,7 @@ void Manager::SpanningGraphConstruct(){
             all_layer[temp_layer+1].SGconstruct_search(all_line[s], GP_result.first, GP_result.second);
         }
 
-        //up down construct rshape via
+        //Init: up down construct rshape via
         P1 = P2 = P3 = P4 = NULL;
     	PP1 = PP2 = PP3 = PP4 = false;
     	if(all_line[s]->S->Shape_type==VIA) PP1 = PP2 = PP3 = PP4 = true;
@@ -83,6 +83,7 @@ void Manager::SpanningGraphConstruct(){
     		else if(GP_result.second == NULL)PP2 = PP4 = true;
 
     	}
+
         for(int i = temp_layer+1;i<=MetalLayers-1;i++) {
             all_layer[i].SGcons_RshapeOverlap(all_line[s], P1, P2, PP1, PP2);
             if(PP1 && PP2) break;
@@ -319,8 +320,8 @@ void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2) { //need to optimize! 
 
     //test 
     if((p1->root->Layer_pos!=p2->root->Layer_pos && !(p1->Shape_type!=OBSTACLE && p2->Shape_type!=OBSTACLE)) ) { //bug: roots are same layer
-        Optimize1(p1, p2);
-        return;
+        //Optimize1(p1, p2);
+        //return;
     }
     //else return;
 

@@ -74,6 +74,7 @@ class GraphPoint{//Only consider same layer
 public:
 	GraphPoint(Line*, int, int);
 	GraphPoint(int, int, int);
+	GraphPoint(int, int, int, int&);
 	void Add_edge(GraphPoint*, int, int, int, int, int, int);
 	GraphPoint* Find_Set();
 	Cluster *clu;
@@ -113,7 +114,7 @@ public:
 
 class BoundLine_info{
 public:
-	BoundLine_info(int m_x, int temp_x, int flag, int P_y, int min_x, GraphPoint *gpp):Gp(NULL),max_x(m_x),point_x(temp_x),point_y(P_y)
+	BoundLine_info(int m_x, int temp_x, int flag, int P_y, int min_x, GraphPoint *gpp=NULL):Gp(NULL),max_x(m_x),point_x(temp_x),point_y(P_y)
 	{
 		//min_x = spacing - 1
 		up_edge_GP = down_edge_GP = NULL;
