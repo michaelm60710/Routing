@@ -1,6 +1,7 @@
 #include "Manager.h"
 #include <iostream>
 #include <algorithm>
+#include <queue>  
 
 using namespace std;
 
@@ -135,7 +136,8 @@ void Manager::SpanningTreeConstruct_2(){
 	//###2. Extended Dijkstra's Algorithm
     ExtendedDijkstra_2();
     //###3. Extended Kruskal's Algorithm
-    ExtendedKruskal_2();
+    //ExtendedKruskal_2();
+    ExtendedPrims();
     //###4. Final GP list construct
     GraphPoint *r_gp;
     for(size_t i = 0; i < all_cluster.size(); i++){
@@ -172,7 +174,6 @@ void Manager::ExtendedDijkstra_2(){
             (*gpv_itr)->Fnode = FibH.push(INT_MAX, (*gpv_itr));
 		}
     }
-
 
     //### 2. Shortest path terminal forest construct
     while(!FibH.empty()){
@@ -284,4 +285,128 @@ void Manager::ExtendedKruskal_2() {
 
     }
 
+}
+
+void Manager::ExtendedPrims(){
+    cout << "...Start extend Prim's ...\n";
+    FibHeap<int> FibH;// FibH;
+    FibHeap<int>::FibNode *temp_fibn;
+    queue<GraphPoint*> myqueue;
+    list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
+    MAP_GP_edge::iterator map_gp_itr;
+    GraphPoint *temp_gp, *temp_gp2, *prims_temp_gp;
+    int edgeLength;
+
+    //###1. construct tree node && Init 
+    for(vector <GraphPoint*>::iterator gpv_itr = all_gp_vec.begin(); gpv_itr != all_gp_vec.end(); ++gpv_itr){
+        if((*gpv_itr)->parent && (*gpv_itr)->parent!=(*gpv_itr) ) (*gpv_itr)->parent->prims_tree_nd.push_back((*gpv_itr));
+        (*gpv_itr)->prims_select = false;
+        (*gpv_itr)->prims_weight = INT_MAX;
+        (*gpv_itr)->Fnode = NULL;
+        (*gpv_itr)->select = false; // final edge need to init
+    }
+
+    //###2-1. select first vertex and update the edge 
+    (*all_gp_rshape_begin)->prims_weight = 0;
+    myqueue.push(*all_gp_rshape_begin);
+    while(!myqueue.empty()){
+        temp_gp = myqueue.front();
+        myqueue.pop();
+        for(list<GraphPoint*>::iterator g_itr = temp_gp->prims_tree_nd.begin(); g_itr != temp_gp->prims_tree_nd.end(); ++g_itr) myqueue.push(*g_itr);
+        for (map_gp_itr = temp_gp->map_edge.begin(); map_gp_itr != temp_gp->map_edge.end(); ++map_gp_itr) {
+            temp_gp2 = map_gp_itr->second->Gp;
+            if (temp_gp->root != temp_gp2->root) {
+                edgeLength = map_gp_itr->second->distance + temp_gp->terminal_dis + temp_gp2->terminal_dis;
+                if(temp_gp2->root->prims_weight > edgeLength) {
+                	temp_gp2->root->prims_weight = edgeLength;
+                	map_gp_itr->second->source = temp_gp;
+                	temp_gp2->root->prims_edge = map_gp_itr->second;
+                }
+            }
+        }
+
+    }
+
+    //###2-2. Insert Vertex
+    for(vector <GraphPoint*>::iterator gpv_itr = ++all_gp_rshape_begin; gpv_itr != all_gp_vec.end(); ++gpv_itr){
+    	if((*gpv_itr)->Shape_type!=OBSTACLE) (*gpv_itr)->Fnode = FibH.push((*gpv_itr)->prims_weight, (*gpv_itr));
+    }
+
+    //###2-3. Extended Prim's Algorithm
+    while(!FibH.empty()){
+        temp_fibn = FibH.topNode();
+        edgeLength = temp_fibn->key;
+        prims_temp_gp = (GraphPoint*)temp_fibn->payload;
+        prims_temp_gp->prims_select = true;
+        //cerr << "Top: " << edgeLength << endl;
+
+        //# pop the target vertex
+        FibH.pop();
+
+        //# update edge (new gp)
+        while(!myqueue.empty()) myqueue.pop();
+        if(prims_temp_gp->root != prims_temp_gp) cout << "wrong?";
+        prims_temp_gp->prims_weight = 0;
+        myqueue.push(prims_temp_gp);
+        while(!myqueue.empty()){
+	        temp_gp = myqueue.front();
+	        myqueue.pop();
+	        for(list<GraphPoint*>::iterator g_itr = temp_gp->prims_tree_nd.begin(); g_itr != temp_gp->prims_tree_nd.end(); ++g_itr) myqueue.push(*g_itr);
+	        for (map_gp_itr = temp_gp->map_edge.begin(); map_gp_itr != temp_gp->map_edge.end(); ++map_gp_itr) {
+	            temp_gp2 = map_gp_itr->second->Gp;
+	            if(temp_gp2->root->prims_select) continue;
+	            if (temp_gp->root != temp_gp2->root) {
+	                edgeLength = map_gp_itr->second->distance + temp_gp->terminal_dis + temp_gp2->terminal_dis;
+	                if(temp_gp2->root->prims_weight > edgeLength) {
+	                	temp_gp2->root->prims_weight = edgeLength;
+	                	map_gp_itr->second->source = temp_gp;
+	                	temp_gp2->root->prims_edge = map_gp_itr->second;
+	                	FibH.decrease_key(temp_gp2->root->Fnode, edgeLength);
+	                }
+	            }
+	        }
+    	}
+    	//# update edge (new path)
+    	update_path(prims_temp_gp->prims_edge->source, FibH);
+    	update_path(prims_temp_gp->prims_edge->Gp, FibH);
+
+       
+
+        //# insert MST edge
+        if(prims_temp_gp->prims_edge)
+        	addMSTEdges(prims_temp_gp->prims_edge->source, prims_temp_gp->prims_edge->Gp);
+       	else{
+       		cout << "bug?";
+       	}
+
+    }
+
+}
+
+void Manager::update_path(GraphPoint *p, FibHeap<int> &FibH){
+	MAP_GP_edge::iterator map_gp_itr;
+	GraphPoint *temp_gp2;
+
+	while (p != p->parent) {
+    	if(p->terminal_dis!=0){
+    		cout << "try  ";
+    		p->terminal_dis = 0;
+    		for (map_gp_itr = p->map_edge.begin(); map_gp_itr != p->map_edge.end(); ++map_gp_itr) {
+	            temp_gp2 = map_gp_itr->second->Gp;
+	            if(temp_gp2->root->prims_select) continue;
+	            if (p->root != temp_gp2->root) {
+	                int edgeLength = map_gp_itr->second->distance + p->terminal_dis + temp_gp2->terminal_dis;
+	                if(temp_gp2->root->prims_weight > edgeLength) {
+	                	temp_gp2->root->prims_weight = edgeLength;
+	                	map_gp_itr->second->source = p;
+	                	temp_gp2->root->prims_edge = map_gp_itr->second;
+	                	FibH.decrease_key(temp_gp2->root->Fnode, edgeLength);
+	                }
+	            }
+	        }
+
+    	}
+
+        p = p->parent;
+    }
 }

@@ -317,9 +317,8 @@ void Manager::unionSet( GraphPoint *s1, GraphPoint *s2 ) {
 
 void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2) { //need to optimize! use map search
     GraphPoint *p = p1;
-
     //test 
-    if((p1->root->Layer_pos!=p2->root->Layer_pos && !(p1->Shape_type!=OBSTACLE && p2->Shape_type!=OBSTACLE)) ) { //bug: roots are same layer
+    if(p1->root->Layer_pos!=p2->root->Layer_pos && !(p1->Shape_type!=OBSTACLE && p2->Shape_type!=OBSTACLE) ) { //bug: roots are same layer
         //Optimize1(p1, p2);
         //return;
     }
@@ -354,7 +353,7 @@ void Manager::add_Final_GP(GraphPoint *p1, GraphPoint *p2, bool insert_gp_list) 
 	MAP_GP_edge::iterator it1 = p1->map_edge.find(p2->idx);
 	Edge_info* temp_edge;
 	Edge_info *E1;
-	if(it1 == p1->map_edge.end() ) cout <<"??\n";
+	if(it1 == p1->map_edge.end() ) cout << insert_gp_list << "??\n";
 	else {
 		if(insert_gp_list) gp_list.push_back(p1);
 		temp_edge = it1->second;

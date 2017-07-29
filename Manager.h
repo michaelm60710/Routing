@@ -29,6 +29,8 @@ public:
 	void ExtendedDijkstra_2();
 	void ExtendedKruskal();
 	void ExtendedKruskal_2();
+	void ExtendedPrims();
+	void update_path(GraphPoint*, FibHeap<int> &);
 	void addMSTEdges(GraphPoint *p1, GraphPoint *p2);
 	void add_Final_GP(GraphPoint *p1, GraphPoint *p2, bool);
 	void unionSet( GraphPoint *, GraphPoint *);

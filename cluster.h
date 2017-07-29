@@ -92,7 +92,7 @@ public:
 	FibHeap<int>::FibNode *Fnode;
 	GraphPoint *parent;//no null
 	GraphPoint *root; //no null
-	int terminal_dis; // Extended Dijkstra's & Opt1 use
+	int terminal_dis; // Extended Dijkstra's & Opt1 use & prims
 	bool select;
 
 	//Extended Kruskal's
@@ -105,6 +105,12 @@ public:
 	list<Edge_info*> ftemp_edge;
 	GraphPoint *path; //Opt1
 	GraphPoint *path_opt; //Opt1
+
+	//Extended Prim's
+	list<GraphPoint*> prims_tree_nd;
+	bool prims_select;
+	int prims_weight;
+	Edge_info *prims_edge;
 
 	//test
 	static int construct_edge;
@@ -212,6 +218,11 @@ struct via_pos{
 	int via_num; //
 };
 
+struct Ex_prims
+{
+	GraphPoint *master_gp;
+	Edge_info* Edge;
+};
 
 
 

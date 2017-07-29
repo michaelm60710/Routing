@@ -21,9 +21,9 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 	//Step 1.2
 	cout << "SGC2...\n";
-	//Restruct();
-	//SpanningGraphConstruct_2();
-	//SpanningTreeConstruct_2();
+	Restruct();
+	SpanningGraphConstruct_2();
+	SpanningTreeConstruct_2();
 	// plot test
     //for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
 
@@ -340,7 +340,6 @@ void Manager::Restruct(){
         		if ((*edge_itr)->layer!=layer_pos){
         			x1 = (*edge_itr)->point_x1;
             		y1 = (*edge_itr)->point_y1;
-		            // bug XX YY != 0 (0728)
 
 	                if((*edge_itr)->layer > layer_pos ){
 	                	for(int i = (*edge_itr)->layer;i>layer_pos;i--){

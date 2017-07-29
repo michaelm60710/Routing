@@ -64,20 +64,15 @@ GraphPoint* Layer::SGconstruct_2(Line *LLine, GraphPoint *GP_last, bool L_or_GP)
         //############check point whether need to insert
         traverse_it = it1;
         ++traverse_it;
+        if(traverse_it!=bound_map.end() && traverse_it->second->down_edge_GP && traverse_it->second->down_edge_GP->Shape_type==RSHAPE && traverse_it->second->Get_down_edge_x() >= temp_x){//Rshape overlap
+            GP_last->Add_edge(traverse_it->second->down_edge_GP, temp_x, temp_y1, temp_x, temp_y1, Layer_pos, 0);
+        }
         if(status1.second==false && it1->second->max_x > temp_x ){//same y 
-        	
             if(it1->second->Gp && it1->second->Gp->Shape_type==RSHAPE){//with Rshape connect
                 GP_last->Add_edge(it1->second->Gp, temp_x, temp_y1, temp_x, temp_y1, Layer_pos, 0);
             }
-            if(traverse_it->second->down_edge_GP && traverse_it->second->down_edge_GP->Shape_type==RSHAPE && traverse_it->second->Get_down_edge_x() >= temp_x){
-                GP_last->Add_edge(traverse_it->second->down_edge_GP, temp_x, temp_y1, temp_x, temp_y1, Layer_pos, 0);
-            }
         } 
         else if(status1.second!=false && traverse_it!=bound_map.end() && traverse_it->second->Get_down_edge_x() >= temp_x){
-        	
-            if(traverse_it->second->down_edge_GP && traverse_it->second->down_edge_GP->Shape_type==RSHAPE){
-                GP_last->Add_edge(traverse_it->second->down_edge_GP, temp_x, temp_y1, temp_x, temp_y1, Layer_pos, 0);
-            }
             p1 = false;//this point need to delete
         }
         else{
@@ -91,15 +86,14 @@ GraphPoint* Layer::SGconstruct_2(Line *LLine, GraphPoint *GP_last, bool L_or_GP)
                 if(temp_bline->Gp!=NULL && temp_bline->point_x > temp_bound_x ){
                 	if(temp_bline->Gp->Shape_type!=OBSTACLE)
                 		GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->max_x, temp_y1, Layer_pos, 0);
-                    else{
+                    else
                     	GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
-                	}
                 }
                 if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
             }
             ++traverse_it;
-            if(traverse_it->second->Gp!=NULL && traverse_it->second->max_x == temp_x )//test
-            	GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, temp_x, traverse_it->second->point_y, Layer_pos, 0);//test
+            if(traverse_it->second->Gp!=NULL && traverse_it->second->max_x == temp_x )//horizental
+            	GP1->Add_edge(traverse_it->second->Gp, temp_x, temp_y1, temp_x, traverse_it->second->point_y, Layer_pos, 0);
 
             if(traverse_it!=bound_map.end() && traverse_it->second->Get_down_edge_x() <= temp_x){
             	if(traverse_it->second->down_edge_GP !=NULL)//horizental
@@ -121,7 +115,7 @@ GraphPoint* Layer::SGconstruct_2(Line *LLine, GraphPoint *GP_last, bool L_or_GP)
                 temp_bline = traverse_it->second;
                 if(temp_bound_x > temp_x) break;
                 if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x ){
-                	if(temp_bline->Gp->Shape_type==RSHAPE && temp_bline->max_x >= temp_x)//make it "vertical"
+                	if(temp_bline->Gp->Shape_type!=OBSTACLE && temp_bline->max_x >= temp_x)//make it "vertical"
                 		GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, 0);
                 	else
                     	GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->max_x, temp_bline->point_y, Layer_pos, 0);
@@ -133,18 +127,12 @@ GraphPoint* Layer::SGconstruct_2(Line *LLine, GraphPoint *GP_last, bool L_or_GP)
             temp_bound_x = min_x;
             traverse_it = it1;
             
-            if(it1!=bound_map.begin()) {
-            	--traverse_it;
-            	//test
-            	temp_bline = traverse_it->second;
-            	if(temp_bline->Gp!=NULL && temp_bline->max_x == temp_x )
-            		GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, 0);
-            }
+            if(it1!=bound_map.begin()) --traverse_it;
             while(1){
                 temp_bline = traverse_it->second;
                 if(temp_bound_x > temp_x) break;
                 if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x ){
-                	if(temp_bline->Gp->Shape_type==RSHAPE && temp_bline->max_x >= temp_x)//make it "vertical"
+                	if(temp_bline->Gp->Shape_type!=OBSTACLE && temp_bline->max_x >= temp_x)//make it "vertical"
                 		GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, 0);
                 	else
                     	GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->max_x, temp_bline->point_y, Layer_pos, 0);
@@ -208,9 +196,7 @@ GraphPoint* Layer::SGconstruct_2(Line *LLine, GraphPoint *GP_last, bool L_or_GP)
         traverse_it = it1;
         ++traverse_it;
 
-        if(status1.second==false && it1->second->max_x > temp_x ){ //same y 
-            //up point no need 
-        }
+        if(status1.second==false && it1->second->max_x > temp_x ); //same y 
         else if(status1.second!=false && traverse_it!=bound_map.end() && traverse_it->second->Get_down_edge_x() >= temp_x){
             //up point no need 
             if( traverse_it->second->Get_down_edge_x() >= temp_max_x) p1 = false;//this point need to delete
@@ -255,7 +241,7 @@ GraphPoint* Layer::SGconstruct_2(Line *LLine, GraphPoint *GP_last, bool L_or_GP)
                 --traverse_it;
             }
 
-            it1->second->Gp = GP1;//////
+            it1->second->Gp = GP1;
 
         }
         
@@ -271,11 +257,11 @@ GraphPoint* Layer::SGconstruct_2(Line *LLine, GraphPoint *GP_last, bool L_or_GP)
             traverse_it = it1;
             ++traverse_it;
             if(traverse_it!=bound_map.end()) 
-               it1->second->Change_up_edge(traverse_it->second->down_edge_GP, traverse_it->second->Get_down_edge_x()); // it1->second->up_edge_x = traverse_it->second->Get_down_edge_x();
+               it1->second->Change_up_edge(traverse_it->second->down_edge_GP, traverse_it->second->Get_down_edge_x()); 
             if(it1!=bound_map.begin()) {
                 traverse_it = it1;
                 --traverse_it;
-                it1->second->Change_down_edge(traverse_it->second->up_edge_GP, traverse_it->second->Get_up_edge_x());//it1->second->down_edge_x = traverse_it->second->Get_up_edge_x();
+                it1->second->Change_down_edge(traverse_it->second->up_edge_GP, traverse_it->second->Get_up_edge_x());
             }
         }
     }
@@ -300,9 +286,9 @@ GraphPoint* Layer::SGconstruct_2(Line *LLine, GraphPoint *GP_last, bool L_or_GP)
             if(traverse_it->second->Get_up_edge_x() >= temp_max_x) p2 = false;//dont inert this x line 
         }
         else{
-            GP2 = temp_clu->Add_GP(LLine, DOWN, G_point_num);
             if(t_shape_type==RSHAPE){//0726
-              //1 and 2 construct edge
+                GP2 = temp_clu->Add_GP(LLine, DOWN, G_point_num);
+                //1 and 2 construct edge
                 temp_bound_x = min_x;
                 traverse_it = it2;
                 if(status2.second==false){
@@ -374,8 +360,8 @@ GraphPoint* Layer::SGconstruct_2(Line *LLine, GraphPoint *GP_last, bool L_or_GP)
             if( traverse_it->second->Get_down_edge_x() >= temp_max_x) p1 = false;//this point need to delete
         }
         else{
-            GP1 = temp_clu->Add_GP(LLine, UP, G_point_num);
             if(t_shape_type==RSHAPE){
+                GP1 = temp_clu->Add_GP(LLine, UP, G_point_num);
                 // 5 and 3 construct edge
                 if(status1.second==false && it1->second->max_x != temp_x) temp_bound_x = it1->second->max_x;//trivial cases
                 else                                                      temp_bound_x = min_x;
@@ -457,8 +443,8 @@ GraphPoint* Layer::SGconstruct_2(Line *LLine, GraphPoint *GP_last, bool L_or_GP)
                 temp_bline = traverse_it->second;
                 if(temp_bline->max_x <= temp_max_x ) {
                 	if(temp_bline->Gp != NULL && temp_bline->point_x >= temp_x){//gp point
-                		//if(GP1 != NULL )  GP1->Add_edge(temp_bline->Gp, temp_bline->point_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
-                		//if(GP2 != NULL )  GP2->Add_edge(temp_bline->Gp, temp_bline->point_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
+                		if(GP1 != NULL )  GP1->Add_edge(temp_bline->Gp, temp_bline->point_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
+                		if(GP2 != NULL )  GP2->Add_edge(temp_bline->Gp, temp_bline->point_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
                 	}
                     delete temp_bline;
                     bound_map.erase(traverse_it++);
@@ -578,7 +564,7 @@ GraphPoint* Layer::SGconstruct_2(Line *LLine, GraphPoint *GP_last, bool L_or_GP)
         }
         if(p1) it1->second->point_x = temp_x;
     }
-    return NULL;//GP1; // no use?
+    return GP1; // no use?
 }
 
 void Layer::SGcons_RshapeOverlap_2(GraphPoint *GP1){
