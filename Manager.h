@@ -31,12 +31,12 @@ public:
 	void ExtendedKruskal_2();
 	void ExtendedPrims();
 	void update_path(GraphPoint*, FibHeap<int> &);
-	void addMSTEdges(GraphPoint *p1, GraphPoint *p2);
+	void addMSTEdges(GraphPoint *p1, GraphPoint *p2, bool);
 	void add_Final_GP(GraphPoint *p1, GraphPoint *p2, bool);
 	void unionSet( GraphPoint *, GraphPoint *);
 	GraphPoint* findSet(GraphPoint *);
 
-	void Restruct();
+	void Reconstruct();
 
 	void Output(const char* );
 	void Output_2(const char* );

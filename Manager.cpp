@@ -21,9 +21,10 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 	//Step 1.2
 	cout << "SGC2...\n";
-	Restruct();
+	Reconstruct();
 	SpanningGraphConstruct_2();
 	SpanningTreeConstruct_2();
+	
 	// plot test
     //for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
 
@@ -250,7 +251,6 @@ void Manager::Output(const char *Output_file){
     }
 
     //### 3. check via
-    //cout << "via num: " << via_checker.size() << endl;
     multimap< int , int >::iterator itr, itr1;
     int x;
     bool out;
@@ -284,7 +284,7 @@ void Manager::Output(const char *Output_file){
 
 }
 
-void Manager::Restruct(){
+void Manager::Reconstruct(){
 	list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
 	list<Edge_info*>::iterator edge_itr;
     int layer_pos, XX, YY, x1, x2, y1, y2;

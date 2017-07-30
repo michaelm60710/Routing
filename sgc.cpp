@@ -288,7 +288,7 @@ void Manager::ExtendedKruskal() {
         GraphPoint *set2 = findSet(temp_gp2->root);
         if (set1 != set2) {
             unionSet(set1, set2);
-            addMSTEdges(temp_gp1, temp_gp2);
+            addMSTEdges(temp_gp1, temp_gp2, false);
         }
 
     }
@@ -315,12 +315,12 @@ void Manager::unionSet( GraphPoint *s1, GraphPoint *s2 ) {
 
 }
 
-void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2) { //need to optimize! use map search
+void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2, bool opt1) { //need to optimize! use map search
     GraphPoint *p = p1;
     //test 
-    if(p1->root->Layer_pos!=p2->root->Layer_pos && !(p1->Shape_type!=OBSTACLE && p2->Shape_type!=OBSTACLE) ) { //bug: roots are same layer
-        //Optimize1(p1, p2);
-        //return;
+    if(opt1 && p1->root->Layer_pos!=p2->root->Layer_pos && !(p1->Shape_type!=OBSTACLE && p2->Shape_type!=OBSTACLE) ) { //bug: roots are same layer
+        Optimize1(p1, p2);
+        return;
     }
     //else return;
 

@@ -1,4 +1,4 @@
-CFLAGS = -g -Wall 
+CFLAGS = -O3 -Wall 
 net_open_finder: main.o Manager.o layer.o layer2.o cluster.o sgc.o sgc2.o
 	g++ -o net_open_finder main.o Manager.o layer.o layer2.o cluster.o sgc.o sgc2.o
 

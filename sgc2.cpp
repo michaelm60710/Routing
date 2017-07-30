@@ -136,8 +136,9 @@ void Manager::SpanningTreeConstruct_2(){
 	//###2. Extended Dijkstra's Algorithm
     ExtendedDijkstra_2();
     //###3. Extended Kruskal's Algorithm
-    //ExtendedKruskal_2();
-    ExtendedPrims();
+    ExtendedKruskal_2();
+    //ExtendedPrims();
+    
     //###4. Final GP list construct
     GraphPoint *r_gp;
     for(size_t i = 0; i < all_cluster.size(); i++){
@@ -280,7 +281,7 @@ void Manager::ExtendedKruskal_2() {
         GraphPoint *set2 = findSet(temp_gp2->root);
         if (set1 != set2) {
             unionSet(set1, set2);
-            addMSTEdges(temp_gp1, temp_gp2);
+            addMSTEdges(temp_gp1, temp_gp2, true);
         }
 
     }
@@ -374,7 +375,7 @@ void Manager::ExtendedPrims(){
 
         //# insert MST edge
         if(prims_temp_gp->prims_edge)
-        	addMSTEdges(prims_temp_gp->prims_edge->source, prims_temp_gp->prims_edge->Gp);
+        	addMSTEdges(prims_temp_gp->prims_edge->source, prims_temp_gp->prims_edge->Gp, true);
        	else{
        		cout << "bug?";
        	}
@@ -389,7 +390,6 @@ void Manager::update_path(GraphPoint *p, FibHeap<int> &FibH){
 
 	while (p != p->parent) {
     	if(p->terminal_dis!=0){
-    		cout << "try  ";
     		p->terminal_dis = 0;
     		for (map_gp_itr = p->map_edge.begin(); map_gp_itr != p->map_edge.end(); ++map_gp_itr) {
 	            temp_gp2 = map_gp_itr->second->Gp;
@@ -404,7 +404,6 @@ void Manager::update_path(GraphPoint *p, FibHeap<int> &FibH){
 	                }
 	            }
 	        }
-
     	}
 
         p = p->parent;

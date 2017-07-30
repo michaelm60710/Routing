@@ -249,11 +249,11 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             traverse_it = it1;
             ++traverse_it;
             if(traverse_it!=bound_map.end()) 
-               it1->second->Change_up_edge(traverse_it->second->down_edge_GP, traverse_it->second->Get_down_edge_x()); // it1->second->up_edge_x = traverse_it->second->Get_down_edge_x();
+               it1->second->Change_up_edge(traverse_it->second->down_edge_GP, traverse_it->second->Get_down_edge_x());
             if(it1!=bound_map.begin()) {
                 traverse_it = it1;
                 --traverse_it;
-                it1->second->Change_down_edge(traverse_it->second->up_edge_GP, traverse_it->second->Get_up_edge_x());//it1->second->down_edge_x = traverse_it->second->Get_up_edge_x();
+                it1->second->Change_down_edge(traverse_it->second->up_edge_GP, traverse_it->second->Get_up_edge_x());
             }
         }
 
@@ -774,13 +774,18 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
                 }
                 if(temp_bline->max_x > temp_bound_x) {
                 	temp_bound_x = temp_bline->max_x;
-                	if(temp_bound_x > temp_x) {
+                	if(temp_bound_x >= temp_x) {
                 	    //obstacle point connect Rshape with vertical edge
-	            		if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
-	            			GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_x, temp_bline->point_y, Layer_pos, Via_cost); 
+	            		//if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
+	            		//	GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_x, temp_bline->point_y, Layer_pos, Via_cost);
+	            		//test 0730
+	            		if(temp_bline->down_edge_GP && temp_bline->Get_down_edge_x()>=temp_x )
+	            			GP2->Add_edge(temp_bline->down_edge_GP, temp_x, temp_y2, temp_x, temp_bline->point_y, Layer_pos, Via_cost);
+	            		//test over 
 	            		break;	
             		}
                 }
+
                 if(traverse_it==bound_map.begin()) break;
                 --traverse_it;
             }
@@ -795,8 +800,10 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
                 	temp_bound_x = ritr->second->max_x;
                 	if(temp_bound_x > temp_x) {
                 	    //obstacle point connect Rshape with vertical edge
-	            		if(ritr->second->Gp!=NULL && ritr->second->Gp->Shape_type==RSHAPE)
-	            			GP2->Add_edge(ritr->second->Gp, temp_x, temp_y2, temp_x, ritr->second->point_y, Layer_pos, Via_cost); 
+	            		//if(ritr->second->Gp!=NULL && ritr->second->Gp->Shape_type==RSHAPE)
+	            		//	GP2->Add_edge(ritr->second->Gp, temp_x, temp_y2, temp_x, ritr->second->point_y, Layer_pos, Via_cost); 
+	            		if(ritr->second->down_edge_GP && ritr->second->Get_down_edge_x()>=temp_x )//not really sure //0730
+	            			GP2->Add_edge(ritr->second->down_edge_GP, temp_x, temp_y2, temp_x, ritr->second->point_y, Layer_pos, Via_cost);
 	            		break;	
             		}
                 }
@@ -819,8 +826,10 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
             	temp_bound_x = temp_bline->max_x;
             	if(temp_bound_x > temp_x) {
             		//obstacle point connect Rshape with vertical edge
-            		if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
-            			GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, Via_cost); 
+            		//if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
+            		//	GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, Via_cost);
+            		if(temp_bline->up_edge_GP && temp_bline->Get_up_edge_x()>=temp_x )
+	            			GP1->Add_edge(temp_bline->up_edge_GP, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, Via_cost);
             		break;	
             	}
             }
@@ -852,8 +861,10 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
                         temp_bound_x = temp_bline->max_x;
                         if(temp_bound_x > temp_x) {
                             //obstacle point connect Rshape with vertical edge
-                            if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
-                                GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_x, temp_bline->point_y, Layer_pos, Via_cost); 
+                            //if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
+                            //    GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_x, temp_bline->point_y, Layer_pos, Via_cost); 
+							if(temp_bline->down_edge_GP && temp_bline->Get_down_edge_x()>=temp_x )
+	            				GP2->Add_edge(temp_bline->down_edge_GP, temp_x, temp_y2, temp_x, temp_bline->point_y, Layer_pos, Via_cost);
                             break;  
                         }
                     }
@@ -928,8 +939,10 @@ void Layer::SGconstruct_search(Line* LLine, GraphPoint *GP1, GraphPoint *GP2){
             	temp_bound_x = temp_bline->max_x;
             	if(temp_bound_x > temp_x) {
             		//obstacle point connect Rshape with vertical edge
-            		if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
-            			GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, Via_cost); 
+            		//if(temp_bline->Gp!=NULL && temp_bline->Gp->Shape_type==RSHAPE)
+            		//	GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, Via_cost); 
+					if(temp_bline->up_edge_GP && temp_bline->Get_up_edge_x()>=temp_x )
+	            		GP1->Add_edge(temp_bline->up_edge_GP, temp_x, temp_y1, temp_x, temp_bline->point_y, Layer_pos, Via_cost);
             		break;	
             	}
             }
@@ -1158,20 +1171,20 @@ Layer::check_point_svg(string name){
                 }
                 if(map_gp_itr->second->layer==Layer_pos){
                     if(map_gp_itr->second->Gp->Layer_pos==Layer_pos+1)
-                      ;// a<< "<circle cx=\"" << xx/size << "\" cy=\""<< yy/size << "\" r=\"4\" style=\"fill:green;stroke:green;stroke-width:4;fill-opacity:0.1;stroke-opacity:0.8\" />" << endl;
-					   //a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"blue\"/>" << endl;
+					   ;//a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"blue\"/>" << endl;
                     else if(map_gp_itr->second->Gp->Layer_pos==Layer_pos)
-                       a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
+                       ;//a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
                     else{
-                       ;//a<< "<circle cx=\"" << xx/size << "\" cy=\""<< yy/size << "\" r=\"5\" style=\"fill:red;stroke:red;stroke-width:5;fill-opacity:0.1;stroke-opacity:0.8\" />" << endl;
-                   		//a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"purple\"/>" << endl;
+                   		a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"purple\"/>" << endl;
                     }
                 }
+                if(map_gp_itr->second->layer==Layer_pos-1)
+                   		a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"red\"/>" << endl;
             }
         }
     }
     //gp_vec edge
-    vector < GraphPoint*>::iterator gpv_itr;
+    /*vector < GraphPoint*>::iterator gpv_itr;
     for(gpv_itr = layer_gp_vec.begin(); gpv_itr != layer_gp_vec.end(); ++gpv_itr){
         int xx = (*gpv_itr)->x;//test
         int yy = (*gpv_itr)->y;//test
@@ -1204,7 +1217,7 @@ Layer::check_point_svg(string name){
 
         	
         }
-    }
+    }*/
     
     //check overlapping via
     /*int x1,y1,x2,y2;
