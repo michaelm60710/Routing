@@ -77,10 +77,12 @@ public:
 	GraphPoint(int, int, int, int&);
 	void Add_edge(GraphPoint*, int, int, int, int, int, int);
 	GraphPoint* Find_Set();
+	
 	Cluster *clu;
 	int Shape_type;
 	int Layer_pos;
 	MAP_GP_edge map_edge;
+	
 	//if the GraphPoint is RoutedShape, x & y is not a fixed value
 	int x;
 	int y;

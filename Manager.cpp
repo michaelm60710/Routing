@@ -20,10 +20,10 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 	SpanningTreeConstruct();
 
 	//Step 1.2
-	cout << "SGC2...\n";
-	Reconstruct();
-	SpanningGraphConstruct_2();
-	SpanningTreeConstruct_2();
+	//cout << "SGC2...\n";
+	//Reconstruct();
+	//SpanningGraphConstruct_2();
+	//SpanningTreeConstruct_2();
 	
 	// plot test
     //for(int i =0;i<MetalLayers;i++) all_layer[i].check_point_svg(itos1(i));
