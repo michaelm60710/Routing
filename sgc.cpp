@@ -49,7 +49,7 @@ void Manager::SpanningGraphConstruct(){
         	l_idx += 2;
         }
     }
-    sort(all_line.begin(), all_line.end(), sort_linex);
+    stable_sort(all_line.begin(), all_line.end(), sort_linex);
     
     //###2.2 
     clu_end = all_line.size() - 1;
@@ -146,7 +146,7 @@ void Manager::SpanningTreeConstruct(){
 }
 
 void Manager::ExtendedDijkstra(){
-	cout << "...Start Dijkstra...\n";
+	//cout << "...Start Dijkstra...\n";
     FibHeap<int> FibH;// FibH;
     FibHeap<int>::FibNode *temp_fibn;
     list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
@@ -229,8 +229,8 @@ void Manager::ExtendedDijkstra(){
         }
     }
     if(isolate_num!=0){
-    	cerr << isolate_num << " vertex are isolated\n";
-    	cerr << isolate_obstacle_num << " OBSTACLE vertex are isolated\n";
+    	//cerr << isolate_num << " vertex are isolated\n";
+    	//cerr << isolate_obstacle_num << " OBSTACLE vertex are isolated\n";
     }
 
     //#check
@@ -240,7 +240,7 @@ void Manager::ExtendedDijkstra(){
 }
 
 void Manager::ExtendedKruskal() {
-    cout << "...Start Kruskal's...\n";
+    //cout << "...Start Kruskal's...\n";
     list <GraphPoint*>::iterator gp_itr, begin1, end1;
     MAP_GP_edge::iterator map_gp_itr, begin2, end2;
     GraphPoint *temp_gp1, *temp_gp2;

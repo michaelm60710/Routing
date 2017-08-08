@@ -13,10 +13,10 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 	Parsing(Input_file);
 	
 	//Step 1
-	cout << "SGC...\n";
+	//cout << "SGC...\n";
 	SpanningGraphConstruct();
 	//Step 2
-	cout << "STC...\n";
+	//cout << "STC...\n";
 	SpanningTreeConstruct();
 
 	//Step 1.2
@@ -34,8 +34,7 @@ Manager::Manager(const char* Input_file,const char* Output_file){
     Output(Output_file);
 
     //test
-    cout << "all edge: " << (*(gp_list.begin()))->construct_edge << endl;
-    cout << "min edge: " << (*(gp_list.begin()))->construct_min_edge << endl;
+    cout << "all edge: " << (*(gp_list.begin()))->construct_edge << ", min edge: " << (*(gp_list.begin()))->construct_min_edge << endl;
 }
 
 
@@ -172,6 +171,7 @@ void Manager::Output(const char *Output_file){
 	multimap< int , via_pos* >::iterator via_itr,via_itr2;
    	bool via_up, via_down;
     int layer_pos, XX, YY, x1, x2, y1, y2;
+    int COST = 0;
 	
 	ofstream ofile;
 	ofile.open(Output_file,ios::out);
@@ -216,6 +216,7 @@ void Manager::Output(const char *Output_file){
 			else{ //YY==0
 				ofile << "H-line M" << (*edge_itr)->layer + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y2 << ")" << endl;
 			}
+			COST += (abs(x1 - x2) + abs(y1 - y2) );
 
         }
         //####VIA output
@@ -276,11 +277,14 @@ void Manager::Output(const char *Output_file){
     				}
     			}
     			//"check Via input" over
-    			if(out2)
+    			if(out2){
     				ofile << "Via V" << i << " ("<< x << "," << itr->second << ")" << endl;
+    				COST += ViaCost;
+    			}
     		}
     	}
     }
+    cout << "Calculate COST = " << COST << endl;
 
 }
 
