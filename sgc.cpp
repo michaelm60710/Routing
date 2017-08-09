@@ -18,7 +18,7 @@ void Manager::SpanningGraphConstruct(){
     int x,y;
     size_t clu_end;
     GraphPoint *P1=NULL, *P2=NULL, *P3=NULL, *P4=NULL;
-    bool PP1 = false, PP2 = false, PP3=false, PP4=false;
+    //bool PP1 = false, PP2 = false, PP3=false, PP4=false;
 
     //###1. Initialize
     for(int i =0;i<MetalLayers;i++) {
@@ -49,7 +49,7 @@ void Manager::SpanningGraphConstruct(){
         	l_idx += 2;
         }
     }
-    stable_sort(all_line.begin(), all_line.end(), sort_linex);
+    sort(all_line.begin(), all_line.end(), sort_linex);
     
     //###2.2 
     clu_end = all_line.size() - 1;
@@ -62,6 +62,7 @@ void Manager::SpanningGraphConstruct(){
     }
 
     //###3. Construct global graph
+    
     for(size_t  s = 0; s <= clu_end; s++){
     	temp_layer = all_line[s]->S->layer_position;
     	GP_result = all_layer[temp_layer].SGconstruct(all_line[s]);
@@ -75,7 +76,7 @@ void Manager::SpanningGraphConstruct(){
         }
 
         //Init: up down construct rshape via
-        P1 = P2 = P3 = P4 = NULL;
+        /*P1 = P2 = P3 = P4 = NULL;
     	PP1 = PP2 = PP3 = PP4 = false;
     	if(all_line[s]->S->Shape_type==VIA) PP1 = PP2 = PP3 = PP4 = true;
     	else if (all_line[s]->S->Shape_type==OBSTACLE){
@@ -93,8 +94,30 @@ void Manager::SpanningGraphConstruct(){
             all_layer[i].SGcons_RshapeOverlap(all_line[s], P3, P4, PP3, PP4);
             if(PP3 && PP4) break;
         }
-        all_layer[0].diff_layer_via(all_line[s],P1,P2,P3,P4);
+        all_layer[0].diff_layer_via(all_line[s],P1,P2,P3,P4);*/
 
+        //Init: extra Obs
+        int _x = all_line[s]->x, _y2 = all_line[s]->y, _y1 = all_line[s]->y + all_line[s]->length;
+        P1 = P2 = P3 = P4 = NULL;
+        if(all_line[s]->S->Shape_type==VIA) P1 = P2 = P3 = P4 = NULL;
+        else if(all_line[s]->S->Shape_type==RSHAPE){
+            P1 = P2 = P3 = P4 = GP_result.first;
+        }
+        else{ //OBSTACLE
+            P1 = P3 = GP_result.first;
+            P2 = P4 = GP_result.second;
+        }
+
+        //Up
+        for(int i = temp_layer+1;i<=MetalLayers-1;i++) {
+            all_layer[i].Extra_obs(all_line[s], P1, P2, _x, _y1, _y2);
+            if(P1==NULL && P2==NULL) break;
+        }
+        //Down
+        for(int i = temp_layer-1; i>=0;i--) {
+            all_layer[i].Extra_obs(all_line[s], P3, P4, _x, _y1, _y2);
+            if(P3==NULL && P4==NULL) break;
+        }
     }
 
     //###4. Update Via length (Cluster of Via must be only 1 Gp)

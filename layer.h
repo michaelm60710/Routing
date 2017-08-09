@@ -33,6 +33,10 @@ public:
     void ConvertToUndirectedG();
     void check_point_svg(string name="x");
 
+    //0809
+    void Extra_obs(Line*, GraphPoint* &, GraphPoint* &, int, int, int);
+    GraphPoint* SGconstruct_extra_obs(const int, const int, GraphPoint*);
+
 	//for private use
 	void Rshape_list_append(Shape *);
 	void Obstacle_list_append(Shape *);
@@ -57,7 +61,9 @@ public:
 
 	//for layout
 	vector <GraphPoint*> layer_gp_vec;
-
+	
+	//0809
+	Cluster *Extra_local_Obs;
 private:
 	list < Shape* > Rshape_list;
 	list < Shape* > Obstacle_list;

@@ -50,6 +50,7 @@ private:
 	int RoutedShapes;
 	int RoutedVias;
 	int Obstacles;
+	Cluster *Extra_Obs; //0809 like VIA
 	vector < Layer > all_layer;
 	
 	vector < Shape* > all_shape;//via, obstacle, rshape

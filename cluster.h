@@ -75,6 +75,7 @@ public:
 	GraphPoint(Line*, int, int);
 	GraphPoint(int, int, int);
 	GraphPoint(int, int, int, int&);
+	GraphPoint(int, int, int, int&, Cluster*);
 	void Add_edge(GraphPoint*, int, int, int, int, int, int);
 	GraphPoint* Find_Set();
 	
@@ -196,10 +197,10 @@ class Cluster{
 	friend class Layer;
 public:
 	Cluster(Shape*);
+	Cluster(int);
 	void Add_shape(Shape*);
-	void Add_GP(GraphPoint*);
 	GraphPoint* Add_GP(Line*, int, int &);
-
+	GraphPoint* Add_GP(int, int, int, int &);
 	int GetShapeType();
 //private:
 	int Shape_type;//Rshape or Obstacle or via

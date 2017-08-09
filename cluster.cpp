@@ -15,13 +15,15 @@ Cluster::Cluster(Shape *temp_shape)
 	shape_list.push_back(temp_shape);
 }
 
+Cluster::Cluster(int _shape_type)
+{
+	shape_num = 0;
+	Shape_type = _shape_type;
+}
+
 void Cluster::Add_shape(Shape *temp_shape){
 
 
-}
-
-void Cluster::Add_GP(GraphPoint *gp){
-	GraphP_list.push_back(gp);
 }
 
 int Cluster::GetShapeType(){
@@ -43,6 +45,13 @@ GraphPoint* Cluster::Add_GP(Line* L, int UPorDown, int &_idx){
 		cerr << "bug";
 		//cin.get();
 	}
+	return gp;
+}
+
+GraphPoint* Cluster::Add_GP(int pos_x, int pos_y, int layer, int &_idx){// for Extra via(Obs)
+	GraphPoint* gp = new GraphPoint(layer, pos_x, pos_y, _idx, this);
+	GraphP_list.push_back(gp);
+
 	return gp;
 }
 
@@ -81,6 +90,20 @@ GraphPoint::GraphPoint(int _layer_pos, int _x, int _y){ // for opt1
 
 GraphPoint::GraphPoint(int _layer_pos, int _x, int _y, int &_idx){ // for SGC_2
 	clu = NULL;
+	Layer_pos = _layer_pos;
+	idx = _idx++;
+	x = _x;
+	y = _y;
+	visit = false;
+	select = false;
+	rank = 0;
+	terminal_dis = INT_MAX;
+	Shape_type = OBSTACLE;
+}
+
+GraphPoint::GraphPoint(int _layer_pos, int _x, int _y, int &_idx, Cluster *_clu){ // for extra obstacle
+	clu = _clu;
+	Shape_type = OBSTACLE;
 	Layer_pos = _layer_pos;
 	idx = _idx++;
 	x = _x;
