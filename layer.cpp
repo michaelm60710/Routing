@@ -36,6 +36,7 @@ void Layer::SpanningGraphConstruct(){
 	
 	//#1.1 construct cluster
     clustering_shape();
+    all_cluster.push_back(Extra_local_Obs);
 
     //#1.2 obstacle add spacing
     for (it_shape it_s= Obstacle_list.begin();it_s != Obstacle_list.end();++it_s){
@@ -1097,6 +1098,11 @@ GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, GraphPoint*
     ++traverse_it;
 
     if(status.second==false && it1->second->max_x > temp_x ){ //same y
+    	if(it1->second->Gp && it1->second->point_x < temp_x){//incomplete?
+    		//GP1 = Extra_local_Obs->Add_GP(_x, _y, Layer_pos, G_point_num);
+    		//GP1->Add_edge(it1->second->Gp, temp_x, temp_y1, it1->second->point_x, it1->second->point_y, Layer_pos, 0);
+    		//it1->second->Gp = GP1;
+    	}
     }
     else if(status.second!=false && traverse_it!=bound_map.end() && traverse_it->second->Get_down_edge_x() >= temp_x){
         if(traverse_it->second->down_edge_GP) {//OVERLAP (RSHAPE)
@@ -1188,8 +1194,6 @@ GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, GraphPoint*
 
     if(GP1!=NULL) GP1->Add_edge(pre_GP, temp_x, temp_y1, temp_x, temp_y1, Layer_pos, Via_cost);
     return GP1;
-
-
 }
 
 void
@@ -1317,13 +1321,14 @@ Layer::check_point_svg(string name){
                 if((*gp_itr)->Shape_type==OBSTACLE ){
                     if(xx!=x1 || yy!=y1) {
                         cout << "error! Q ";//something strange...";
+                        //if((*gp_itr)->clu!=Extra_local_Obs) cout << "ass";
                     }
                 }
                 if(map_gp_itr->second->layer==Layer_pos){
                     if(map_gp_itr->second->Gp->Layer_pos==Layer_pos+1)
-					   a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"blue\"/>" << endl;
+					   ;//a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"blue\"/>" << endl;
                     else if(map_gp_itr->second->Gp->Layer_pos==Layer_pos)
-                       ;//a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
+                       a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"green\"/>" << endl;
                     else{
                    	   ;//a << "<line x1=\"" << x1/size << "\" y1=\"" << y1/size << "\" x2=\"" << x2/size << "\" y2=\"" << y2/size << "\"\nstroke-width=\"2\" stroke=\"purple\"/>" << endl;
                     }

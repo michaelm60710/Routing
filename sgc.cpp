@@ -98,23 +98,32 @@ void Manager::SpanningGraphConstruct(){
 
         //Init: extra Obs
         int _x = all_line[s]->x, _y2 = all_line[s]->y, _y1 = all_line[s]->y + all_line[s]->length;
+        int up_layer = MetalLayers-1, down_layer = 0;
         P1 = P2 = P3 = P4 = NULL;
         if(all_line[s]->S->Shape_type==VIA) P1 = P2 = P3 = P4 = NULL;
         else if(all_line[s]->S->Shape_type==RSHAPE){
             P1 = P2 = P3 = P4 = GP_result.first;
+            /*if(MetalLayers-1 > temp_layer + 4) up_layer = temp_layer + 4;
+            else							   up_layer = MetalLayers-1;
+            if(0 < temp_layer - 4) down_layer = temp_layer - 4;
+            else				   down_layer = 0;*/
         }
         else{ //OBSTACLE
             P1 = P3 = GP_result.first;
             P2 = P4 = GP_result.second;
+            /*if(MetalLayers-1 > temp_layer + 1) up_layer = temp_layer + 1;
+            else							   up_layer = MetalLayers-1;
+            if(0 < temp_layer - 1) down_layer = temp_layer - 1;
+            else				   down_layer = 0;*/
         }
 
         //Up
-        for(int i = temp_layer+1;i<=MetalLayers-1;i++) {
+        for(int i = temp_layer+1;i<=up_layer;i++) {
             all_layer[i].Extra_obs(all_line[s], P1, P2, _x, _y1, _y2);
             if(P1==NULL && P2==NULL) break;
         }
         //Down
-        for(int i = temp_layer-1; i>=0;i--) {
+        for(int i = temp_layer-1; i>=down_layer;i--) {
             all_layer[i].Extra_obs(all_line[s], P3, P4, _x, _y1, _y2);
             if(P3==NULL && P4==NULL) break;
         }
