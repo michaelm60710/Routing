@@ -13,10 +13,10 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 	Parsing(Input_file);
 	
 	//Step 1
-	//cout << "SGC...\n";
+	cout << "SGC...\n";
 	SpanningGraphConstruct();
 	//Step 2
-	//cout << "STC...\n";
+	cout << "STC...\n";
 	SpanningTreeConstruct();
 
 	//Step 1.2
@@ -43,6 +43,8 @@ void Manager::Parsing(const char* Input_file){
 	cout << "==================" << Input_file << "================" << endl;
 	string garbage,layer,coor1,coor2;
 	int l,all=0;
+	//test
+	MaxRshapeEdge = 0;
 	ifstream i_file;
 
 	i_file.open(Input_file,ios::in);
@@ -67,6 +69,7 @@ void Manager::Parsing(const char* Input_file){
 		all_layer[i].Height  = Boundary->y2 - Boundary->y1;
 		all_layer[i].Layer_pos = i;
 		all_layer[i].Via_cost  = ViaCost;
+		
 	}
 
 	//###2. read RoutedShape
@@ -78,8 +81,11 @@ void Manager::Parsing(const char* Input_file){
 		temp_shape->coords = Parsing_coordinate(coor1,coor2);
 		all_layer[l].Rshape_list_append(temp_shape);
 		all_shape[all++] = temp_shape;
+		if(abs(temp_shape->coords->x1 - temp_shape->coords->x2) > MaxRshapeEdge ) MaxRshapeEdge = abs(temp_shape->coords->x1 - temp_shape->coords->x2);
+		if(abs(temp_shape->coords->y1 - temp_shape->coords->y2) > MaxRshapeEdge ) MaxRshapeEdge = abs(temp_shape->coords->y1 - temp_shape->coords->y2);
 	}
-
+	for(int i = 0;i<MetalLayers;i++) all_layer[i].Max_dis  = MaxRshapeEdge/3 + 400;
+	
 	//###3. read RoutedVias
 	//cout << "read RoutedVias..." << endl;
 	for(int i = 0; i < RoutedVias;i++){
@@ -119,6 +125,7 @@ void Manager::Parsing(const char* Input_file){
 	cout << "MetalLayers: " <<MetalLayers << endl;
 	cout << "RoutedShapes: " <<RoutedShapes << endl;
 	cout << "RoutedVias: " <<RoutedVias << endl;
+	cout << "Max R Edge: " << MaxRshapeEdge << endl;
 	cout << "Obstacles: " <<Obstacles << endl << endl;
 	/*for(int i=0;i<MetalLayers;i++){
 		cout << "LAYER " << i << ":"<<endl;
@@ -169,7 +176,6 @@ void Manager::Output(const char *Output_file){
 	list < GraphPoint* >::iterator gp_itr;
 	list<Edge_info*>::iterator edge_itr;
 	multimap< int , via_pos* >::iterator via_itr,via_itr2;
-   	bool via_up, via_down;
     int layer_pos, XX, YY, x1, x2, y1, y2;
     int COST = 0;
 	
@@ -185,14 +191,8 @@ void Manager::Output(const char *Output_file){
     for(gp_itr = gp_list.begin();gp_itr != gp_list.end(); ++gp_itr){
     	layer_pos = (*gp_itr)->Layer_pos;
     	(*gp_itr)->select = true;
-    	via_up = via_down = false;
         for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
-			//Via check
-        	if ((*edge_itr)->layer!=layer_pos){
 
-				if((*edge_itr)->layer==layer_pos+1) via_up = true;
-                else if((*edge_itr)->layer==layer_pos-1) via_down = true;
-			} 
         	if((*edge_itr)->Gp->select) continue;
 
             x1 = (*edge_itr)->point_x1;
@@ -220,34 +220,23 @@ void Manager::Output(const char *Output_file){
 
         }
         //####VIA output
-        if((*gp_itr)->Shape_type==OBSTACLE){
-        	if(via_up)  {
-        		via_checker[layer_pos + 1].insert(pair<int, int>( (*gp_itr)->x, (*gp_itr)->y) );
-        	}
-        	if(via_down){
-        		via_checker[layer_pos].insert(pair<int, int>( (*gp_itr)->x, (*gp_itr)->y) );
-        	}
-        }
-        else{//RSHAPE or VIA (remove same via)
-        	for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
-        		if ((*edge_itr)->layer!=layer_pos){
-        			x1 = (*edge_itr)->point_x1;
-            		y1 = (*edge_itr)->point_y1;
+	    for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
+    		if ((*edge_itr)->layer!=layer_pos){
+    			x1 = (*edge_itr)->point_x1;
+        		y1 = (*edge_itr)->point_y1;
 
-	                if((*edge_itr)->layer > layer_pos ){
-	                	for(int i = (*edge_itr)->layer;i>layer_pos;i--){
-	                		via_checker[i].insert(pair<int, int>(x1, y1) );
-	                	}
-	                }
-	                else if((*edge_itr)->layer < layer_pos){
-						for(int i = (*edge_itr)->layer;i<layer_pos;i++){
-	                		via_checker[i+1].insert(pair<int, int>(x1, y1) );
-	                	}
-	                }
-				} 
-        	}
-
-        }
+                if((*edge_itr)->layer > layer_pos ){
+                	for(int i = (*edge_itr)->layer;i>layer_pos;i--){
+                		via_checker[i].insert(pair<int, int>(x1, y1) );
+                	}
+                }
+                else if((*edge_itr)->layer < layer_pos){
+					for(int i = (*edge_itr)->layer;i<layer_pos;i++){
+                		via_checker[i+1].insert(pair<int, int>(x1, y1) );
+                	}
+                }
+			} 
+    	}
 
     }
 
@@ -413,5 +402,4 @@ void Manager::Reconstruct(){
     }
 
 }
-
 

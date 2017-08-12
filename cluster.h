@@ -66,6 +66,7 @@ struct Line{
 	int x;
 	int y;
 	int length;
+	int width;
 	bool LR; //LEFT or RIGHT
 	Shape *S;
 };

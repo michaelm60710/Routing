@@ -40,6 +40,8 @@ void Manager::SpanningGraphConstruct(){
         l_r->x = all_shape[s]->coords->x2;
         l_l->y = l_r->y = all_shape[s]->coords->y1;
         l_l->length = l_r->length = all_shape[s]->coords->y2 - l_l->y;
+        l_l->width = 0;
+        l_r->width = l_r->x - l_l->x;
     	if(all_shape[s]->Shape_type==VIA) {
          	all_line[l_idx++]  = l_l;
     	}
@@ -67,64 +69,46 @@ void Manager::SpanningGraphConstruct(){
     	temp_layer = all_line[s]->S->layer_position;
     	GP_result = all_layer[temp_layer].SGconstruct(all_line[s]);
 
-    	// up down construct edge
-        if(temp_layer>0){
-            all_layer[temp_layer-1].SGconstruct_search(all_line[s], GP_result.first, GP_result.second);
-        }
-        if(temp_layer<MetalLayers-1){
-            all_layer[temp_layer+1].SGconstruct_search(all_line[s], GP_result.first, GP_result.second);
-        }
-
-        //Init: up down construct rshape via
-        /*P1 = P2 = P3 = P4 = NULL;
-    	PP1 = PP2 = PP3 = PP4 = false;
-    	if(all_line[s]->S->Shape_type==VIA) PP1 = PP2 = PP3 = PP4 = true;
-    	else if (all_line[s]->S->Shape_type==OBSTACLE){
-    		if(GP_result.first == NULL) 	 PP1 = PP3 = true;
-    		else if(GP_result.second == NULL)PP2 = PP4 = true;
-
-    	}
-
-        for(int i = temp_layer+1;i<=MetalLayers-1;i++) {
-            all_layer[i].SGcons_RshapeOverlap(all_line[s], P1, P2, PP1, PP2);
-            if(PP1 && PP2) break;
-        }
-        //down
-        for(int i = temp_layer-1; i>=0;i--) {
-            all_layer[i].SGcons_RshapeOverlap(all_line[s], P3, P4, PP3, PP4);
-            if(PP3 && PP4) break;
-        }
-        all_layer[0].diff_layer_via(all_line[s],P1,P2,P3,P4);*/
 
         //Init: extra Obs
         int _x = all_line[s]->x, _y2 = all_line[s]->y, _y1 = all_line[s]->y + all_line[s]->length;
-        int up_layer = MetalLayers-1, down_layer = 0;
+        int R_d_y2_len = _y1, R_d_y1_len = _y2, R_u_y2_len = _y1, R_u_y1_len = _y2;
+        if(all_line[s]->S->Shape_type!=RSHAPE){
+            R_d_y2_len = R_u_y2_len = _y2;
+            R_d_y1_len = R_u_y1_len = _y1;
+        }
+
+
+        //int up_layer = MetalLayers-1, down_layer = 0;
         P1 = P2 = P3 = P4 = NULL;
-        if(all_line[s]->S->Shape_type==VIA) P1 = P2 = P3 = P4 = NULL;
+        if(all_line[s]->S->Shape_type==VIA);
         else if(all_line[s]->S->Shape_type==RSHAPE){
             P1 = P2 = P3 = P4 = GP_result.first;
-            /*if(MetalLayers-1 > temp_layer + 4) up_layer = temp_layer + 4;
-            else							   up_layer = MetalLayers-1;
-            if(0 < temp_layer - 4) down_layer = temp_layer - 4;
-            else				   down_layer = 0;*/
         }
         else{ //OBSTACLE
             P1 = P3 = GP_result.first;
             P2 = P4 = GP_result.second;
-            /*if(MetalLayers-1 > temp_layer + 1) up_layer = temp_layer + 1;
-            else							   up_layer = MetalLayers-1;
-            if(0 < temp_layer - 1) down_layer = temp_layer - 1;
-            else				   down_layer = 0;*/
         }
 
+        // up down construct edge
+        if(temp_layer<MetalLayers-1){
+            if(P2) P2 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P2, DOWN, R_u_y2_len);
+            if(P1) P1 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y1, (_y1 - _y2), P1, UP, R_u_y1_len);
+        }
+        if(temp_layer>0){
+            if(P4) P4 = all_layer[temp_layer-1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P4, DOWN, R_d_y2_len);
+            if(P3) P3 = all_layer[temp_layer-1].SGconstruct_extra_obs(_x, _y1, (_y1 - _y2), P3, UP, R_d_y1_len);
+        }
+
+
         //Up
-        for(int i = temp_layer+1;i<=up_layer;i++) {
-            all_layer[i].Extra_obs(all_line[s], P1, P2, _x, _y1, _y2);
+        for(int i = temp_layer+2;i<=MetalLayers-1;i++) {
+            all_layer[i].Extra_obs(all_line[s], P1, P2, _x, _y1, _y2, R_u_y1_len, R_u_y2_len);
             if(P1==NULL && P2==NULL) break;
         }
         //Down
-        for(int i = temp_layer-1; i>=down_layer;i--) {
-            all_layer[i].Extra_obs(all_line[s], P3, P4, _x, _y1, _y2);
+        for(int i = temp_layer-2; i>=0;i--) {
+            all_layer[i].Extra_obs(all_line[s], P3, P4, _x, _y1, _y2, R_d_y1_len, R_d_y2_len);
             if(P3==NULL && P4==NULL) break;
         }
     }
@@ -213,7 +197,6 @@ void Manager::ExtendedDijkstra(){
         temp_dis = temp_fibn->key;
         temp_gp = (GraphPoint*)temp_fibn->payload;
         temp_gp->select = true;
-        //cout << "Top: " << temp_dis << endl;
 
         //# pop the target vertex
         FibH.pop();
@@ -282,13 +265,13 @@ void Manager::ExtendedKruskal() {
     multimap < int, Edge_info* >::iterator curEdge;
 
     // initialization
-    int ttt= 0;
+    int SET_count= 0;
     for (size_t i = 0; i < all_cluster.size(); i++) {
         begin1 = all_cluster[i]->GraphP_list.begin();
         end1 = all_cluster[i]->GraphP_list.end();
         if(all_cluster[i]->GetShapeType()==RSHAPE || all_cluster[i]->GetShapeType()==VIA){
              (*(all_cluster[i]->GraphP_list.begin() ))->parentKK = (*(all_cluster[i]->GraphP_list.begin() ));
-             ttt++;
+             SET_count++;
         }
         for (gp_itr = begin1; gp_itr != end1; ++gp_itr) {
             temp_gp1 = (*gp_itr);
@@ -313,18 +296,25 @@ void Manager::ExtendedKruskal() {
     }
 
     // choose MST points
+    int set_combine = 1;
     for(curEdge = HeapBE.begin(); curEdge != HeapBE.end(); ++curEdge){
-    	temp_gp1 = curEdge->second->source;
+        temp_gp1 = curEdge->second->source;
         temp_gp2 = curEdge->second->Gp;
         GraphPoint *set1 = findSet(temp_gp1->root);
         GraphPoint *set2 = findSet(temp_gp2->root);
+
         if (set1 != set2) {
+            set_combine++;
             unionSet(set1, set2);
             addMSTEdges(temp_gp1, temp_gp2, false);
+            if(set_combine>=SET_count) {
+            cout << "longest path= " << curEdge->first << endl;
+            break;
         }
+        }
+        
 
     }
-
 }
 
 

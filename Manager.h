@@ -50,6 +50,7 @@ private:
 	int RoutedShapes;
 	int RoutedVias;
 	int Obstacles;
+	int MaxRshapeEdge;
 	Cluster *Extra_Obs; //0809 like VIA
 	vector < Layer > all_layer;
 	
@@ -66,13 +67,6 @@ private:
 	vector<GraphPoint* >::iterator all_gp_rshape_begin;
 
 };
-
-
-
-
-
-
-
 
 
 #endif
