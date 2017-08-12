@@ -31,6 +31,7 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 
     //OutputFile
+    //Output_test(Output_file);
     Output(Output_file);
 
     //test
@@ -108,12 +109,6 @@ void Manager::Parsing(const char* Input_file){
 		l = int(layer[1]) - 49; // M1 -> 0, M2 -> 1
 		Shape *temp_shape = new Shape(OBSTACLE, l);
 		temp_shape->coords = Parsing_coordinate(coor1,coor2);
-		//Add Spacing
-		/*temp_shape->coords->x1 -= Spacing;
-		temp_shape->coords->x2 += Spacing;
-		temp_shape->coords->y1 -= Spacing;
-		temp_shape->coords->y2 += Spacing;*/
-		
 		all_layer[l].Obstacle_list_append(temp_shape);
 		all_shape[all++] = temp_shape;
 	}
@@ -238,6 +233,132 @@ void Manager::Output(const char *Output_file){
 			} 
     	}
 
+    }
+
+    //### 3. check via
+    multimap< int , int >::iterator itr, itr1;
+    int x;
+    bool out;
+    for(int i=0;i<MetalLayers;i++){
+    	for(itr = via_checker[i].begin();itr!=via_checker[i].end();++itr){
+    		itr1 = itr;
+    		x = itr1->first;
+    		++itr1;
+    		out = true;
+    		while(itr1!=via_checker[i].end()){
+    			if(itr1->first!=x) break;
+    			if(itr1->second==itr->second) out = false;
+    			++itr1;
+    		}
+    		if(out) {
+    			//"check Via input" // not good enough
+    			list < Shape* >::iterator via_itr;
+    			bool out2 = true;
+    			for(via_itr = all_layer[i-1].Via_list.begin(); via_itr != all_layer[i-1].Via_list.end(); ++via_itr){
+    				if((*via_itr)->coords->x1 == x &&  (*via_itr)->coords->y1 == itr->second){
+    					out2 = false;
+    					break;
+    				}
+    			}
+    			//"check Via input" over
+    			if(out2){
+    				ofile << "Via V" << i << " ("<< x << "," << itr->second << ")" << endl;
+    				COST += ViaCost;
+    			}
+    		}
+    	}
+    }
+    cout << "Calculate COST = " << COST << endl;
+
+}
+
+void Manager::Output_test(const char *Output_file){
+
+	MAP_GP_edge::iterator map_edge_itr;
+	multimap< int , via_pos* >::iterator via_itr,via_itr2;
+	list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
+    int layer_pos, XX, YY, x1, x2, y1, y2;
+    int COST = 0;
+	
+	ofstream ofile;
+	ofile.open(Output_file,ios::out);
+	//test
+	vector <multimap< int , int > > via_checker;//test
+	via_checker.resize(MetalLayers);
+    //### 1. init select = false
+    for(size_t i = 0; i < all_cluster.size(); i++){
+        begin_itr = all_cluster[i]->GraphP_list.begin();
+        end_itr = all_cluster[i]->GraphP_list.end();
+        if(all_cluster[i]->GetShapeType()==RSHAPE || all_cluster[i]->GetShapeType()==VIA){
+            (*begin_itr)->select = false;
+        }
+        else{
+            for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
+                (*gp_itr)->select = false;
+            }
+        }
+    }
+
+    //### 2. Greedy steiner point
+    int bound_x2 = Boundary->x2;
+    int bound_y2 = Boundary->y2;
+    for(size_t i = 0; i < all_cluster.size(); i++){
+        begin_itr = all_cluster[i]->GraphP_list.begin();
+        end_itr = all_cluster[i]->GraphP_list.end();
+
+        for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
+	    	layer_pos = (*gp_itr)->Layer_pos;
+	    	(*gp_itr)->select = true;
+	        for(map_edge_itr = (*gp_itr)->map_edge.begin();map_edge_itr!=(*gp_itr)->map_edge.end(); ++map_edge_itr){
+
+	        	if(map_edge_itr->second->Gp->select) continue;
+
+	            x1 = map_edge_itr->second->point_x1;
+	            y1 = map_edge_itr->second->point_y1;
+	            x2 = map_edge_itr->second->point_x2;
+	            y2 = map_edge_itr->second->point_y2;
+	            if(x1 < Spacing || y1 < Spacing || x2 < Spacing || y2 < Spacing || x1 > bound_x2 - Spacing || x2 > bound_x2 - Spacing || y1 > bound_y2 - Spacing || y2 > bound_y2 - Spacing) continue;
+	            
+	            XX = x2 - x1;
+				YY = y2 - y1;
+
+				//####Edge output
+				if(XX==0 && YY==0);
+				else if(XX!=0 && YY!=0){ // add steiner_point
+					ofile << "V-line M" << map_edge_itr->second->layer + 1 << " ("<< x2 << "," << y2 << ") (" << x2 << "," << y1 << ")" << endl;
+					ofile << "H-line M" << map_edge_itr->second->layer + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y1 << ")" << endl;
+
+				}
+				else if(XX==0){ //it is already vertical or H
+					ofile << "V-line M" << map_edge_itr->second->layer + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y2 << ")" << endl;				
+				}
+				else{ //YY==0
+					ofile << "H-line M" << map_edge_itr->second->layer + 1 << " ("<< x1 << "," << y1 << ") (" << x2 << "," << y2 << ")" << endl;
+				}
+				COST += (abs(x1 - x2) + abs(y1 - y2) );
+
+	        }
+	        //####VIA output
+		    for(map_edge_itr = (*gp_itr)->map_edge.begin();map_edge_itr!=(*gp_itr)->map_edge.end(); ++map_edge_itr){
+	    		if (map_edge_itr->second->layer!=layer_pos){
+	    			x1 = map_edge_itr->second->point_x1;
+	        		y1 = map_edge_itr->second->point_y1;
+	        	    if(x1 < Spacing || y1 < Spacing || x1 > bound_x2 - Spacing || y1 > bound_y2 - Spacing) continue;
+
+	                if(map_edge_itr->second->layer > layer_pos ){
+	                	for(int i = map_edge_itr->second->layer;i>layer_pos;i--){
+	                		via_checker[i].insert(pair<int, int>(x1, y1) );
+	                	}
+	                }
+	                else if(map_edge_itr->second->layer < layer_pos){
+						for(int i = map_edge_itr->second->layer;i<layer_pos;i++){
+	                		via_checker[i+1].insert(pair<int, int>(x1, y1) );
+	                	}
+	                }
+				} 
+	    	}
+
+        }
     }
 
     //### 3. check via

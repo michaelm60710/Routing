@@ -122,9 +122,10 @@ void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_
 	MAP_GP_Status status1;//,status2;
 	Edge_info *E1 = NULL;
 	status1 = map_edge.insert(MAP_GP_edge::value_type(insert_gp->idx, E1 ) );
-	if(my_x==473616 && my_y==136932) {
+	if( my_x==6888 && my_y==9096 && insert_x==6168) {//(6168,9096) to (6888,9096)
 		cout << "edge x y:" << insert_x << ", " << insert_y << endl;
 		//cin.get();
+
 	}
 	if(status1.second==true){
 		E1 = new Edge_info(insert_gp, my_x, my_y, insert_x, insert_y, distance, layer);

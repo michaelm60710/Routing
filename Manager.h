@@ -39,7 +39,7 @@ public:
 	void Reconstruct();
 
 	void Output(const char* );
-	void Output_2(const char* );
+	void Output_test(const char* );
 
 	string itos1(int);//integer convert to string
 private:
