@@ -159,3 +159,30 @@ GraphPoint* GraphPoint::Find_Set(){
 	return root;
 }
 
+BoundLine_info::BoundLine_info(int m_x, int temp_x, int flag, int P_y, int min_x, GraphPoint *gpp=NULL):Gp(NULL),max_x(m_x),point_x(temp_x),point_y(P_y)
+{
+	//min_x = spacing - 1
+	up_edge_GP = down_edge_GP = NULL;
+	if(flag & UP) {
+		down_edge_x = m_x;
+		down_edge_GP = gpp;
+		up_edge_x   = min_x;
+	}
+	else if(flag & DOWN){
+		down_edge_x = min_x;
+		up_edge_x   = m_x;
+		up_edge_GP = gpp;
+	}
+	else { //VIA
+		down_edge_x = min_x;
+		up_edge_x   = min_x;
+	}
+}
+
+BoundLine_info::BoundLine_info(int max_x, int P_y, int min_x, int down_x):Gp(NULL),max_x(max_x),point_x(max_x),point_y(P_y){
+
+	up_edge_GP = down_edge_GP = NULL;
+	down_edge_x = down_x;
+	up_edge_x   = min_x;
+
+}

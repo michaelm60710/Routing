@@ -40,6 +40,7 @@ public:
 
 	void Output(const char* );
 	void Output_test(const char* );
+	void Verify();
 
 	string itos1(int);//integer convert to string
 private:
@@ -51,6 +52,8 @@ private:
 	int RoutedVias;
 	int Obstacles;
 	int MaxRshapeEdge;
+
+	int min_x;
 	Cluster *Extra_Obs; //0809 like VIA
 	vector < Layer > all_layer;
 	

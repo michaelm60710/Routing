@@ -33,6 +33,7 @@ Manager::Manager(const char* Input_file,const char* Output_file){
     //OutputFile
     //Output_test(Output_file);
     Output(Output_file);
+    //Verify();
 
     //test
     cout << "all edge: " << (*(gp_list.begin()))->construct_edge << ", min edge: " << (*(gp_list.begin()))->construct_min_edge << endl;
@@ -63,9 +64,10 @@ void Manager::Parsing(const char* Input_file){
 	//###1.2 construct
 	all_layer.resize(MetalLayers);
 	all_shape.resize(RoutedShapes+RoutedVias*2+Obstacles);
+	min_x = Spacing - 1;
 	for(int i = 0;i<MetalLayers;i++) {
 		all_layer[i].Spacing = Spacing;
-		all_layer[i].min_x   = Spacing - 1;
+		all_layer[i].min_x   = min_x;//Spacing - 1;
 		all_layer[i].Width   = Boundary->x2 - Boundary->x1;
 		all_layer[i].Height  = Boundary->y2 - Boundary->y1;
 		all_layer[i].Layer_pos = i;
@@ -397,6 +399,100 @@ void Manager::Output_test(const char *Output_file){
     cout << "Calculate COST = " << COST << endl;
 
 }
+
+void Manager::Verify(){
+
+	list < GraphPoint* >::iterator gp_itr;
+	list<Edge_info*>::iterator edge_itr;
+	multimap< int , via_pos* >::iterator via_itr,via_itr2;
+    int layer_pos, XX, YY, x1, x2, y1, y2;
+    int COST = 0;
+	
+	//test
+	vector <multimap< int , int > > via_checker;//test
+	via_checker.resize(MetalLayers);
+    //### 1. init select = false
+    for(gp_itr = gp_list.begin();gp_itr != gp_list.end(); ++gp_itr) (*gp_itr)->select = false;
+
+    //### 2. Greedy steiner point
+    for(gp_itr = gp_list.begin();gp_itr != gp_list.end(); ++gp_itr){
+    	layer_pos = (*gp_itr)->Layer_pos;
+    	(*gp_itr)->select = true;
+        for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
+
+        	if((*edge_itr)->Gp->select) continue;
+
+            x1 = (*edge_itr)->point_x1;
+            y1 = (*edge_itr)->point_y1;
+            x2 = (*edge_itr)->point_x2;
+            y2 = (*edge_itr)->point_y2;
+            
+            XX = x2 - x1;
+			YY = y2 - y1;
+
+			COST += (abs(x1 - x2) + abs(y1 - y2) );
+
+        }
+        //####VIA output
+	    for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
+    		if ((*edge_itr)->layer!=layer_pos){
+    			x1 = (*edge_itr)->point_x1;
+        		y1 = (*edge_itr)->point_y1;
+
+                if((*edge_itr)->layer > layer_pos ){
+                	for(int i = (*edge_itr)->layer;i>layer_pos;i--){
+                		via_checker[i].insert(pair<int, int>(x1, y1) );
+                	}
+                }
+                else if((*edge_itr)->layer < layer_pos){
+					for(int i = (*edge_itr)->layer;i<layer_pos;i++){
+                		via_checker[i+1].insert(pair<int, int>(x1, y1) );
+                	}
+                }
+			} 
+    	}
+
+    }
+
+    //### 3. check via
+    multimap< int , int >::iterator itr, itr1;
+    int x;
+    bool out;
+    for(int i=0;i<MetalLayers;i++){
+    	for(itr = via_checker[i].begin();itr!=via_checker[i].end();++itr){
+    		itr1 = itr;
+    		x = itr1->first;
+    		++itr1;
+    		out = true;
+    		while(itr1!=via_checker[i].end()){
+    			if(itr1->first!=x) break;
+    			if(itr1->second==itr->second) out = false;
+    			++itr1;
+    		}
+    		if(out) {
+    			//"check Via input" // not good enough
+    			list < Shape* >::iterator via_itr;
+    			bool out2 = true;
+    			for(via_itr = all_layer[i-1].Via_list.begin(); via_itr != all_layer[i-1].Via_list.end(); ++via_itr){
+    				if((*via_itr)->coords->x1 == x &&  (*via_itr)->coords->y1 == itr->second){
+    					out2 = false;
+    					break;
+    				}
+    			}
+    			//"check Via input" over
+    			if(out2){
+    				//ofile << "Via V" << i << " ("<< x << "," << itr->second << ")" << endl;
+    				COST += ViaCost;
+    			}
+    		}
+    	}
+    }
+    cout << "Verify :Calculate COST = " << COST << endl;
+
+
+
+}
+
 
 void Manager::Reconstruct(){
 	list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;

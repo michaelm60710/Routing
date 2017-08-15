@@ -13,9 +13,10 @@ sort_linex(Line* L1, Line* L2){
 void Manager::SpanningGraphConstruct(){
     pair<GraphPoint*, GraphPoint*> GP_result;
 	int l_idx=0, temp_layer;
+    map< int , BoundLine_info* , less<int> > R_bound_map;
     list < Shape* >::iterator itr1,itr2;
     GraphPoint *gp1, *gp2;
-    int x,y;
+    int x,y, Width = Boundary->x2 - Boundary->x1, Height  = Boundary->y2 - Boundary->y1, temp_min_x;
     size_t clu_end;
     GraphPoint *P1=NULL, *P2=NULL, *P3=NULL, *P4=NULL;
     //bool PP1 = false, PP2 = false, PP3=false, PP4=false;
@@ -64,7 +65,6 @@ void Manager::SpanningGraphConstruct(){
     }
 
     //###3. Construct global graph
-    
     for(size_t  s = 0; s <= clu_end; s++){
     	temp_layer = all_line[s]->S->layer_position;
     	GP_result = all_layer[temp_layer].SGconstruct(all_line[s]);
@@ -90,27 +90,51 @@ void Manager::SpanningGraphConstruct(){
             P2 = P4 = GP_result.second;
         }
 
-        // up down construct edge
-        if(temp_layer<MetalLayers-1){
-            if(P2) P2 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P2, DOWN, R_u_y2_len);
-            if(P1) P1 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y1, (_y1 - _y2), P1, UP, R_u_y1_len);
+        if(all_line[s]->S->Shape_type==RSHAPE && all_line[s]->LR==RIGHT){
+            //1. Init R_bound_map
+            if(min_x > _x - Width) temp_min_x = min_x;
+            else                   temp_min_x = _x - Width;
+            R_bound_map.clear();
+            R_bound_map.insert(pair< int , BoundLine_info*>(Spacing-1, new BoundLine_info(Width, 0, UP, Spacing-1, temp_min_x, NULL) ) );
+            R_bound_map.insert(pair< int , BoundLine_info*>(-1, new BoundLine_info(Width, 0, DOWN, -1, temp_min_x, NULL) ) );
+            R_bound_map.insert(pair< int , BoundLine_info*>(Height+1, new BoundLine_info(Width, 0, UP, Height+1, temp_min_x, NULL) ) );
+            R_bound_map.insert(pair< int , BoundLine_info*>(Height+1-Spacing, new BoundLine_info(Width, 0, DOWN, Height+1-Spacing, temp_min_x, NULL) ) );
+            //2. 
+            //Up
+            for(int i = temp_layer+2;i<=MetalLayers-1;i++) {
+                all_layer[i].Update_Rbound_map(_x, _y1, _y2, R_bound_map);
+            }
+            //Down
+            for(int i = temp_layer-2; i>=0;i--) {
+                all_layer[i].Update_Rbound_map(_x, _y1, _y2, R_bound_map);
+            }
+
         }
-        if(temp_layer>0){
-            if(P4) P4 = all_layer[temp_layer-1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P4, DOWN, R_d_y2_len);
-            if(P3) P3 = all_layer[temp_layer-1].SGconstruct_extra_obs(_x, _y1, (_y1 - _y2), P3, UP, R_d_y1_len);
-        }
+        /*else{
+            // up down construct edge
+            if(temp_layer<MetalLayers-1){
+                if(P2) P2 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P2, DOWN, R_u_y2_len);
+                if(P1) P1 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y1, (_y1 - _y2), P1, UP, R_u_y1_len);
+            }
+            if(temp_layer>0){
+                if(P4) P4 = all_layer[temp_layer-1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P4, DOWN, R_d_y2_len);
+                if(P3) P3 = all_layer[temp_layer-1].SGconstruct_extra_obs(_x, _y1, (_y1 - _y2), P3, UP, R_d_y1_len);
+            }
 
 
-        //Up
-        for(int i = temp_layer+2;i<=MetalLayers-1;i++) {
-            all_layer[i].Extra_obs(all_line[s], P1, P2, _x, _y1, _y2, R_u_y1_len, R_u_y2_len);
-            if(P1==NULL && P2==NULL) break;
-        }
-        //Down
-        for(int i = temp_layer-2; i>=0;i--) {
-            all_layer[i].Extra_obs(all_line[s], P3, P4, _x, _y1, _y2, R_d_y1_len, R_d_y2_len);
-            if(P3==NULL && P4==NULL) break;
-        }
+            //Up
+            for(int i = temp_layer+2;i<=MetalLayers-1;i++) {
+                all_layer[i].Extra_obs(all_line[s], P1, P2, _x, _y1, _y2, R_u_y1_len, R_u_y2_len);
+                if(P1==NULL && P2==NULL) break;
+            }
+            //Down
+            for(int i = temp_layer-2; i>=0;i--) {
+                all_layer[i].Extra_obs(all_line[s], P3, P4, _x, _y1, _y2, R_d_y1_len, R_d_y2_len);
+                if(P3==NULL && P4==NULL) break;
+            }
+
+        }*/
+
     }
 
     //###4. Update Via length (Cluster of Via must be only 1 Gp)
