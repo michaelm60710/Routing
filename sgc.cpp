@@ -99,18 +99,41 @@ void Manager::SpanningGraphConstruct(){
             R_bound_map.insert(pair< int , BoundLine_info*>(-1, new BoundLine_info(Width, 0, DOWN, -1, temp_min_x, NULL) ) );
             R_bound_map.insert(pair< int , BoundLine_info*>(Height+1, new BoundLine_info(Width, 0, UP, Height+1, temp_min_x, NULL) ) );
             R_bound_map.insert(pair< int , BoundLine_info*>(Height+1-Spacing, new BoundLine_info(Width, 0, DOWN, Height+1-Spacing, temp_min_x, NULL) ) );
-            //2. 
+            
+            // up down construct edge
+            /*if(temp_layer<MetalLayers-1){
+                if(P2) P2 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P2, DOWN, R_u_y2_len);
+                if(P1) P1 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y1, (_y1 - _y2), P1, UP, R_u_y1_len);
+                all_layer[temp_layer+1].Update_Rbound_map(_x, _y1, _y2, R_bound_map);
+            }
             //Up
             for(int i = temp_layer+2;i<=MetalLayers-1;i++) {
+                all_layer[i].Extra_obs_RSHAPE_right(all_line[s], P1, P2, _x, _y1, _y2, R_u_y1_len, R_u_y2_len, R_bound_map);
+                if(P1==NULL && P2==NULL) break;
                 all_layer[i].Update_Rbound_map(_x, _y1, _y2, R_bound_map);
             }
+
+            R_bound_map.clear();
+            R_bound_map.insert(pair< int , BoundLine_info*>(Spacing-1, new BoundLine_info(Width, 0, UP, Spacing-1, temp_min_x, NULL) ) );
+            R_bound_map.insert(pair< int , BoundLine_info*>(-1, new BoundLine_info(Width, 0, DOWN, -1, temp_min_x, NULL) ) );
+            R_bound_map.insert(pair< int , BoundLine_info*>(Height+1, new BoundLine_info(Width, 0, UP, Height+1, temp_min_x, NULL) ) );
+            R_bound_map.insert(pair< int , BoundLine_info*>(Height+1-Spacing, new BoundLine_info(Width, 0, DOWN, Height+1-Spacing, temp_min_x, NULL) ) );
+           */
+
+            if(temp_layer>0){
+                if(P4) P4 = all_layer[temp_layer-1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P4, DOWN, R_d_y2_len);
+                if(P3) P3 = all_layer[temp_layer-1].SGconstruct_extra_obs(_x, _y1, (_y1 - _y2), P3, UP, R_d_y1_len);
+                all_layer[temp_layer-1].Update_Rbound_map(_x, _y1, _y2, R_bound_map);
+            }           
             //Down
             for(int i = temp_layer-2; i>=0;i--) {
+                all_layer[i].Extra_obs_RSHAPE_right(all_line[s], P3, P4, _x, _y1, _y2, R_d_y1_len, R_d_y2_len, R_bound_map);
+                if(P3==NULL && P4==NULL) break;
                 all_layer[i].Update_Rbound_map(_x, _y1, _y2, R_bound_map);
             }
 
         }
-        /*else{
+        else{
             // up down construct edge
             if(temp_layer<MetalLayers-1){
                 if(P2) P2 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P2, DOWN, R_u_y2_len);
@@ -133,7 +156,7 @@ void Manager::SpanningGraphConstruct(){
                 if(P3==NULL && P4==NULL) break;
             }
 
-        }*/
+        }
 
     }
 

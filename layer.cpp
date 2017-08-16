@@ -689,6 +689,18 @@ void Layer::Extra_obs(Line* LLine, GraphPoint *&GP1, GraphPoint *&GP2, int _x, i
 
 }
 
+void Layer::Extra_obs_RSHAPE_right(Line* LLine, GraphPoint *&GP1, GraphPoint *&GP2, int _x, int _y1, int _y2, int &R_pos1, int &R_pos2,  map< int , BoundLine_info* , less<int> > &R_bound_map){
+
+    if(GP2!=NULL){
+        GP2 = SGconstruct_extra_obs_RSHAPE_right(_x, _y2, (_y1 - _y2), GP2, DOWN, R_pos2, R_bound_map);
+    }
+
+    if(GP1!=NULL){
+        GP1 = SGconstruct_extra_obs_RSHAPE_right(_x, _y1, (_y1 - _y2), GP1, UP, R_pos1, R_bound_map);
+    }
+
+}
+
 GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, const int length, GraphPoint* pre_GP, int up_down, int &R_pos){
     map< int , BoundLine_info* , less<int> >::iterator it1,traverse_it;
     int temp_x, temp_bound_x, temp_bound_x_2, temp_y1;
@@ -712,8 +724,13 @@ GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, const int l
             if(it1->second->Gp && it1->second->point_x < temp_x){
                 if(it1->second->Gp->Shape_type==RSHAPE)
                     pre_GP->Add_edge(it1->second->Gp, temp_x, temp_y1, temp_x, temp_y1, Layer_pos, Temp_via_cost);
-                else
+                else{
                     pre_GP->Add_edge(it1->second->Gp, temp_x, temp_y1, it1->second->point_x, it1->second->point_y, Layer_pos, Temp_via_cost);
+                    //### OPT 0816
+                    no_overlap = true;
+                	temp_R_pos = _y;
+                	//### OPT: over
+                }
             }
         }
         else if(it1->second->point_y != temp_y1 && it1->second->Get_down_edge_x() >= temp_x){//OVERLAP
@@ -858,10 +875,12 @@ GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, const int l
 
 }
 
+
+
 GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y, const int length, GraphPoint* pre_GP, int up_down, int &R_pos, map< int , BoundLine_info* , less<int> > &R_bound_map){
-    map< int , BoundLine_info* , less<int> >::iterator it1,traverse_it;
+    map< int , BoundLine_info* , less<int> >::iterator it1,traverse_it, it_R;
     int temp_x, temp_bound_x, temp_bound_x_2, temp_y1;
-    int limit_y, temp_R_pos = R_pos;
+    int limit_y, temp_R_pos = R_pos, R_x;
     BoundLine_info *temp_bline;
     bool no_overlap = false;
     int Temp_via_cost = abs(pre_GP->Layer_pos - Layer_pos )*Via_cost;
@@ -874,7 +893,6 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
     */
     temp_x = _x;
     temp_y1 = _y;
-
     it1 = bound_map.lower_bound(temp_y1);
     if(it1 != bound_map.end() ){
         if(it1->second->point_y == temp_y1 && it1->second->max_x > temp_x ){ //same y && overlap
@@ -896,6 +914,9 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
             }
         }
         else{
+        	//R_bound
+    		it_R = R_bound_map.lower_bound(_y);
+    		--it_R;
             temp_bound_x_2 = min_x;
             no_overlap = true;
             //1 and 5 construct edge
@@ -924,9 +945,11 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
                     while(traverse_it!=bound_map.end() && traverse_it->second->point_y < R_pos){
                         temp_bline = traverse_it->second;
                         if(temp_bline->max_x > _x && temp_bline->point_y < temp_R_pos) temp_R_pos = temp_bline->point_y; //Update R_pos
-                        if(temp_bline->up_edge_GP){
-                            if(temp_bline->Get_up_edge_x() <= temp_x )
-                                pre_GP->Add_edge(temp_bline->up_edge_GP, temp_x, temp_bline->point_y, temp_bline->Get_up_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
+                        if(temp_bline->up_edge_GP){//RSHAPE
+                            if(temp_bline->Get_up_edge_x() <= temp_x ){
+                            	R_x = Get_better_x_pos(temp_bline->point_y, temp_bline->Get_up_edge_x(), temp_x, UP, it_R);
+                                pre_GP->Add_edge(temp_bline->up_edge_GP, R_x, temp_bline->point_y, temp_bline->Get_up_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            }
                             else
                                 pre_GP->Add_edge(temp_bline->up_edge_GP, temp_x, temp_bline->point_y, temp_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
                         }
@@ -1023,7 +1046,7 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
 
     if(!no_overlap) pre_GP = NULL;
     R_pos = temp_R_pos;
-    return pre_GP;  
+    return pre_GP;
 
 
 }
@@ -1045,12 +1068,11 @@ void Layer::Update_Rbound_map(const int x1, const int y1, const int y2, map< int
     temp_x = x1;
     it1 = bound_map.lower_bound(y1); 
     traverse_it = it1;
-    cout << "hi " << endl;
     if(it1!=bound_map.end() ){
         p1_max_x = it1->second->max_x;
         p1_down_x = it1->second->Get_down_edge_x();
         p1_y = y1;
-        cout << "p1fisrt y, down_x, max_x: " << p1_y << ", " << p1_down_x << ", " <<p1_max_x <<endl;
+        //cout << "p1fisrt y, down_x, max_x: " << p1_y << ", " << p1_down_x << ", " <<p1_max_x <<endl;
         if(p1_down_x > temp_x){
             b1 = new BoundLine_info(p1_max_x, p1_y, min_x, p1_down_x);//int max_x, int P_y, int min_x, int down_x
             status1 = R_bound_map.insert(pair< int , BoundLine_info*>(p1_y, b1) );
@@ -1072,7 +1094,7 @@ void Layer::Update_Rbound_map(const int x1, const int y1, const int y2, map< int
         while(1){
             if(traverse_it->second->point_y < y2) break;
             temp_bline = traverse_it->second;
-            cout << "y, up_x, down_x, max_x: " << temp_bline->point_y << ", " << temp_bline->Get_up_edge_x()<< ", " << temp_bline->Get_down_edge_x() << ", " <<temp_bline->max_x<<endl;
+            //cout << "y, up_x, down_x, max_x: " << temp_bline->point_y << ", " << temp_bline->Get_up_edge_x()<< ", " << temp_bline->Get_down_edge_x() << ", " <<temp_bline->max_x<<endl;
             if(temp_bline->max_x > temp_x) {
                 p2_max_x = temp_bline->max_x;
                 p2_down_x = temp_bline->Get_down_edge_x();
@@ -1080,15 +1102,22 @@ void Layer::Update_Rbound_map(const int x1, const int y1, const int y2, map< int
 
                 if(b1 && temp_bline->Get_up_edge_x()== p1_down_x) {
                     b2 = new BoundLine_info(p2_max_x, p2_y, min_x, p2_down_x);
-                    status2 = R_bound_map.insert(pair< int , BoundLine_info*>(p1_y, b2) );
+                    status2 = R_bound_map.insert(pair< int , BoundLine_info*>(p2_y, b2) );
 
                     //### delete mid
-                    for(it1 = ++(status1.first), it2 = status2.first; it1 != it2; ++it1){
-                        temp_bline2 = it1->second;
+                    it2 = status2.first;
+                    ++it2;
+                    for(it1 = status1.first; it1 != it2;++it2){
+                    	if(it2==R_bound_map.end()) {//for test
+                    		cerr << "...";
+                    		cin.get();
+                    		break;
+                    	}
+                        temp_bline2 = it2->second;
                         if(temp_bline2->max_x <= p1_down_x ) {
                             delete temp_bline2;
-                            R_bound_map.erase(it1++);
-                            --it1;
+                           	R_bound_map.erase(it2++);
+                           	--it2;
                         }
                         else{
                             if(temp_bline2->Get_up_edge_x() < p1_down_x)   temp_bline2->Change_up_edge(NULL, p1_down_x);
@@ -1109,29 +1138,30 @@ void Layer::Update_Rbound_map(const int x1, const int y1, const int y2, map< int
                     //### update status1 
                     {
                         bool p1 = true;
-                        if(status1.second==false){
-                            temp_bline2 = status1.first->second;
-                            ++temp_bline2;
-                            if(temp_bline2->Get_down_edge_x() < status1.first->second->max_x){
+                        if(status1.second==false){// bug? 
+                        	//it1 = status1.first;
+                        	//++it1;
+                            //temp_bline2 = it1->second;
+                            //if(temp_bline2->Get_down_edge_x() < status1.first->second->max_x){
                                 temp_bline2 = status1.first->second;
                                 if(temp_bline2->Get_down_edge_x() < p1_down_x) temp_bline2->Change_down_edge(NULL, p1_down_x);
                                 delete b1;
                                 if(temp_bline2->max_x <= p1_max_x)temp_bline2->point_x = p1_max_x;
                                 if(temp_bline2->max_x <  p1_max_x)temp_bline2->max_x   = p1_max_x;
-                            }
+                            //}
 
                         }
                         else{
                             temp_bline2 = status1.first->second;
                             ++temp_bline2;
-                            if(temp_bline2->Get_down_edge_x() < status1.first->second->max_x) p1 = false;
+                            if(temp_bline2->Get_down_edge_x() > status1.first->second->max_x) p1 = false;
                         }
 
                         if(p1==false) {
-                            //delete status1.first->second;
-                            //bound_map.erase(status1.first);
+                        	it1 = status1.first;
+                            delete status1.first->second;
+                            R_bound_map.erase(status1.first);
                         }
-
                     }
                     //###Update b1
                     if(p2_down_x > temp_x){
@@ -1167,11 +1197,7 @@ void Layer::Update_Rbound_map(const int x1, const int y1, const int y2, map< int
                     cout << b1 << " " << temp_bline->Get_up_edge_x() << " " << p1_down_x;
                     cin.get();
                 }
-
-
             }
-
-
 
             if(traverse_it==bound_map.begin()) break;
             --traverse_it;
@@ -1180,6 +1206,7 @@ void Layer::Update_Rbound_map(const int x1, const int y1, const int y2, map< int
 
 
     }
+
     /*
 
     */
@@ -1229,6 +1256,29 @@ Layer::ConvertToUndirectedG(){
  	}
 
 }
+int Layer::Get_better_x_pos(int _y, int find_x, int RSHAPE_x, int up_down, map< int , BoundLine_info* , less<int> >::iterator &R_it){
+	int R_x = 0;
+	int R_bound_down_x = 0;
+	if(up_down==UP){//go UP
+		while(R_it->second->point_y < _y) ++R_it;
+		R_bound_down_x = R_it->second->Get_down_edge_x();
+	}
+	else{ //go Down
+		while(R_it->second->point_y > _y) --R_it;
+		R_bound_down_x = R_it->second->Get_up_edge_x();
+	}
+
+	if(R_bound_down_x < find_x) R_x = find_x;
+	else if(R_bound_down_x > RSHAPE_x){//test
+		R_x = RSHAPE_x;
+		cout << "wrong"<<endl;
+		cin.get();
+	}
+	else	R_x = R_bound_down_x;
+
+	return R_x;
+}
+
 
 //int convert to string
 string itos(int a) {
