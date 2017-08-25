@@ -16,9 +16,10 @@ void Manager::SpanningGraphConstruct(){
     map< int , BoundLine_info* , less<int> > R_bound_map;
     list < Shape* >::iterator itr1,itr2;
     GraphPoint *gp1, *gp2;
-    int x,y, Width = Boundary->x2 - Boundary->x1, Height  = Boundary->y2 - Boundary->y1, temp_min_x;
+    int x,y, temp_min_x, RSHAPE_width;
     size_t clu_end;
     GraphPoint *P1=NULL, *P2=NULL, *P3=NULL, *P4=NULL;
+    BoundLine_info* b_upper, * b_upper1, * b_down, * b_down1;
     //bool PP1 = false, PP2 = false, PP3=false, PP4=false;
 
     //###1. Initialize
@@ -92,48 +93,66 @@ void Manager::SpanningGraphConstruct(){
 
         if(all_line[s]->S->Shape_type==RSHAPE && all_line[s]->LR==RIGHT){
             //1. Init R_bound_map
-            if(min_x > _x - Width) temp_min_x = min_x;
-            else                   temp_min_x = _x - Width;
-            R_bound_map.clear();
-            R_bound_map.insert(pair< int , BoundLine_info*>(Spacing-1, new BoundLine_info(Width, 0, UP, Spacing-1, temp_min_x, NULL) ) );
-            R_bound_map.insert(pair< int , BoundLine_info*>(-1, new BoundLine_info(Width, 0, DOWN, -1, temp_min_x, NULL) ) );
-            R_bound_map.insert(pair< int , BoundLine_info*>(Height+1, new BoundLine_info(Width, 0, UP, Height+1, temp_min_x, NULL) ) );
-            R_bound_map.insert(pair< int , BoundLine_info*>(Height+1-Spacing, new BoundLine_info(Width, 0, DOWN, Height+1-Spacing, temp_min_x, NULL) ) );
+            RSHAPE_width = all_line[s]->width;
+            if(min_x > _x - RSHAPE_width) temp_min_x = min_x;
+            else                          temp_min_x = _x - RSHAPE_width;
             
+
+            b_upper = new BoundLine_info(INT_MAX, 0, UP, _y1+2, temp_min_x, NULL);
+            b_upper1= new BoundLine_info(INT_MAX, 0, DOWN, _y1+1, temp_min_x, NULL);
+            b_down  = new BoundLine_info(INT_MAX, 0, UP, _y2-1, temp_min_x, NULL);
+            b_down1 = new BoundLine_info(INT_MAX, 0, DOWN, -1, temp_min_x, NULL);
+            //cout << "RSHAPE LEFT x1 ,x2:" << _x - RSHAPE_width << ", " << _x << ", y_up ,y_down:" << _y1 << ", " << _y2 << endl;
+            R_bound_map.clear();                                                            //Max_x, point_x, flag(UP_or_down), point_y, min_x
+            R_bound_map.insert(pair< int , BoundLine_info*>(_y1+2, b_upper) );
+            R_bound_map.insert(pair< int , BoundLine_info*>(_y1+1, b_upper1) );
+            R_bound_map.insert(pair< int , BoundLine_info*>(_y2-1, b_down ) );
+            R_bound_map.insert(pair< int , BoundLine_info*>(-1,    b_down1) );
+            //Print_R_bound(R_bound_map, true);
             // up down construct edge
-            /*if(temp_layer<MetalLayers-1){
-                if(P2) P2 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P2, DOWN, R_u_y2_len);
-                if(P1) P1 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y1, (_y1 - _y2), P1, UP, R_u_y1_len);
-                all_layer[temp_layer+1].Update_Rbound_map(_x, _y1, _y2, R_bound_map);
+            if(temp_layer<MetalLayers-1){
+                if(P2) P2 = all_layer[temp_layer+1].SGconstruct_extra_obs_RSHAPE_right(_x, _y2, (_y1 - _y2), P2, DOWN, R_u_y2_len, R_bound_map);
+                if(P1) P1 = all_layer[temp_layer+1].SGconstruct_extra_obs_RSHAPE_right(_x, _y1, (_y1 - _y2), P1, UP, R_u_y1_len, R_bound_map);
+                all_layer[temp_layer+1].Update_Rbound_map(temp_min_x, _y1, _y2, R_bound_map);
+                //Print_R_bound(R_bound_map, false);
             }
             //Up
             for(int i = temp_layer+2;i<=MetalLayers-1;i++) {
                 all_layer[i].Extra_obs_RSHAPE_right(all_line[s], P1, P2, _x, _y1, _y2, R_u_y1_len, R_u_y2_len, R_bound_map);
                 if(P1==NULL && P2==NULL) break;
-                all_layer[i].Update_Rbound_map(_x, _y1, _y2, R_bound_map);
+                all_layer[i].Update_Rbound_map(temp_min_x, _y1, _y2, R_bound_map);
+                //Print_R_bound(R_bound_map, false);
             }
 
             R_bound_map.clear();
-            R_bound_map.insert(pair< int , BoundLine_info*>(Spacing-1, new BoundLine_info(Width, 0, UP, Spacing-1, temp_min_x, NULL) ) );
-            R_bound_map.insert(pair< int , BoundLine_info*>(-1, new BoundLine_info(Width, 0, DOWN, -1, temp_min_x, NULL) ) );
-            R_bound_map.insert(pair< int , BoundLine_info*>(Height+1, new BoundLine_info(Width, 0, UP, Height+1, temp_min_x, NULL) ) );
-            R_bound_map.insert(pair< int , BoundLine_info*>(Height+1-Spacing, new BoundLine_info(Width, 0, DOWN, Height+1-Spacing, temp_min_x, NULL) ) );
-           */
+            b_upper = new BoundLine_info(INT_MAX, 0, UP, _y1+2, temp_min_x, NULL);
+            b_upper1= new BoundLine_info(INT_MAX, 0, DOWN, _y1+1, temp_min_x, NULL);
+            b_down  = new BoundLine_info(INT_MAX, 0, UP, _y2-1, temp_min_x, NULL);
+            b_down1 = new BoundLine_info(INT_MAX, 0, DOWN, -1, temp_min_x, NULL);
+            R_bound_map.insert(pair< int , BoundLine_info*>(_y1+2, b_upper) );
+            R_bound_map.insert(pair< int , BoundLine_info*>(_y1+1, b_upper1) );
+            R_bound_map.insert(pair< int , BoundLine_info*>(_y2-1, b_down) );
+            R_bound_map.insert(pair< int , BoundLine_info*>(-1,    b_down1) );
+            
 
             if(temp_layer>0){
-                if(P4) P4 = all_layer[temp_layer-1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P4, DOWN, R_d_y2_len);
-                if(P3) P3 = all_layer[temp_layer-1].SGconstruct_extra_obs(_x, _y1, (_y1 - _y2), P3, UP, R_d_y1_len);
-                all_layer[temp_layer-1].Update_Rbound_map(_x, _y1, _y2, R_bound_map);
-            }           
+                if(P4) P4 = all_layer[temp_layer-1].SGconstruct_extra_obs_RSHAPE_right(_x, _y2, (_y1 - _y2), P4, DOWN, R_d_y2_len, R_bound_map);
+                if(P3) P3 = all_layer[temp_layer-1].SGconstruct_extra_obs_RSHAPE_right(_x, _y1, (_y1 - _y2), P3, UP, R_d_y1_len, R_bound_map);
+                all_layer[temp_layer-1].Update_Rbound_map(temp_min_x, _y1, _y2, R_bound_map);
+                //Print_R_bound(R_bound_map, false);
+            }    
+
             //Down
             for(int i = temp_layer-2; i>=0;i--) {
+                //cout << "test " << i << endl;
+                //cin.get();
                 all_layer[i].Extra_obs_RSHAPE_right(all_line[s], P3, P4, _x, _y1, _y2, R_d_y1_len, R_d_y2_len, R_bound_map);
                 if(P3==NULL && P4==NULL) break;
-                all_layer[i].Update_Rbound_map(_x, _y1, _y2, R_bound_map);
+                all_layer[i].Update_Rbound_map(temp_min_x, _y1, _y2, R_bound_map);
+                //Print_R_bound(R_bound_map, false);
             }
-
         }
-        else{
+        /*else{
             // up down construct edge
             if(temp_layer<MetalLayers-1){
                 if(P2) P2 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P2, DOWN, R_u_y2_len);
@@ -156,7 +175,7 @@ void Manager::SpanningGraphConstruct(){
                 if(P3==NULL && P4==NULL) break;
             }
 
-        }
+        }*/
 
     }
 
@@ -628,7 +647,35 @@ int Manager::opt1_shape(Edge_info *E, int &x1, int &y1, int &x2, int &y2){
 
 
 
+void Manager::Print_R_bound(map< int , BoundLine_info* , less<int> > &R_bound_map, bool print){
+    if(print){
+       cout << "R_bound_map print" << endl;
+        for(map< int , BoundLine_info* , less<int> >::iterator it1 = R_bound_map.begin();it1 != R_bound_map.end();++it1){
+            cout << "y, max_x, up_edge_x, down_edge_x: " << it1->second->point_y << ", " << it1->second->max_x << ", " << it1->second->Get_up_edge_x() << ", " << it1->second->Get_down_edge_x() << endl;
+        } 
+        return;
+    }
 
+    
+    bool bug = false;
+    map< int , BoundLine_info* , less<int> >::reverse_iterator pre_ritr,it1;
+    pre_ritr = it1 = R_bound_map.rbegin();
+    ++it1;
+    for(;it1 != R_bound_map.rend();++it1){
+        if(pre_ritr->second->down_edge_x != it1->second->up_edge_x)bug = true;// cout << "Q";
+        //if(it1->second->max_x < it1->second->Get_up_edge_x() || it1->second->max_x < it1->second->Get_down_edge_x()) bug = true;
+        pre_ritr = it1;
+    }
+    if(bug){
+        cout << "R_bound_map print" << endl;
+        for(map< int , BoundLine_info* , less<int> >::reverse_iterator it1 = R_bound_map.rbegin();it1 != R_bound_map.rend();++it1){
+            cout << "y, max_x, up_edge_x, down_edge_x: " << it1->second->point_y << ", " << it1->second->max_x << ", " << it1->second->Get_up_edge_x() << ", " << it1->second->Get_down_edge_x() << endl;
+        }
+        //cin.get();
+    }
+    if(bug) cin.get();
+
+}
 
 
 

@@ -40,6 +40,7 @@ public:
     GraphPoint* SGconstruct_extra_obs_RSHAPE_right(const int, const int, const int, GraphPoint*, int, int &, map< int , BoundLine_info* , less<int> > &);
     void Update_Rbound_map(const int, const int, const int, map< int , BoundLine_info* , less<int> > &);
     int Get_better_x_pos(int, int, int, int, map< int , BoundLine_info* , less<int> >::iterator &);//0816
+    int Get_better_x_pos(int, int, int);//0826
 	//for private use
 	void Rshape_list_append(Shape *);
 	void Obstacle_list_append(Shape *);

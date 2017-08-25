@@ -124,7 +124,7 @@ public:
 
 class BoundLine_info{
 public:
-	BoundLine_info(int m_x, int temp_x, int flag, int P_y, int min_x, GraphPoint *gpp);
+	BoundLine_info(int m_x, int temp_x, int flag, int P_y, int min_x, GraphPoint *gpp);//Max_x, point_x, flag(UP_or_down), point_y, min_x
 	BoundLine_info(int max_x, int P_y, int min_x, int down_x); //0815 for R_bound_map
 	int Get_up_edge_x()  { return up_edge_x;}
 	int Get_down_edge_x(){ return down_edge_x;}

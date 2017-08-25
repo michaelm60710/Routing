@@ -31,8 +31,8 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 
     //OutputFile
-    //Output_test(Output_file);
-    Output(Output_file);
+    Output_test(Output_file);
+    //Output(Output_file);
     //Verify();
 
     //test
