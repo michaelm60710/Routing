@@ -25,10 +25,8 @@ public:
 
     //
     pair<GraphPoint*, GraphPoint*> SGconstruct(Line*); //same layer shape
-    GraphPoint* SGconstruct_2(Line*, GraphPoint*, bool); //same layer shape
     void SGconstruct_search(Line*, GraphPoint*, GraphPoint*); //dif layer shape
     void SGcons_RshapeOverlap(Line*, GraphPoint* &, GraphPoint* &, bool &, bool &);
-    void SGcons_RshapeOverlap_2(GraphPoint*);
     void diff_layer_via(Line*, GraphPoint*, GraphPoint*, GraphPoint*, GraphPoint*);
     void ConvertToUndirectedG();
     void check_point_svg(string name="x");
@@ -60,6 +58,10 @@ public:
 	int Via_cost;
 	int Max_dis;
 
+	//dff_map
+	void diff_map_update(Line*); //same layer shape
+	void diff_map_insert_rshape_point(GraphPoint*, const int, const int);
+
 	vector<Cluster*> all_cluster;
 	list < Shape* > Via_list;
 	list < Shape* > Upper_Via_list;
@@ -84,6 +86,7 @@ private:
 	int Layer_Shape_num;
 
 	map< int , BoundLine_info* , less<int> > bound_map;
+	map< int , BoundLine_info* , less<int> > dff_bound_map; //dfferent Rshape 0827
 
 	
 

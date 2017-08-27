@@ -69,6 +69,16 @@ void Layer::SpanningGraphConstruct(){
     bound_map.insert(pair< int , BoundLine_info*>(Height+1, b_upper) );
     bound_map.insert(pair< int , BoundLine_info*>(Height+1-Spacing, b_upper1) );
 
+    dff_bound_map.clear();
+    b_upper = new BoundLine_info(Width, 0, UP, Height+1, min_x, NULL);//
+    b_upper1= new BoundLine_info(Width, 0, DOWN, Height+1-Spacing, min_x, NULL);
+    b_down  = new BoundLine_info(Width, 0, UP, Spacing-1, min_x, NULL);
+    b_down1 = new BoundLine_info(Width, 0, DOWN, -1, min_x, NULL);//
+    dff_bound_map.insert(pair< int , BoundLine_info*>(Spacing-1, b_down) );
+    dff_bound_map.insert(pair< int , BoundLine_info*>(-1, b_down1) );
+    dff_bound_map.insert(pair< int , BoundLine_info*>(Height+1, b_upper) );
+    dff_bound_map.insert(pair< int , BoundLine_info*>(Height+1-Spacing, b_upper1) );
+
 }
 
 bool
@@ -682,10 +692,12 @@ void Layer::Extra_obs(Line* LLine, GraphPoint *&GP1, GraphPoint *&GP2, int _x, i
 
     if(GP2!=NULL){
         GP2 = SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), GP2, DOWN, R_pos2);
+        diff_map_insert_rshape_point(GP2, _x, _y2); 
     }
 
     if(GP1!=NULL){
         GP1 = SGconstruct_extra_obs(_x, _y1, (_y1 - _y2), GP1, UP, R_pos1);
+        diff_map_insert_rshape_point(GP1, _x, _y1); 
     }
 
 }
@@ -694,10 +706,12 @@ void Layer::Extra_obs_RSHAPE_right(Line* LLine, GraphPoint *&GP1, GraphPoint *&G
 
     if(GP2!=NULL){
         GP2 = SGconstruct_extra_obs_RSHAPE_right(_x, _y2, (_y1 - _y2), GP2, DOWN, R_pos2, R_bound_map);
+        diff_map_insert_rshape_point(GP2, _x, _y2); 
     }
 
     if(GP1!=NULL){
         GP1 = SGconstruct_extra_obs_RSHAPE_right(_x, _y1, (_y1 - _y2), GP1, UP, R_pos1, R_bound_map);
+        diff_map_insert_rshape_point(GP1, _x, _y1); 
     }
 
 }
@@ -716,6 +730,7 @@ GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, const int l
               1     |                |
   
     */
+
     temp_x = _x;
     temp_y1 = _y;
 
@@ -889,6 +904,7 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
               1     |                |
   
     */
+
     temp_x = _x;
     temp_y1 = _y;
     it1 = bound_map.lower_bound(temp_y1);
@@ -960,25 +976,16 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
                         temp_bound_x = traverse_it->second->down_edge_x;
                     }
                     //update length_x 0826
-                    /*while(it_R->second->point_y < R_pos) ++it_R;
-                    //test
-                    if(it_R->second->point_y == R_pos ) cout << "Q"; //bug?
-                    else if(it_R->second->point_y == R_pos+1) cout << "W";
-                    else {
-                        cout << "!";
-                        cout << it_R->second->point_y  << "," << _y << "," << R_pos <<  endl;
-                        cin.get();
-                    }
-                    //testo ver
+                    while(it_R->second->point_y < R_pos) ++it_R;
                     --it_R;
-                    if(it_R!=R_bound_map.end() &&  it_R->second->Get_up_edge_x() < length_x) length_x = it_R->second->Get_up_edge_x();*/
+                    if(it_R!=R_bound_map.end() &&  it_R->second->Get_up_edge_x() < length_x) length_x = it_R->second->Get_up_edge_x();
                 }
                 else {
                     limit_y = temp_y1 + Max_dis;
                     temp_y1 = _y;
                     if(traverse_it!=bound_map.end() && traverse_it->second->down_edge_x > temp_bound_x) temp_bound_x = traverse_it->second->down_edge_x;
                     //update length_x 0826
-                    if(it_R!=R_bound_map.end() &&  it_R->second->Get_up_edge_x() < length_x) length_x = it_R->second->Get_up_edge_x();
+                    if(it_R!=R_bound_map.end() && it_R->second->Get_up_edge_x() < length_x) length_x = it_R->second->Get_up_edge_x();
                 }
                 
                 //5
@@ -999,7 +1006,7 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
                     }
                     if(limit_y < temp_bline->point_y) break;
                 }
-
+                
                 //1
                 it_R = R_bound_map.lower_bound(_y);
                 length_x = temp_x;
@@ -1013,6 +1020,7 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
                     temp_y1 = _y;
                     if(traverse_it->second->down_edge_x > temp_bound_x) temp_bound_x = traverse_it->second->down_edge_x;
                     //update length_x 0826
+                    if(it_R!=R_bound_map.end() && it_R->second->Get_down_edge_x() < length_x) length_x = it_R->second->Get_down_edge_x();
                 }
                 else { //UP
                     limit_y = _y - length;
@@ -1040,9 +1048,8 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
                     if(traverse_it!=bound_map.end() && traverse_it->second->up_edge_x > temp_bound_x) temp_bound_x = traverse_it->second->up_edge_x;
                     
                     //update length_x 0826
-                    /*while(it_R->second->point_y > R_pos) --it_R;
-                    ++it_R;
-                    if(it_R!=R_bound_map.end() && it_R->second->Get_down_edge_x() < length_x) length_x = it_R->second->Get_down_edge_x();*/
+                    while(it_R->second->point_y > R_pos) --it_R;
+                    if(it_R!=R_bound_map.end() && it_R->second->Get_up_edge_x() < length_x && _y!=temp_y1) length_x = it_R->second->Get_up_edge_x(); // why _y!=temp_y1 //
                 }
 
                 while(1){
@@ -1454,7 +1461,7 @@ Layer::check_point_svg(string name){
         begin_itr = all_cluster[i]->GraphP_list.begin();
         end_itr = all_cluster[i]->GraphP_list.end();
         for(gp_itr = begin_itr; gp_itr!=end_itr;++gp_itr){
-            //a<< "<circle cx=\"" << (*gp_itr)->x/size << "\" cy=\""<< (*gp_itr)->y/size << "\" r=\"2\" style=\"fill:red;stroke:red;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.8\" />" << endl;
+            a<< "<circle cx=\"" << (*gp_itr)->x/size << "\" cy=\""<< (*gp_itr)->y/size << "\" r=\"2\" style=\"fill:red;stroke:red;stroke-width:3;fill-opacity:0.1;stroke-opacity:0.8\" />" << endl;
      
         }
     }

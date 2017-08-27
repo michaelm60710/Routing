@@ -31,8 +31,8 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 
     //OutputFile
-    Output_test(Output_file);
-    //Output(Output_file);
+    //Output_test(Output_file);
+    Output(Output_file);
     //Verify();
 
     //test
@@ -400,7 +400,7 @@ void Manager::Output_test(const char *Output_file){
 
 }
 
-void Manager::Verify(){
+/*void Manager::Verify(){
 
 	list < GraphPoint* >::iterator gp_itr;
 	list<Edge_info*>::iterator edge_itr;
@@ -488,10 +488,7 @@ void Manager::Verify(){
     	}
     }
     cout << "Verify :Calculate COST = " << COST << endl;
-
-
-
-}
+}*/
 
 
 void Manager::Reconstruct(){

@@ -38,10 +38,13 @@ public:
 
 	void Reconstruct();
 
+	//0827
+	void SGC_up_down(pair<GraphPoint*, GraphPoint*>, int, Line* );
+
 	void Output(const char* );
 	void Output_test(const char* );
 	void Verify();
-	void Print_R_bound(map< int , BoundLine_info* , less<int> > &, bool);
+	void Print_R_bound(map< int , BoundLine_info* , less<int> > &, bool, int);
 
 	string itos1(int);//integer convert to string
 private:
