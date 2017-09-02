@@ -498,8 +498,8 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         //############delete mid (refrech bound info)
         traverse_it = it2;
         ++traverse_it;
-        if(it2->first!=it1->first)//if the shape is not a wire
-            for(;traverse_it!=it1; ++traverse_it){
+        if(it2->first!=it1->first){//if the shape is not a wire
+        	for(;traverse_it!=it1; ++traverse_it){
             	temp_bline = traverse_it->second;
                 if(temp_bline->max_x <= temp_max_x ) {
                 	delete temp_bline;
@@ -512,7 +512,8 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
                     temp_bline->Gp = NULL;
                 }
             }
-        
+            
+        }
         //############ bug? >max_x <= temp_x
         if(status1.second==false){
         	temp_bline = it1->second;

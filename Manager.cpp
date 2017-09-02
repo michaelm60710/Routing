@@ -123,6 +123,7 @@ void Manager::Parsing(const char* Input_file){
 	cout << "RoutedShapes: " <<RoutedShapes << endl;
 	cout << "RoutedVias: " <<RoutedVias << endl;
 	cout << "Max R Edge: " << MaxRshapeEdge << endl;
+	cout << "Max limit length: " << all_layer[0].Max_dis << endl;
 	cout << "Obstacles: " <<Obstacles << endl << endl;
 	/*for(int i=0;i<MetalLayers;i++){
 		cout << "LAYER " << i << ":"<<endl;
