@@ -417,7 +417,7 @@ void Manager::unionSet( GraphPoint *s1, GraphPoint *s2 ) {
 void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2, bool opt1) { //need to optimize! use map search
     GraphPoint *p = p1;
     //test 
-    if(opt1 && p1->root->Layer_pos!=p2->root->Layer_pos && !(p1->Shape_type!=OBSTACLE && p2->Shape_type!=OBSTACLE) ) { //bug: roots are same layer
+    if(/*opt1 && */p1->root->Layer_pos!=p2->root->Layer_pos && !(p1->Shape_type!=OBSTACLE && p2->Shape_type!=OBSTACLE) ) { //bug: roots are same layer
         Optimize1(p1, p2);
         return;
     }

@@ -892,6 +892,7 @@ GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, const int l
 
 
 GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y, const int length, GraphPoint* pre_GP, int up_down, int &R_pos, map< int , BoundLine_info* , less<int> > &R_bound_map){
+
     map< int , BoundLine_info* , less<int> >::iterator it1,traverse_it, it_R;
     int temp_x, temp_bound_x, temp_bound_x_2, temp_y1;
     int limit_y, temp_R_pos = R_pos, R_x, length_x;
