@@ -155,6 +155,10 @@ sort_line_x(Line* L1, Line* L2){
 
 
 pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
+	/*
+	For single layer SGconstruct
+	Separate in 3 case: Via, Left side, Right side
+	*/
     map< int , BoundLine_info* , less<int> >::iterator it1,it2, low_it,traverse_it;
     pair<map< int , BoundLine_info* , less<int> >::iterator,bool> status1,status2;
     bool p1,p2; //t_shape_type,
@@ -224,10 +228,12 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             }
             ++traverse_it;
             if(temp_bound_x < temp_x){
+            	mmin_edge.Init();/////////////////1102
                 for(;traverse_it!=bound_map.end();++traverse_it){
                     temp_bline = traverse_it->second;
                     if(temp_bline->Gp!=NULL && temp_bline->point_x > temp_bound_x ){
-                        GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
+                    	mmin_edge.update(GP1, temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//1102
+                        //GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//Mark1102
 
                     }
                     if(temp_bline->max_x > temp_bound_x){
@@ -239,16 +245,19 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
                         }
                     }
                 }
+                mmin_edge.Add_min_edge(GP1);//1102
                 //1
                 temp_bound_x = temp_bound_x_2;
                 traverse_it = it1;
                 
                 if(it1!=bound_map.begin()) --traverse_it;
+                mmin_edge.Init();/////////////////1102
                 while(1){
                     temp_bline = traverse_it->second;
                     
                     if(temp_bline->Gp!=NULL && temp_bline->point_x > temp_bound_x ){
-                        GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
+                    	mmin_edge.update(GP1, temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//1102
+                        //GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//Mark1102
                     }
                     if(temp_bline->max_x > temp_bound_x) {
                         temp_bound_x = temp_bline->max_x;
@@ -261,6 +270,7 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
                     if(traverse_it==bound_map.begin()) break;
                     --traverse_it;
                 }
+                mmin_edge.Add_min_edge(GP1);//1102
             }
             
 
@@ -336,10 +346,12 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
                 if(traverse_it->second->Get_up_edge_x() > temp_bound_x) temp_bound_x = traverse_it->second->Get_up_edge_x();
             }
             if(temp_bound_x <= temp_x){
+            	mmin_edge.Init();/////////////////1102
 				while(1){
 	            	temp_bline = traverse_it->second;
 	                if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x ){
-	                    GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
+	                	mmin_edge.update(GP2, temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//1102
+	                    //GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//Mark1102
 	                }
 	                if(temp_bline->max_x > temp_bound_x) {
 	                	temp_bound_x = temp_bline->max_x;
@@ -348,6 +360,7 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
 	                if(traverse_it==bound_map.begin()) break;
 	                --traverse_it;
 	            }
+	            mmin_edge.Add_min_edge(GP2);//1102
             }
             if(traverse_it->second->down_edge_GP && traverse_it->second->Get_down_edge_x() >= temp_x)
                 GP2->Add_edge(traverse_it->second->down_edge_GP, temp_x, temp_y2, temp_x, traverse_it->second->point_y, Layer_pos, 0);
@@ -362,23 +375,28 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             	if(traverse_it->second->down_edge_GP && traverse_it->second->Get_down_edge_x() <= temp_x)
             		GP2->Add_edge(traverse_it->second->down_edge_GP, temp_x, temp_y2, traverse_it->second->Get_down_edge_x(), temp_y2, Layer_pos, 0);
 
+            	mmin_edge.Init();/////////////////1102
             	if(LLine->S->Shape_type!=RSHAPE ){
 	            	for(;traverse_it!=it1;++traverse_it){
 	                	temp_bline = traverse_it->second;
 	                    if(temp_bound_x >= temp_x) break;
 	                    if(temp_bline->Gp && temp_bline->point_x >= temp_bound_x ){
-	                        GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
+	                    	mmin_edge.update(GP2, temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//1102
+	                        //GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//Mark1102
 	                    }
 	                    if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
 	                }
+	                mmin_edge.Add_min_edge(GP2);//1102
             	}
             	else{ //RSHAPE
 	            	for(;traverse_it!=it1;++traverse_it){
 	                	temp_bline = traverse_it->second;
 	                    if(temp_bline->Gp && temp_bline->point_x < temp_x ){
-	                        GP2->Add_edge(temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
+	                    	mmin_edge.update(GP2, temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//1102
+	                        //GP2->Add_edge(temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//Mark1102
 	                    }
-	                }            		
+	                }
+	                mmin_edge.Add_min_edge(GP2);//1102         		
             	}
                 
 			}
@@ -423,10 +441,12 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             if(traverse_it!=bound_map.end() && traverse_it->second->Get_down_edge_x() > temp_bound_x) {
                 temp_bound_x = traverse_it->second->Get_down_edge_x();
             }
+            mmin_edge.Init();/////////////////1102
             for(;traverse_it!=bound_map.end();++traverse_it){
             	temp_bline = traverse_it->second;
                 if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x ){
-                    GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
+                	mmin_edge.update(GP1, temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//1102
+                    //GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//Mark1102
                 }
                 if(temp_bline->max_x > temp_bound_x) {
                 	temp_bound_x = temp_bline->max_x;
@@ -437,6 +457,7 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
                 	}
                 }
             }
+            mmin_edge.Add_min_edge(GP1);//1102
             
             //3
             traverse_it = it1;
@@ -447,23 +468,28 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
                 temp_bound_x = temp_bound_x_2;
                 if(traverse_it->second->Get_up_edge_x() > temp_bound_x) temp_bound_x = traverse_it->second->Get_up_edge_x();
 
+                mmin_edge.Init();/////////////////1102
             	if(LLine->S->Shape_type!=RSHAPE ){
             		for(;traverse_it!=it2;--traverse_it){
 	                	temp_bline = traverse_it->second;
 	                    if(temp_bound_x >= temp_x) break;
 	                    if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x ){
-	                        GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);////bug 0813
+	                    	mmin_edge.update(GP1, temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//1102
+	                        //GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//Mark1102
 	                    }
 	                    if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
 	                }
+	                mmin_edge.Add_min_edge(GP1);//1102
             	}
             	else if(GP2==NULL){
             		for(;traverse_it!=it2;--traverse_it){
 	                	temp_bline = traverse_it->second;
 	                    if(temp_bline->Gp!=NULL && temp_bline->point_x < temp_x ){
-	                        GP1->Add_edge(temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
+	                    	mmin_edge.update(GP1, temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//1102
+	                        //GP1->Add_edge(temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//Mark1102
 	                    }
 	                }
+	                mmin_edge.Add_min_edge(GP1);//1102
             	}
             }
 
@@ -574,15 +600,16 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             GP2 = temp_clu->Add_GP(LLine, DOWN, G_point_num);
             //1 construct edge
             temp_bound_x =  LLine->S->coords->x1;
-            if(traverse_it->second->Get_down_edge_x() > temp_bound_x) temp_bound_x = traverse_it->second->Get_down_edge_x();
+            if(traverse_it->second->Get_down_edge_x() - 1 > temp_bound_x) temp_bound_x = traverse_it->second->Get_down_edge_x() - 1;
             traverse_it = it2;
             if(it2!=bound_map.begin()) --traverse_it;
             if(LLine->S->Shape_type!=RSHAPE ){
+            	mmin_edge.Init();/////////////////1102
 	            while(1){
 	             	temp_bline = traverse_it->second;
 	                if(temp_bline->Gp!=NULL && temp_bline->point_x > temp_bound_x ){
-	                    GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
-
+	                	mmin_edge.update(GP2, temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//1102
+	                    //GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//Mark1102
 	                }
 	                if(temp_bline->max_x > temp_bound_x) {
 	                	temp_bound_x = temp_bline->max_x;
@@ -597,23 +624,25 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
 	                if(traverse_it==bound_map.begin()) break;
 	                --traverse_it;
 	            }
-
+	            mmin_edge.Add_min_edge(GP2);//1102
 	            //construct Obstacle edge
 	            if(/*it2->second->point_x==LLine->S->coords->x1 && */it2->second->Gp)
 	                GP2->Add_edge(it2->second->Gp, temp_x, temp_y2, it2->second->point_x, temp_y2, Layer_pos, 0);          	
             }
             else{
+            	mmin_edge.Init();/////////////////1102
 	            while(1){
 	             	temp_bline = traverse_it->second;
 	                if(temp_bline->Gp!=NULL && temp_bline->point_x > temp_bound_x ){
-	                    GP2->Add_edge(temp_bline->Gp, temp_bline->point_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
-
+	                    mmin_edge.update(GP2, temp_bline->Gp, temp_bline->point_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//1102
+	                    //GP2->Add_edge(temp_bline->Gp, temp_bline->point_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//Mark1102
 	                }
 	                if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
 	                if(temp_bound_x > temp_x) break;
 	                if(traverse_it==bound_map.begin()) break;
 	                --traverse_it;
-	            }            	
+	            }
+	            mmin_edge.Add_min_edge(GP2);//1102      	
             }
 
 
@@ -633,14 +662,16 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             GP1 = temp_clu->Add_GP(LLine, UP, G_point_num);
             //5 construct edge
             temp_bound_x = LLine->S->coords->x1;
-            if(traverse_it->second->Get_up_edge_x() > temp_bound_x) temp_bound_x = traverse_it->second->Get_up_edge_x();
+            if(traverse_it->second->Get_up_edge_x() - 1 > temp_bound_x) temp_bound_x = traverse_it->second->Get_up_edge_x() - 1;
             traverse_it = it1;
             ++traverse_it;
             if(LLine->S->Shape_type!=RSHAPE ){
+            	mmin_edge.Init();/////////////////1102
 	            for(;traverse_it!=bound_map.end();++traverse_it){
 	            	temp_bline = traverse_it->second;
 	                if(temp_bline->Gp!=NULL && temp_bline->point_x > temp_bound_x ){
-	                    GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
+	                	mmin_edge.update(GP1, temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//1102
+	                    //GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//Mark1102
 	                }
 	                if(temp_bline->max_x > temp_bound_x) {
 	                	temp_bound_x = temp_bline->max_x;
@@ -652,20 +683,24 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
 	                	}
 	                }
 	            }
+	            mmin_edge.Add_min_edge(GP1);//1102
 	            
 	            //construct Obstacle edge
 	            if(/*it1->second->point_x==LLine->S->coords->x1 && */it1->second->Gp!=NULL)
 	                GP1->Add_edge(it1->second->Gp, temp_x, temp_y1, it1->second->point_x, temp_y1, Layer_pos, 0);            	
             }
             else{//RSHAPE
+            	mmin_edge.Init();/////////////////1102
             	for(;traverse_it!=bound_map.end();++traverse_it){
             		temp_bline = traverse_it->second;
 	                if(temp_bound_x > temp_x) break;
 	                if(temp_bline->Gp!=NULL && temp_bline->point_x > temp_bound_x ){
-	                    GP1->Add_edge(temp_bline->Gp, temp_bline->point_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);
+	                	mmin_edge.update(GP1, temp_bline->Gp, temp_bline->point_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//1102
+	                    //GP1->Add_edge(temp_bline->Gp, temp_bline->point_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, 0);//Mark1102
 	                }
 	                if(temp_bline->max_x > temp_bound_x) temp_bound_x = temp_bline->max_x;
-	            }	
+	            }
+	            mmin_edge.Add_min_edge(GP1);//1102	
             }
 
 
@@ -780,24 +815,31 @@ GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, const int l
             if(temp_bound_x <= temp_x){
                 if(traverse_it!=bound_map.end() && traverse_it->second->down_edge_GP && traverse_it->second->Get_down_edge_x() <= temp_x)//horizental
                     pre_GP->Add_edge(traverse_it->second->down_edge_GP, temp_x, temp_y1, traverse_it->second->Get_down_edge_x(), temp_y1, Layer_pos, Temp_via_cost);
-                if(up_down==DOWN){// down point: RSHAPE horizental
+                if(up_down==DOWN && pre_GP->Shape_type==RSHAPE){// down point: RSHAPE horizental 
                     //update temp_y
                     limit_y = temp_y1 + length;
                     temp_y1 = R_pos;
+                    mmin_edge.Init(); mmin_edge2.Init();
                     while(traverse_it!=bound_map.end() && traverse_it->second->point_y < R_pos){
                         temp_bline = traverse_it->second;
                         if(temp_bline->max_x > _x && temp_bline->point_y < temp_R_pos) temp_R_pos = temp_bline->point_y; //Update R_pos
-                        if(temp_bline->up_edge_GP){
-                            if(temp_bline->Get_up_edge_x() <= temp_x )
-                                pre_GP->Add_edge(temp_bline->up_edge_GP, temp_x, temp_bline->point_y, temp_bline->Get_up_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
-                            else
-                                pre_GP->Add_edge(temp_bline->up_edge_GP, temp_x, temp_bline->point_y, temp_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                        if(temp_bline->up_edge_GP){//RSHAPE
+                            if(temp_bline->Get_up_edge_x() <= temp_x ){
+                            	mmin_edge.update(pre_GP, temp_bline->up_edge_GP, temp_x, temp_bline->point_y, temp_bline->Get_up_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
+                                //pre_GP->Add_edge(temp_bline->up_edge_GP, temp_x, temp_bline->point_y, temp_bline->Get_up_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            }
+                            else{
+                            	mmin_edge2.update(pre_GP, temp_bline->up_edge_GP, temp_x, temp_bline->point_y, temp_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                                //pre_GP->Add_edge(temp_bline->up_edge_GP, temp_x, temp_bline->point_y, temp_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            }
                         }
                         if(temp_bline->Gp && temp_bline->max_x <= temp_x && temp_bline->point_x < temp_x ){
-                            pre_GP->Add_edge(temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            mmin_edge.update(pre_GP, temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            //pre_GP->Add_edge(temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
                         }
                         ++traverse_it;
                     }
+                    mmin_edge.Add_min_edge(pre_GP); mmin_edge2.Add_min_edge(pre_GP);
                     if(traverse_it!=bound_map.end() && traverse_it->second->down_edge_x > temp_bound_x) {
                         temp_bound_x = traverse_it->second->down_edge_x;
                     }
@@ -809,11 +851,12 @@ GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, const int l
                 }
                 
                 //5
+                mmin_edge.Init();
                 for(;traverse_it!=bound_map.end();++traverse_it){
                     temp_bline = traverse_it->second;
                     if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x ){
-                        pre_GP->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
-
+                    	mmin_edge.update(pre_GP, temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                        //pre_GP->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
                     }
                     if(temp_bline->max_x >= temp_bound_x){
                         temp_bound_x = temp_bline->max_x;
@@ -825,6 +868,7 @@ GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, const int l
                     }
                     if(limit_y < temp_bline->point_y) break;
                 }
+                mmin_edge.Add_min_edge(pre_GP);
 
                 //1
                 temp_bound_x = temp_bound_x_2;
@@ -832,39 +876,48 @@ GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, const int l
                 
                 if(it1!=bound_map.begin()) --traverse_it;
                 limit_y = _y - length;
-                if(up_down==DOWN) {
-                    limit_y = _y - Max_dis;//DOWN
-                    temp_y1 = _y;
-                    if(traverse_it->second->down_edge_x > temp_bound_x) temp_bound_x = traverse_it->second->down_edge_x;
-                }
-                else {
+                if(up_down==UP && pre_GP->Shape_type==RSHAPE){
                     limit_y = _y - length;
                     temp_y1 = R_pos;//update temp_y1
 
+                    mmin_edge.Init(); mmin_edge2.Init();
                     while(traverse_it->second->point_y > R_pos){
                         temp_bline = traverse_it->second;
                         if(temp_bline->max_x > _x && temp_bline->point_y > temp_R_pos) temp_R_pos = temp_bline->point_y; //Update R_pos
                         if(temp_bline->down_edge_GP){
-                            if(temp_bline->Get_down_edge_x() <= temp_x )
-                                pre_GP->Add_edge(temp_bline->down_edge_GP, temp_x, temp_bline->point_y, temp_bline->Get_down_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
-                            else
-                                pre_GP->Add_edge(temp_bline->down_edge_GP, temp_x, temp_bline->point_y, temp_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            if(temp_bline->Get_down_edge_x() <= temp_x ){
+                            	mmin_edge.update(pre_GP, temp_bline->down_edge_GP, temp_x, temp_bline->point_y, temp_bline->Get_down_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
+                                //pre_GP->Add_edge(temp_bline->down_edge_GP, temp_x, temp_bline->point_y, temp_bline->Get_down_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            }
+                            else{
+                                mmin_edge2.update(pre_GP, temp_bline->down_edge_GP, temp_x, temp_bline->point_y, temp_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                                //pre_GP->Add_edge(temp_bline->down_edge_GP, temp_x, temp_bline->point_y, temp_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            }
                         }
                         if(temp_bline->Gp && temp_bline->max_x <= temp_x && temp_bline->point_x < temp_x ){
-                            pre_GP->Add_edge(temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            mmin_edge.update(pre_GP, temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            //pre_GP->Add_edge(temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
                         }
 
                         if(traverse_it==bound_map.begin() ) break;
                         --traverse_it;
                     }
+                    mmin_edge.Add_min_edge(pre_GP); mmin_edge2.Add_min_edge(pre_GP);
+
                     if(traverse_it!=bound_map.end() && traverse_it->second->up_edge_x > temp_bound_x) temp_bound_x = traverse_it->second->up_edge_x;
 
                 }
-
+                else {
+                    limit_y = _y - Max_dis;//DOWN
+                    temp_y1 = _y;
+                    if(traverse_it->second->down_edge_x > temp_bound_x) temp_bound_x = traverse_it->second->down_edge_x;
+                }
+                mmin_edge.Init();
                 while(1){
                     temp_bline = traverse_it->second;
                     if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x ){
-                        pre_GP->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                    	mmin_edge.update(pre_GP, temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                        //pre_GP->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
                     }
                     if(temp_bline->max_x >= temp_bound_x) {
                         temp_bound_x = temp_bline->max_x;
@@ -878,6 +931,7 @@ GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, const int l
                     if(traverse_it==bound_map.begin()) break;
                     --traverse_it;
                 }
+                mmin_edge.Add_min_edge(pre_GP);
             }
         }
 
@@ -957,23 +1011,29 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
                     //update temp_y
                     limit_y = temp_y1 + length;
                     temp_y1 = R_pos;
+                    mmin_edge.Init(); mmin_edge2.Init(); 
                     while(traverse_it!=bound_map.end() && traverse_it->second->point_y < R_pos){
                         temp_bline = traverse_it->second;
                         if(temp_bline->max_x > _x && temp_bline->point_y < temp_R_pos) temp_R_pos = temp_bline->point_y; //Update R_pos
-                        if(temp_bline->up_edge_GP){//RSHAPE
+                        if(temp_bline->up_edge_GP){//RSHAPE (edge)
                             if(temp_bline->Get_up_edge_x() <= temp_x ){
                             	R_x = Get_better_x_pos(temp_bline->point_y, temp_bline->Get_up_edge_x(), temp_x, UP, it_R);
-                                pre_GP->Add_edge(temp_bline->up_edge_GP, R_x, temp_bline->point_y, temp_bline->Get_up_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            	mmin_edge2.update(pre_GP, temp_bline->up_edge_GP, R_x, temp_bline->point_y, temp_bline->Get_up_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
+                                //pre_GP->Add_edge(temp_bline->up_edge_GP, R_x, temp_bline->point_y, temp_bline->Get_up_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
                             }
-                            else
-                                pre_GP->Add_edge(temp_bline->up_edge_GP, temp_x, temp_bline->point_y, temp_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            else{
+                                mmin_edge.update(pre_GP, temp_bline->up_edge_GP, temp_x, temp_bline->point_y, temp_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                                //pre_GP->Add_edge(temp_bline->up_edge_GP, temp_x, temp_bline->point_y, temp_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            }
                         }
-                        if(temp_bline->Gp && temp_bline->max_x <= temp_x && temp_bline->point_x < temp_x ){
+                        if(temp_bline->Gp /*&& temp_bline->max_x <= temp_x*/ && temp_bline->point_x < temp_x ){
                             R_x = Get_better_x_pos(temp_bline->point_y, temp_bline->point_x, temp_x, UP, it_R);
-                            pre_GP->Add_edge(temp_bline->Gp, R_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            mmin_edge2.update(pre_GP, temp_bline->Gp, R_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            //pre_GP->Add_edge(temp_bline->Gp, R_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
                         }
                         ++traverse_it;
                     }
+                    mmin_edge.Add_min_edge(pre_GP); mmin_edge2.Add_min_edge(pre_GP); 
                     if(traverse_it!=bound_map.end() && traverse_it->second->down_edge_x > temp_bound_x) {
                         temp_bound_x = traverse_it->second->down_edge_x;
                     }
@@ -991,12 +1051,13 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
                 }
                 
                 //5
+                mmin_edge.Init(); 
                 for(;traverse_it!=bound_map.end();++traverse_it){
                     temp_bline = traverse_it->second;
                     if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x ){
                         R_x = Get_better_x_pos(temp_bline->point_x, temp_x, length_x);//int find_x, int RSHAPE_x, int length_x)
-                        pre_GP->Add_edge(temp_bline->Gp, R_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
-
+                        mmin_edge.update(pre_GP, temp_bline->Gp, R_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                        //pre_GP->Add_edge(temp_bline->Gp, R_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
                     }
                     if(temp_bline->max_x >= temp_bound_x){
                         temp_bound_x = temp_bline->max_x;
@@ -1008,7 +1069,7 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
                     }
                     if(limit_y < temp_bline->point_y) break;
                 }
-                
+                mmin_edge.Add_min_edge(pre_GP);
                 //1
                 it_R = R_bound_map.lower_bound(_y);
                 length_x = temp_x;
@@ -1027,26 +1088,33 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
                 else { //UP
                     limit_y = _y - length;
                     temp_y1 = R_pos;//update temp_y1
-                    
+
+                    mmin_edge.Init(); mmin_edge2.Init(); 
                     while(traverse_it->second->point_y > R_pos){
                         temp_bline = traverse_it->second;
                         if(temp_bline->max_x > _x && temp_bline->point_y > temp_R_pos) temp_R_pos = temp_bline->point_y; //Update R_pos
                         if(temp_bline->down_edge_GP){
                             if(temp_bline->Get_down_edge_x() <= temp_x ){
                                 R_x = Get_better_x_pos(temp_bline->point_y, temp_bline->Get_down_edge_x(), temp_x, DOWN, it_R);
-                                pre_GP->Add_edge(temp_bline->down_edge_GP, R_x, temp_bline->point_y, temp_bline->Get_down_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
+                                mmin_edge.update(pre_GP, temp_bline->down_edge_GP, R_x, temp_bline->point_y, temp_bline->Get_down_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
+                                //pre_GP->Add_edge(temp_bline->down_edge_GP, R_x, temp_bline->point_y, temp_bline->Get_down_edge_x(), temp_bline->point_y, Layer_pos, Temp_via_cost);
                             }
-                            else
-                                pre_GP->Add_edge(temp_bline->down_edge_GP, temp_x, temp_bline->point_y, temp_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            else{
+                                mmin_edge2.update(pre_GP, temp_bline->down_edge_GP, temp_x, temp_bline->point_y, temp_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                                //pre_GP->Add_edge(temp_bline->down_edge_GP, temp_x, temp_bline->point_y, temp_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            }
                         }
-                        if(temp_bline->Gp && temp_bline->max_x <= temp_x && temp_bline->point_x < temp_x ){
+                        if(temp_bline->Gp /*&& temp_bline->max_x <= temp_x*/ && temp_bline->point_x < temp_x ){
                             R_x = Get_better_x_pos(temp_bline->point_y, temp_bline->point_x, temp_x, DOWN, it_R);
-                            pre_GP->Add_edge(temp_bline->Gp, R_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            mmin_edge.update(pre_GP, temp_bline->Gp, R_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                            //pre_GP->Add_edge(temp_bline->Gp, R_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
                         }
 
                         if(traverse_it==bound_map.begin() ) break;
                         --traverse_it;
                     }
+                	mmin_edge.Add_min_edge(pre_GP); mmin_edge2.Add_min_edge(pre_GP); 
+
                     if(traverse_it!=bound_map.end() && traverse_it->second->up_edge_x > temp_bound_x) temp_bound_x = traverse_it->second->up_edge_x;
                     
                     //update length_x 0826
@@ -1054,11 +1122,13 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
                     if(it_R!=R_bound_map.end() && it_R->second->Get_up_edge_x() < length_x && _y!=temp_y1) length_x = it_R->second->Get_up_edge_x(); // why _y!=temp_y1 //
                 }
 
+                mmin_edge.Init();
                 while(1){
                     temp_bline = traverse_it->second;
                     if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x ){
                         R_x = Get_better_x_pos(temp_bline->point_x, temp_x, length_x);
-                        pre_GP->Add_edge(temp_bline->Gp, R_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                        mmin_edge.update(pre_GP, temp_bline->Gp, R_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
+                        //pre_GP->Add_edge(temp_bline->Gp, R_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Temp_via_cost);
                     }
                     if(temp_bline->max_x >= temp_bound_x) {
                         temp_bound_x = temp_bline->max_x;
@@ -1072,6 +1142,7 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
                     if(traverse_it==bound_map.begin()) break;
                     --traverse_it;
                 }
+                mmin_edge.Add_min_edge(pre_GP);
             }
 
         }
@@ -1086,6 +1157,7 @@ GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right(const int _x, const int _y
 }
 
 void Layer::Update_Rbound_map(const int x1, const int y1, const int y2, map< int , BoundLine_info* , less<int> > &R_bound_map){
+	/* Using the infomation in bound_map to update R_bound_map (mask) */
     map< int , BoundLine_info* , less<int> >::iterator it1, it2, traverse_it, R_it1;
     pair<map< int , BoundLine_info* , less<int> >::iterator,bool> status1, status2;
     BoundLine_info* b1 = NULL, *b2 = NULL;

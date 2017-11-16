@@ -4,7 +4,12 @@
 #include <fstream>
 
 using namespace std;
-
+/*
+#Heuristic 
+Consider the net shape in different layer. Project the net shape (corner) and keep the infomation in dff_map
+Runtime -> 120%
+Cost -> 99%
+*/
 int dff_layer_via_cost(int , int , int , int);
 
 void Layer::diff_map_update(Line* LLine){
@@ -36,7 +41,7 @@ void Layer::diff_map_update(Line* LLine){
     temp_y2 = LLine->y;
 
     //start
-    if(LLine->S->Shape_type==VIA){
+    if(LLine->S->Shape_type==VIA){/*{{{*/
         p1 = true;
         BoundLine_info* b1 = new BoundLine_info(temp_max_x, temp_max_x, VIA, temp_y1, min_x, NULL);
         status1 = dff_bound_map.insert(pair< int , BoundLine_info*>(temp_y1, b1) );
@@ -64,7 +69,7 @@ void Layer::diff_map_update(Line* LLine){
         }
 
         if(p1==false) dff_bound_map.erase(it1);
-        else{
+        else{/*{{{*/
             traverse_it = it1;
             ++traverse_it;
             if(traverse_it!=dff_bound_map.end()) 
@@ -73,10 +78,10 @@ void Layer::diff_map_update(Line* LLine){
                 traverse_it = it1;
                 --traverse_it;
                 it1->second->Change_down_edge(traverse_it->second->up_edge_GP, traverse_it->second->Get_up_edge_x());
-            }
+            }/*}}}*/
         }
-    }
-    else if(LLine->LR==LEFT){ //LEFT
+    }/*}}}*/
+    else if(LLine->LR==LEFT){ //LEFT/*{{{*/
         p1 = p2 = true;
         BoundLine_info* b1 = new BoundLine_info(temp_max_x, temp_max_x, UP, temp_y1, min_x, NULL);
         BoundLine_info* b2 = new BoundLine_info(temp_max_x, temp_max_x, DOWN, temp_y2, min_x, NULL);
@@ -120,10 +125,12 @@ void Layer::diff_map_update(Line* LLine){
             }
             if(temp_bound_x <= temp_x){
                 limit_y = temp_y2 - Max_dis;
+                mmin_edge.Init();
                 while(1){
                     temp_bline = traverse_it->second;
-                    if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x ){
-                        GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost*abs(temp_bline->Gp->Layer_pos - GP2->Layer_pos));
+                    if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x && temp_bline->Gp->Layer_pos != GP2->Layer_pos){
+                        mmin_edge.update(GP2, temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost*abs(temp_bline->Gp->Layer_pos - GP2->Layer_pos));
+                        //GP2->Add_edge(temp_bline->Gp, temp_x, temp_y2, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost*abs(temp_bline->Gp->Layer_pos - GP2->Layer_pos));
                     }
                     if(temp_bline->max_x > temp_bound_x) {
                         temp_bound_x = temp_bline->max_x;
@@ -133,6 +140,7 @@ void Layer::diff_map_update(Line* LLine){
                     if(temp_bline->point_y < limit_y) break;
                     --traverse_it;
                 }
+                mmin_edge.Add_min_edge(GP2);
             }
             
             //2
@@ -141,14 +149,15 @@ void Layer::diff_map_update(Line* LLine){
             ++traverse_it;
             if(it2->first!=it1->first){//if the shape is not a wire
                 if(traverse_it!=dff_bound_map.end() && traverse_it->second->Get_down_edge_x() > temp_bound_x) temp_bound_x = traverse_it->second->Get_down_edge_x();
-
+                mmin_edge.Init();
                 for(;traverse_it!=it1;++traverse_it){
                     temp_bline = traverse_it->second;
-                    if(temp_bline->Gp && temp_bline->point_x < temp_x ){
-                        GP2->Add_edge(temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost*abs(temp_bline->Gp->Layer_pos - GP2->Layer_pos));
+                    if(temp_bline->Gp && temp_bline->point_x < temp_x && temp_bline->Gp->Layer_pos != GP2->Layer_pos){
+                        mmin_edge.update(GP2, temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost*abs(temp_bline->Gp->Layer_pos - GP2->Layer_pos));
+                        //GP2->Add_edge(temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost*abs(temp_bline->Gp->Layer_pos - GP2->Layer_pos));
                     }
                 }  
-                
+                mmin_edge.Add_min_edge(GP2);
             }
 
             it2->second->Gp = NULL;
@@ -190,10 +199,12 @@ void Layer::diff_map_update(Line* LLine){
                 temp_bound_x = traverse_it->second->Get_down_edge_x();
             }
             limit_y = temp_y1 + Max_dis;
+            mmin_edge.Init();
             for(;traverse_it!=bound_map.end();++traverse_it){
                 temp_bline = traverse_it->second;
-                if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x ){
-                    GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost*abs(temp_bline->Gp->Layer_pos - GP1->Layer_pos));
+                if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x && temp_bline->Gp->Layer_pos != GP1->Layer_pos){
+                    mmin_edge.update(GP1, temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost*abs(temp_bline->Gp->Layer_pos - GP1->Layer_pos));
+                    //GP1->Add_edge(temp_bline->Gp, temp_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos, Via_cost*abs(temp_bline->Gp->Layer_pos - GP1->Layer_pos));
                 }
                 if(temp_bline->max_x > temp_bound_x) {
                     temp_bound_x = temp_bline->max_x;
@@ -201,6 +212,7 @@ void Layer::diff_map_update(Line* LLine){
                 }
                 if(temp_bline->point_y > limit_y) break;
             }
+            mmin_edge.Add_min_edge(GP1);
             
             //3
             traverse_it = it1;
@@ -208,12 +220,16 @@ void Layer::diff_map_update(Line* LLine){
             if(GP2==NULL && it2->first!=it1->first){//if the shape is not a wire
                 temp_bound_x = temp_bound_x_2;
                 if(traverse_it->second->Get_up_edge_x() > temp_bound_x) temp_bound_x = traverse_it->second->Get_up_edge_x();
-                    for(;traverse_it!=it2;--traverse_it){
-                        temp_bline = traverse_it->second;
-                        if(temp_bline->Gp!=NULL && temp_bline->point_x < temp_x ){
-                            GP1->Add_edge(temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos,Via_cost*abs(temp_bline->Gp->Layer_pos - GP1->Layer_pos));
+                
+                mmin_edge.Init();
+                for(;traverse_it!=it2;--traverse_it){
+                    temp_bline = traverse_it->second;
+                    if(temp_bline->Gp!=NULL && temp_bline->point_x < temp_x && temp_bline->Gp->Layer_pos != GP1->Layer_pos){
+                         mmin_edge.update(GP1, temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos,Via_cost*abs(temp_bline->Gp->Layer_pos - GP1->Layer_pos));
+                        //GP1->Add_edge(temp_bline->Gp, temp_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos,Via_cost*abs(temp_bline->Gp->Layer_pos - GP1->Layer_pos));
                     }
-                }
+                }   
+                mmin_edge.Add_min_edge(GP1);
             }
 
 
@@ -283,12 +299,12 @@ void Layer::diff_map_update(Line* LLine){
 	            }
 	        }
     	}
-    }
+    }/*}}}*/
     
 }
 
-void Layer::diff_map_insert_rshape_point(GraphPoint *GP, const int _x, const int _y){
-
+void Layer::diff_map_insert_rshape_point(GraphPoint *GP, const int _x, const int _y){/*{{{*/
+	/* Insert a rshape point (corner) into dff_bound_map */
     if(GP!=NULL && GP->Shape_type==RSHAPE);
     else  return;
 
@@ -316,7 +332,6 @@ void Layer::diff_map_insert_rshape_point(GraphPoint *GP, const int _x, const int
     else{
         it1->second->Gp = GP;
     }
-    
     if(status1.second==false){
         if(it1->second->max_x <= temp_x){
             it1->second->point_x = temp_x;
@@ -336,156 +351,7 @@ void Layer::diff_map_insert_rshape_point(GraphPoint *GP, const int _x, const int
             it1->second->Change_down_edge(traverse_it->second->up_edge_GP, traverse_it->second->Get_up_edge_x());
         }
     }
-}
-
-GraphPoint* Layer::SGconstruct_extra_obs_RSHAPE_right_dff(const int _x, const int _y, const int length, GraphPoint* pre_GP, int up_down, int R_pos, map< int , BoundLine_info* , less<int> > &R_bound_map){
-    map< int , BoundLine_info* , less<int> >::iterator it1,traverse_it, it_R;
-    int temp_x, temp_bound_x, temp_bound_x_2, temp_y1;
-    int limit_y, R_x, length_x;
-    BoundLine_info *temp_bline;
-    bool no_overlap = false;
-    int preGP_lpos = pre_GP->Layer_pos;
-
-    /*
-                    |
-              5     |
-        ----------- p1 ---------------
-              1     |                |
-  
-    */
-
-    temp_x = _x;
-    temp_y1 = _y;
-    it1 = dff_bound_map.lower_bound(temp_y1);
-    if(it1 != dff_bound_map.end() ){
-        if(it1->second->point_y == temp_y1 && it1->second->max_x > temp_x ){ //same y && overlap
-        }
-        else if(it1->second->point_y != temp_y1 && it1->second->Get_down_edge_x() >= temp_x){//OVERLAP
-        }
-        else{
-        	//R_bound
-    		it_R = R_bound_map.lower_bound(_y);
-    		--it_R;
-            temp_bound_x_2 = min_x;
-            no_overlap = true;
-            //1 and 5 construct edge
-            temp_bound_x = min_x;
-            traverse_it = it1;
-            if(it1->second->point_y == temp_y1){//same y
-                temp_bline = it1->second;
-                if(temp_bline->max_x > temp_bound_x) {
-                    temp_bound_x = temp_bound_x_2 = temp_bline->max_x;
-                }
-                ++traverse_it;
-            }
-            if(temp_bound_x <= temp_x){
-                length_x = temp_x;
-                if(up_down==DOWN){// down point
-                    //update temp_y
-                    limit_y = temp_y1 + length;
-                    temp_y1 = R_pos;
-                    while(traverse_it!=dff_bound_map.end() && traverse_it->second->point_y < R_pos){
-                        temp_bline = traverse_it->second;
-                        if(temp_bline->Gp && temp_bline->max_x <= temp_x && temp_bline->point_x < temp_x ){
-                            R_x = Get_better_x_pos(temp_bline->point_y, temp_bline->point_x, temp_x, UP, it_R);
-                            pre_GP->Add_edge(temp_bline->Gp, R_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos, dff_layer_via_cost(preGP_lpos, temp_bline->Gp->Layer_pos, Layer_pos ,Via_cost) );
-                        }
-                        ++traverse_it;
-                    }
-                    if(traverse_it!=dff_bound_map.end() && traverse_it->second->down_edge_x > temp_bound_x) {
-                        temp_bound_x = traverse_it->second->down_edge_x;
-                    }
-                    //update length_x 0826
-                    while(it_R->second->point_y < R_pos) ++it_R;
-                    --it_R;
-                    if(it_R!=R_bound_map.end() &&  it_R->second->Get_up_edge_x() < length_x) length_x = it_R->second->Get_up_edge_x();
-                }
-                else {
-                    limit_y = temp_y1 + Max_dis;
-                    temp_y1 = _y;
-                    if(traverse_it!=dff_bound_map.end() && traverse_it->second->down_edge_x > temp_bound_x) temp_bound_x = traverse_it->second->down_edge_x;
-                    //update length_x 0826
-                    if(it_R!=R_bound_map.end() && it_R->second->Get_up_edge_x() < length_x) length_x = it_R->second->Get_up_edge_x();
-                }
-                
-                //5
-                for(;traverse_it!=dff_bound_map.end();++traverse_it){
-                    temp_bline = traverse_it->second;
-                    if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x ){
-                        R_x = Get_better_x_pos(temp_bline->point_x, temp_x, length_x);//int find_x, int RSHAPE_x, int length_x)
-                        pre_GP->Add_edge(temp_bline->Gp, R_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos,  dff_layer_via_cost(preGP_lpos, temp_bline->Gp->Layer_pos, Layer_pos ,Via_cost) );
-
-                    }
-                    if(temp_bline->max_x >= temp_bound_x){
-                        temp_bound_x = temp_bline->max_x;
-                        if(temp_bound_x > temp_x) break;
-                    }
-                    if(limit_y < temp_bline->point_y) break;
-                }
-                
-                //1
-                it_R = R_bound_map.lower_bound(_y);
-                length_x = temp_x;
-                temp_bound_x = temp_bound_x_2;
-                traverse_it = it1;
-                
-                if(it1!=dff_bound_map.begin()) --traverse_it;
-                limit_y = _y - length;
-                if(up_down==DOWN) {
-                    limit_y = _y - Max_dis;//DOWN
-                    temp_y1 = _y;
-                    if(traverse_it->second->down_edge_x > temp_bound_x) temp_bound_x = traverse_it->second->down_edge_x;
-                    //update length_x 0826
-                    if(it_R!=R_bound_map.end() && it_R->second->Get_down_edge_x() < length_x) length_x = it_R->second->Get_down_edge_x();
-                }
-                else { //UP
-                    limit_y = _y - length;
-                    temp_y1 = R_pos;//update temp_y1
-                    
-                    while(traverse_it->second->point_y > R_pos){
-                        temp_bline = traverse_it->second;
-                        if(temp_bline->Gp && temp_bline->max_x <= temp_x && temp_bline->point_x < temp_x ){
-                            R_x = Get_better_x_pos(temp_bline->point_y, temp_bline->point_x, temp_x, DOWN, it_R);
-                            pre_GP->Add_edge(temp_bline->Gp, R_x, temp_bline->point_y, temp_bline->point_x, temp_bline->point_y, Layer_pos,  dff_layer_via_cost(preGP_lpos, temp_bline->Gp->Layer_pos, Layer_pos ,Via_cost) );
-                        }
-
-                        if(traverse_it==dff_bound_map.begin() ) break;
-                        --traverse_it;
-                    }
-                    if(traverse_it!=dff_bound_map.end() && traverse_it->second->up_edge_x > temp_bound_x) temp_bound_x = traverse_it->second->up_edge_x;
-                    
-                    //update length_x 0826
-                    while(it_R->second->point_y > R_pos) --it_R;
-                    if(it_R!=R_bound_map.end() && it_R->second->Get_up_edge_x() < length_x && _y!=temp_y1) length_x = it_R->second->Get_up_edge_x(); // why _y!=temp_y1 //
-                }
-
-                while(1){
-                    temp_bline = traverse_it->second;
-                    if(temp_bline->Gp!=NULL && temp_bline->point_x >= temp_bound_x ){
-                        R_x = Get_better_x_pos(temp_bline->point_x, temp_x, length_x);
-                        pre_GP->Add_edge(temp_bline->Gp, R_x, temp_y1, temp_bline->point_x, temp_bline->point_y, Layer_pos,  dff_layer_via_cost(preGP_lpos, temp_bline->Gp->Layer_pos, Layer_pos ,Via_cost) );
-                    }
-                    if(temp_bline->max_x >= temp_bound_x) {
-                        temp_bound_x = temp_bline->max_x;
-                        if(temp_bound_x > temp_x) break;
-                    }
-                    if(limit_y > temp_bline->point_y) break;
-                    if(traverse_it==dff_bound_map.begin()) break;
-                    --traverse_it;
-                }
-            }
-
-        }
-
-    }
-
-    if(!no_overlap) pre_GP = NULL;
-    return pre_GP;
-
-
-}
-
-
+}/*}}}*/
 int dff_layer_via_cost(int layer1, int layer2, int this_layer, int via_cost){
 	return (abs(layer1 - this_layer) + abs(layer2 - this_layer) )*via_cost;
 

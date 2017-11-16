@@ -1,6 +1,6 @@
-CFLAGS = -O3 -Wall 
+CFLAGS = -O3 -Wall -fopenmp 
 net_open_finder: main.o Manager.o layer.o cluster.o sgc.o layer_dff.o
-	g++ -o net_open_finder main.o Manager.o layer.o cluster.o sgc.o layer_dff.o
+	g++ -o net_open_finder -fopenmp main.o Manager.o layer.o cluster.o sgc.o layer_dff.o
 
 main.o: main.cpp Manager.h
 	g++ -c $(CFLAGS) main.cpp

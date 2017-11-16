@@ -11,7 +11,7 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 	//Parsing
 	Parsing(Input_file);
-	
+
 	//Step 1
 	cout << "SGC...\n";
 	SpanningGraphConstruct();
@@ -31,7 +31,7 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 
 
     //OutputFile
-    //Output_test(Output_file);
+    //Output_test(Output_file); // output all the edges and vias
     Output(Output_file);
     //Verify();
 

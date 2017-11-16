@@ -1,7 +1,7 @@
 #include "Manager.h"
 #include <iostream>
 #include <algorithm>
-
+//#include <omp.h>
 using namespace std;
 
 

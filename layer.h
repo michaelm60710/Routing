@@ -3,9 +3,9 @@
 
 
 #include "cluster.h"
+class Edge_info2;
 
 using namespace std;
-
 
 
 class Layer{
@@ -36,7 +36,6 @@ public:
     void Extra_obs_RSHAPE_right(Line*, GraphPoint* &, GraphPoint* &, int, int, int, int &, int &, map< int , BoundLine_info* , less<int> > &);
     GraphPoint* SGconstruct_extra_obs(const int, const int, const int, GraphPoint*, int, int &);
     GraphPoint* SGconstruct_extra_obs_RSHAPE_right(const int, const int, const int, GraphPoint*, int, int &, map< int , BoundLine_info* , less<int> > &);
-    GraphPoint* SGconstruct_extra_obs_RSHAPE_right_dff(const int, const int, const int, GraphPoint*, int, int , map< int , BoundLine_info* , less<int> > &);
     void Update_Rbound_map(const int, const int, const int, map< int , BoundLine_info* , less<int> > &);
     int Get_better_x_pos(int, int, int, int, map< int , BoundLine_info* , less<int> >::iterator &);//0816
     int Get_better_x_pos(int, int, int);//0826
@@ -89,11 +88,11 @@ private:
 	map< int , BoundLine_info* , less<int> > bound_map;
 	map< int , BoundLine_info* , less<int> > dff_bound_map; //dfferent Rshape 0827
 
-	
+	// 1102 store the shortest edge in each region for each Gp
+	Edge_info2 mmin_edge, mmin_edge2;
 
 
 };
-
 
 
 
