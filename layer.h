@@ -57,6 +57,7 @@ public:
 	int Layer_pos;
 	int Via_cost;
 	int Max_dis;
+	int Max_ob_dis;//1116
 
 	//dff_map
 	void diff_map_update(Line*); //same layer shape
@@ -72,6 +73,10 @@ public:
 	
 	//0809
 	Cluster *Extra_local_Obs;
+	//1117
+	int g_obs_len;
+	vector <GraphPoint*> Obs_gp_vec;
+
 private:
 	list < Shape* > Rshape_list;
 	list < Shape* > Obstacle_list;

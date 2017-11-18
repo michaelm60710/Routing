@@ -70,6 +70,8 @@ void Manager::SpanningGraphConstruct(){
     	//###3.2 go up & down to construct graph
     	SGC_up_down(GP_result, temp_layer, all_line[s]); 
 
+    	//test 1117
+
     }
 
     //###4. Update Via length (Cluster of Via must be only 1 Gp)
@@ -89,7 +91,6 @@ void Manager::SpanningGraphConstruct(){
 
     //###5. Convert to undirected graph
     for(int i =0;i<MetalLayers;i++) all_layer[i].ConvertToUndirectedG();
-    
 }
 
 void Manager::SpanningTreeConstruct(){
@@ -235,6 +236,28 @@ void Manager::SGC_up_down(pair<GraphPoint*, GraphPoint*> GP_result, int temp_lay
             if(P3==NULL && P4==NULL) break;
         }
     }
+    if(_Line->S->Shape_type==OBSTACLE && all_layer[temp_layer].g_obs_len > 0 ){ //there are new verteices 11/17
+
+    	for(int i = 0; i < all_layer[temp_layer].g_obs_len; i++){
+    		P1 = P2 = all_layer[temp_layer].Obs_gp_vec[i];
+    		_x = P1->x; _y1 = P1->y;
+    		R_u_y2_len = R_u_y1_len = max_dis_for_extra_obs/2;
+
+    		//Up
+    		for(int i = temp_layer+1;i<=MetalLayers-1;i++) {
+    			if(P1) P1 = all_layer[i].SGconstruct_extra_obs(_x, _y1, max_dis_for_extra_obs/2, P1, UP, R_u_y2_len);
+    			else break;
+    		}
+    		//Down
+    		for(int i = temp_layer-2; i>=0;i--) {
+    			if(P2) P2 = all_layer[i].SGconstruct_extra_obs(_x, _y1, max_dis_for_extra_obs/2, P2, DOWN, R_u_y1_len);
+    			else break;
+    		}
+
+    	}
+    }
+    all_layer[temp_layer].g_obs_len = 0;
+
 }
 
 

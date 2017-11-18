@@ -13,10 +13,10 @@ Manager::Manager(const char* Input_file,const char* Output_file){
 	Parsing(Input_file);
 
 	//Step 1
-	cout << "SGC...\n";
+	//cout << "SGC...\n";
 	SpanningGraphConstruct();
 	//Step 2
-	cout << "STC...\n";
+	//cout << "STC...\n";
 	SpanningTreeConstruct();
 
 	//Step 1.2
@@ -55,7 +55,7 @@ void Manager::Parsing(const char* Input_file){
 	i_file>>garbage>>garbage>>Spacing;
 	i_file>>garbage>>garbage>>coor1>>coor2;
 	Boundary = Parsing_coordinate(coor1,coor2);
-	cout << "boundary: " << Boundary->x1 << " " << Boundary->y1 << ", " << Boundary->x2 << " " << Boundary->y2 <<endl;
+	//cout << "boundary: " << Boundary->x1 << " " << Boundary->y1 << ", " << Boundary->x2 << " " << Boundary->y2 <<endl;
 	i_file>>garbage>>garbage>>MetalLayers;
 	i_file>>garbage>>garbage>>RoutedShapes;
 	i_file>>garbage>>garbage>>RoutedVias;
@@ -87,8 +87,9 @@ void Manager::Parsing(const char* Input_file){
 		if(abs(temp_shape->coords->x1 - temp_shape->coords->x2) > MaxRshapeEdge ) MaxRshapeEdge = abs(temp_shape->coords->x1 - temp_shape->coords->x2);
 		if(abs(temp_shape->coords->y1 - temp_shape->coords->y2) > MaxRshapeEdge ) MaxRshapeEdge = abs(temp_shape->coords->y1 - temp_shape->coords->y2);
 	}
-	for(int i = 0;i<MetalLayers;i++) all_layer[i].Max_dis  = MaxRshapeEdge/3 + 400;
-	
+	for(int i = 0;i<MetalLayers;i++) all_layer[i].Max_dis  = 2*(MaxRshapeEdge/9) + 400;// MaxRshapeEdge/3 + 400
+	for(int i = 0;i<MetalLayers;i++) all_layer[i].Max_ob_dis  = all_layer[i].Max_dis*2/3 - 200;//all_layer[i].Max_dis/2;
+	max_dis_for_extra_obs = all_layer[0].Max_dis;
 	//###3. read RoutedVias
 	//cout << "read RoutedVias..." << endl;
 	for(int i = 0; i < RoutedVias;i++){
@@ -117,14 +118,14 @@ void Manager::Parsing(const char* Input_file){
 
 
 	//###3. print & check
-	cout << "\nViaCost: " << ViaCost << endl;
-	cout << "Spacing: " << Spacing << endl;
-	cout << "MetalLayers: " <<MetalLayers << endl;
-	cout << "RoutedShapes: " <<RoutedShapes << endl;
-	cout << "RoutedVias: " <<RoutedVias << endl;
+	//cout << "\nViaCost: " << ViaCost << endl;
+	//cout << "Spacing: " << Spacing << endl;
+	//cout << "MetalLayers: " <<MetalLayers << endl;
+	//cout << "RoutedShapes: " <<RoutedShapes << endl;
+	//cout << "RoutedVias: " <<RoutedVias << endl;
 	cout << "Max R Edge: " << MaxRshapeEdge << endl;
 	cout << "Max limit length: " << all_layer[0].Max_dis << endl;
-	cout << "Obstacles: " <<Obstacles << endl << endl;
+	//cout << "Obstacles: " <<Obstacles << endl << endl;
 	/*for(int i=0;i<MetalLayers;i++){
 		cout << "LAYER " << i << ":"<<endl;
 		cout << "   Rshape size: " << all_layer[i].get_Rshape_num() << endl;

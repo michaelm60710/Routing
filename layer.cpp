@@ -8,10 +8,11 @@ using namespace std;
 
 
 Layer::Layer()
-:Rshape_num(0),Obstacle_num(0),Via_num(0),Upper_Via_num(0),Layer_Shape_num(0)//,G_point_num(0) //initialize
+:g_obs_len(0),Rshape_num(0),Obstacle_num(0),Via_num(0),Upper_Via_num(0),Layer_Shape_num(0)//,G_point_num(0) //initialize
 {
 	//cout << "QQ";
     Extra_local_Obs = new Cluster(OBSTACLE);
+    Obs_gp_vec.resize(10);
 }
 
 bool Sort_Shape(Shape* a, Shape* b){
@@ -36,6 +37,7 @@ void Layer::SpanningGraphConstruct(){
         all_shape_vec[pos++] = (*it_s);  	
 	
 	//#1.1 construct cluster
+	all_cluster.reserve(Obstacle_num/2);
     clustering_shape();
     all_cluster.push_back(Extra_local_Obs);
 
@@ -185,7 +187,7 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
     temp_clu = LLine->S->clu;
     temp_y1 = LLine->y+LLine->length;
     temp_y2 = LLine->y;
-
+    g_obs_len = 0;
     //for up down x edge GP
     if(LLine->S->Shape_type==RSHAPE) GP_rshape = temp_clu->Add_GP(LLine, UP, G_point_num);
     else							 GP_rshape = NULL;
@@ -520,26 +522,68 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             if(connect) GP1->Add_edge(GP2, temp_x, temp_y1, temp_x, temp_y2, Layer_pos, 0);
         }
         
-        
+        //############Construct extra obs vertex
+        if(LLine->S->Shape_type==OBSTACLE){
+        	traverse_it = it2;
+        	++traverse_it;
+        	int new_v1_y, new_v2_y; 
+        	GraphPoint *new_gp1 = NULL, *new_gp2 = NULL;
+        	if(GP2) {
+        		new_v2_y = temp_y2;
+        		new_gp2 = GP2;
+        	}
+        	if(it2->first!=it1->first){//if the shape is not a wire
+	        	for(;traverse_it!=it1; ++traverse_it){
+	            	temp_bline = traverse_it->second;
+	            	if(temp_bline->max_x > temp_x ){//add 1116
+	            		new_v1_y = temp_bline->point_y;
+	            		new_gp1 = Extra_local_Obs->Add_GP(temp_x, new_v1_y, Layer_pos, G_point_num); //step 2: create new vertex
+	            		if(g_obs_len < 10) Obs_gp_vec[g_obs_len++] = new_gp1;
+	            		if(temp_bline->Gp) new_gp1->Add_edge(temp_bline->Gp, temp_x, new_v1_y, temp_bline->point_x, new_v1_y, Layer_pos, 0); //step 3: connect temp_x to temp_bline->point_x
+	            		if(new_gp2!=NULL){//step 4: connect to prev new_v
+	            			new_gp1->Add_edge(new_gp2, temp_x, new_v1_y, temp_x, new_v2_y, Layer_pos, 0);
+	            		} 
+
+	            		if(temp_bline->Get_up_edge_x() < temp_x) {
+	            			new_gp2 =  new_gp1;
+	            			new_v2_y = new_v1_y;
+	            		}
+	            		else {
+	            			new_gp2 = NULL;
+	            		}
+	            	}
+	            }
+	            if(GP1 && new_gp2) {
+		           GP1->Add_edge(new_gp2, temp_x, temp_y1, temp_x, new_v2_y, Layer_pos, 0);
+		           if(new_gp2->y != new_v2_y) cout << new_gp2->y << " bug " << new_v2_y;
+		        }
+	        }
+        }
+
         //############delete mid (refrech bound info)
         traverse_it = it2;
         ++traverse_it;
-        if(it2->first!=it1->first){//if the shape is not a wire
-        	for(;traverse_it!=it1; ++traverse_it){
-            	temp_bline = traverse_it->second;
-                if(temp_bline->max_x <= temp_max_x ) {
-                	delete temp_bline;
-                    bound_map.erase(traverse_it++);
-                    --traverse_it;
-                }
-                else{
-                    if(temp_bline->Get_up_edge_x() < temp_max_x)   temp_bline->Change_up_edge(GP_rshape, temp_max_x);//temp_bline->up_edge_x   = temp_max_x;
-                    if(temp_bline->Get_down_edge_x() < temp_max_x) temp_bline->Change_down_edge(GP_rshape, temp_max_x);//temp_bline->down_edge_x = temp_max_x;
-                    temp_bline->Gp = NULL;
-                }
-            }
-            
-        }
+        //if(LLine->S->Shape_type==RSHAPE){
+        	if(it2->first!=it1->first){//if the shape is not a wire
+	        	for(;traverse_it!=it1; ++traverse_it){
+	            	temp_bline = traverse_it->second;
+	                if(temp_bline->max_x <= temp_max_x ) {
+	                	delete temp_bline;
+	                    bound_map.erase(traverse_it++);
+	                    --traverse_it;
+	                }
+	                else{
+	                    if(temp_bline->Get_up_edge_x() < temp_max_x)   temp_bline->Change_up_edge(GP_rshape, temp_max_x);//temp_bline->up_edge_x   = temp_max_x;
+	                    if(temp_bline->Get_down_edge_x() < temp_max_x) temp_bline->Change_down_edge(GP_rshape, temp_max_x);//temp_bline->down_edge_x = temp_max_x;
+	                    temp_bline->Gp = NULL;
+	                }
+	            }
+	            
+	        }
+
+
+        
+
         //############ bug? >max_x <= temp_x
         if(status1.second==false){
         	temp_bline = it1->second;
@@ -718,6 +762,45 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             }
             if(connect) GP1->Add_edge(GP2, temp_x, temp_y1, temp_x, temp_y2, Layer_pos, 0);
         }
+
+        //############Construct extra obs vertex
+        if(LLine->S->Shape_type==OBSTACLE){
+        	traverse_it = it2;
+        	if(it2->first == temp_y2 ) ++traverse_it;
+        	int new_v1_y, new_v2_y; 
+        	GraphPoint *new_gp1 = NULL, *new_gp2 = NULL;
+        	if(p2) {
+        		new_v2_y = temp_y2;
+        		new_gp2 = GP2;
+        	}
+        	if(it2->first!=it1->first){//if the shape is not a wire
+	        	for(;traverse_it!=it1; ++traverse_it){
+	            	temp_bline = traverse_it->second;
+	            	if(temp_bline->max_x > temp_x ){//add 1116
+	            		new_v1_y = temp_bline->point_y;
+	            		new_gp1 = Extra_local_Obs->Add_GP(temp_x, new_v1_y, Layer_pos, G_point_num); //step 2: create new vertex
+	            		if(g_obs_len < 10) Obs_gp_vec[g_obs_len++] = new_gp1;
+	            		//step 3: update contour 
+	            		temp_bline->Gp = new_gp1;
+	            		temp_bline->point_x = temp_x;
+	            		if(new_gp2!=NULL){//step 4: connect to prev new_v
+	            			new_gp1->Add_edge(new_gp2, temp_x, new_v1_y, temp_x, new_v2_y, Layer_pos, 0);
+	            		} 
+	            		if(temp_bline->Get_up_edge_x() <= temp_x) {
+	            			new_gp2 =  new_gp1;
+	            			new_v2_y = new_v1_y;
+	            		}
+	            		else {
+	            			new_gp2 = NULL;
+	            		}
+	            	}
+	            }
+	            if(p1 && new_gp2) {
+		           GP1->Add_edge(new_gp2, temp_x, temp_y1, temp_x, new_v2_y, Layer_pos, 0);
+		           if(new_gp2->y != new_v2_y) cout << new_gp2->y << " bug " << new_v2_y;
+		        }
+	        }
+        }
     }
  	
     if(LLine->S->Shape_type==RSHAPE ) GP1 = GP2 = temp_clu->Add_GP(LLine, DOWN, G_point_num);
@@ -845,7 +928,7 @@ GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, const int l
                     }
                 }
                 else {
-                    limit_y = temp_y1 + Max_dis;
+                    limit_y = temp_y1 + Max_ob_dis;//Max_dis;
                     temp_y1 = _y;
                     if(traverse_it!=bound_map.end() && traverse_it->second->down_edge_x > temp_bound_x) temp_bound_x = traverse_it->second->down_edge_x;
                 }
@@ -908,7 +991,7 @@ GraphPoint* Layer::SGconstruct_extra_obs(const int _x, const int _y, const int l
 
                 }
                 else {
-                    limit_y = _y - Max_dis;//DOWN
+                    limit_y = _y - Max_ob_dis;//Max_dis;//DOWN
                     temp_y1 = _y;
                     if(traverse_it->second->down_edge_x > temp_bound_x) temp_bound_x = traverse_it->second->down_edge_x;
                 }
@@ -1567,6 +1650,7 @@ Layer::check_point_svg(string name){
                     if(xx!=x1 || yy!=y1) {
                         cout << "error! Q ";//something strange...";
                         //if((*gp_itr)->clu!=Extra_local_Obs) cout << "ass";
+                        cout << (*gp_itr)->map_edge.size() << " "<<  (*gp_itr)->idx << endl;
                     }
                 }
                 if(map_gp_itr->second->layer==Layer_pos){

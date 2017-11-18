@@ -124,7 +124,7 @@ void Layer::diff_map_update(Line* LLine){
                 if(traverse_it->second->Get_up_edge_x() > temp_bound_x) temp_bound_x = traverse_it->second->Get_up_edge_x();
             }
             if(temp_bound_x <= temp_x){
-                limit_y = temp_y2 - Max_dis;
+                limit_y = temp_y2 - Max_ob_dis;//Max_dis;
                 mmin_edge.Init();
                 while(1){
                     temp_bline = traverse_it->second;
@@ -198,7 +198,7 @@ void Layer::diff_map_update(Line* LLine){
             if(traverse_it!=bound_map.end() && traverse_it->second->Get_down_edge_x() > temp_bound_x) {
                 temp_bound_x = traverse_it->second->Get_down_edge_x();
             }
-            limit_y = temp_y1 + Max_dis;
+            limit_y = temp_y1 + Max_ob_dis;//Max_dis;
             mmin_edge.Init();
             for(;traverse_it!=bound_map.end();++traverse_it){
                 temp_bline = traverse_it->second;

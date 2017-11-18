@@ -46,6 +46,7 @@ public:
 	void Verify();
 	void Print_R_bound(map< int , BoundLine_info* , less<int> > &, bool, int);
 
+
 	string itos1(int);//integer convert to string
 private:
 	int ViaCost;
@@ -73,6 +74,7 @@ private:
 	vector<GraphPoint* > all_gp_vec; //gp_vec + rshape + via
 	vector<GraphPoint* >::iterator all_gp_rshape_begin;
 
+	int max_dis_for_extra_obs;
 };
 
 
