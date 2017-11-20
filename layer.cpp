@@ -523,7 +523,7 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         }
         
         //############Construct extra obs vertex
-        if(LLine->S->Shape_type==OBSTACLE){
+        if(LLine->S->Shape_type==OBSTACLE /*&& !GP2 && !GP1*/ ){
         	traverse_it = it2;
         	++traverse_it;
         	int new_v1_y, new_v2_y; 
@@ -535,10 +535,11 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         	if(it2->first!=it1->first){//if the shape is not a wire
 	        	for(;traverse_it!=it1; ++traverse_it){
 	            	temp_bline = traverse_it->second;
-	            	if(temp_bline->max_x > temp_x ){//add 1116
-	            		new_v1_y = temp_bline->point_y;
+	            	if(temp_bline->max_x > temp_x  && g_obs_len < 2 && (temp_bline->Get_up_edge_x() < temp_x || temp_bline->Get_down_edge_x() < temp_x)) {//add 1116
+                        if(temp_bline->Gp==NULL || temp_x - temp_bline->point_x <  Max_ob_dis/3/*Max_ob_dis/2*/) continue;
+                        new_v1_y = temp_bline->point_y;
 	            		new_gp1 = Extra_local_Obs->Add_GP(temp_x, new_v1_y, Layer_pos, G_point_num); //step 2: create new vertex
-	            		if(g_obs_len < 10) Obs_gp_vec[g_obs_len++] = new_gp1;
+	            		Obs_gp_vec[g_obs_len++] = new_gp1;
 	            		if(temp_bline->Gp) new_gp1->Add_edge(temp_bline->Gp, temp_x, new_v1_y, temp_bline->point_x, new_v1_y, Layer_pos, 0); //step 3: connect temp_x to temp_bline->point_x
 	            		if(new_gp2!=NULL){//step 4: connect to prev new_v
 	            			new_gp1->Add_edge(new_gp2, temp_x, new_v1_y, temp_x, new_v2_y, Layer_pos, 0);
@@ -763,8 +764,8 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
             if(connect) GP1->Add_edge(GP2, temp_x, temp_y1, temp_x, temp_y2, Layer_pos, 0);
         }
 
-        //############Construct extra obs vertex
-        if(LLine->S->Shape_type==OBSTACLE){
+        //############Construct extra obs vertex (bug)
+        if(LLine->S->Shape_type==OBSTACLE /*&& !p1 && !p2*/){
         	traverse_it = it2;
         	if(it2->first == temp_y2 ) ++traverse_it;
         	int new_v1_y, new_v2_y; 
@@ -776,14 +777,15 @@ pair<GraphPoint*, GraphPoint*> Layer::SGconstruct(Line* LLine){
         	if(it2->first!=it1->first){//if the shape is not a wire
 	        	for(;traverse_it!=it1; ++traverse_it){
 	            	temp_bline = traverse_it->second;
-	            	if(temp_bline->max_x > temp_x ){//add 1116
-	            		new_v1_y = temp_bline->point_y;
+	            	if(temp_bline->max_x > temp_x && g_obs_len < 3 && (temp_bline->Get_up_edge_x() <= temp_x || temp_bline->Get_down_edge_x() <= temp_x)){//add 1116
+	            		if(temp_bline->max_x - temp_x < Max_ob_dis/3 /*Max_ob_dis/2*/) continue;
+                        new_v1_y = temp_bline->point_y;
 	            		new_gp1 = Extra_local_Obs->Add_GP(temp_x, new_v1_y, Layer_pos, G_point_num); //step 2: create new vertex
-	            		if(g_obs_len < 10) Obs_gp_vec[g_obs_len++] = new_gp1;
+	            		Obs_gp_vec[g_obs_len++] = new_gp1;
 	            		//step 3: update contour 
 	            		temp_bline->Gp = new_gp1;
 	            		temp_bline->point_x = temp_x;
-	            		if(new_gp2!=NULL){//step 4: connect to prev new_v
+	            		if(new_gp2){//step 4: connect to prev new_v
 	            			new_gp1->Add_edge(new_gp2, temp_x, new_v1_y, temp_x, new_v2_y, Layer_pos, 0);
 	            		} 
 	            		if(temp_bline->Get_up_edge_x() <= temp_x) {

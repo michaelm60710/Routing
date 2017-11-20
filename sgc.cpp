@@ -236,21 +236,24 @@ void Manager::SGC_up_down(pair<GraphPoint*, GraphPoint*> GP_result, int temp_lay
             if(P3==NULL && P4==NULL) break;
         }
     }
+
+    //For Extra Obs vertice
     if(_Line->S->Shape_type==OBSTACLE && all_layer[temp_layer].g_obs_len > 0 ){ //there are new verteices 11/17
 
     	for(int i = 0; i < all_layer[temp_layer].g_obs_len; i++){
-    		P1 = P2 = all_layer[temp_layer].Obs_gp_vec[i];
+            P1 = P3 = all_layer[temp_layer].Obs_gp_vec[i];
     		_x = P1->x; _y1 = P1->y;
-    		R_u_y2_len = R_u_y1_len = max_dis_for_extra_obs/2;
+    		R_u_y1_len = _y1;
+            R_u_y1_len = _y1;
 
     		//Up
     		for(int i = temp_layer+1;i<=MetalLayers-1;i++) {
-    			if(P1) P1 = all_layer[i].SGconstruct_extra_obs(_x, _y1, max_dis_for_extra_obs/2, P1, UP, R_u_y2_len);
+    			if(P1) P1 = all_layer[i].SGconstruct_extra_obs(_x, _y1, max_dis_for_extra_obs/4, P1, UP, R_u_y1_len);
     			else break;
     		}
     		//Down
-    		for(int i = temp_layer-2; i>=0;i--) {
-    			if(P2) P2 = all_layer[i].SGconstruct_extra_obs(_x, _y1, max_dis_for_extra_obs/2, P2, DOWN, R_u_y1_len);
+    		for(int i = temp_layer-1; i>=0;i--) {
+    			if(P3) P3 = all_layer[i].SGconstruct_extra_obs(_x, _y1, max_dis_for_extra_obs/4, P3, UP, R_d_y1_len);
     			else break;
     		}
 
@@ -272,9 +275,11 @@ void Manager::ExtendedDijkstra(){
 
 
     //### 1. insert all GP in fibo heap & initialize SET
+    int test = 0;
     for(size_t i = 0; i < all_cluster.size(); i++){
         begin_itr = all_cluster[i]->GraphP_list.begin();
         end_itr = all_cluster[i]->GraphP_list.end();
+        test += all_cluster[i]->GraphP_list.size();
         if(all_cluster[i]->GetShapeType()==RSHAPE || all_cluster[i]->GetShapeType()==VIA){
             (*begin_itr)->parent = (*begin_itr); //SET root
             (*begin_itr)->terminal_dis = 0;
@@ -290,7 +295,8 @@ void Manager::ExtendedDijkstra(){
             }
         }
     }
-
+    cout << "num of vertices: " << test << endl;
+    
     //### 2. Shortest path terminal forest construct
     while(!FibH.empty()){
         temp_fibn = FibH.topNode();

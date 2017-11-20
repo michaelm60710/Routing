@@ -191,7 +191,6 @@ void Manager::Output(const char *Output_file){
     	layer_pos = (*gp_itr)->Layer_pos;
     	(*gp_itr)->select = true;
         for(edge_itr = (*gp_itr)->final_edge.begin();edge_itr!=(*gp_itr)->final_edge.end(); ++edge_itr){
-
         	if((*edge_itr)->Gp->select) continue;
 
             x1 = (*edge_itr)->point_x1;
