@@ -19,45 +19,63 @@ public:
 	Coords* Parsing_via(string);
 
 	void SpanningGraphConstruct(); //Step 1
+	void SpanningGraphConstruct_2(); //Step 1
 	void SpanningTreeConstruct();  //Step 2
+	void SpanningTreeConstruct_2();  //Step 2
+	void Optimize1(GraphPoint *, GraphPoint *);
+	int opt1_shape(Edge_info*, int&, int&, int&, int&);
+	void Recur_parent_opt1(GraphPoint* );
 	void ExtendedDijkstra();
+	void ExtendedDijkstra_2();
 	void ExtendedKruskal();
-	void addMSTEdges(GraphPoint *p1, GraphPoint *p2);
+	void ExtendedKruskal_2();
+	void ExtendedPrims();
+	void update_path(GraphPoint*, FibHeap<int> &);
+	void addMSTEdges(GraphPoint *p1, GraphPoint *p2, bool);
+	void add_Final_GP(GraphPoint *p1, GraphPoint *p2, bool);
 	void unionSet( GraphPoint *, GraphPoint *);
 	GraphPoint* findSet(GraphPoint *);
 
+	void Reconstruct();
+
+	//0827
+	void SGC_up_down(pair<GraphPoint*, GraphPoint*>, int, Line* );
+
 	void Output(const char* );
+	void Output_test(const char* );
+	void Verify();
+	void Print_R_bound(map< int , BoundLine_info* , less<int> > &, bool, int);
+
 
 	string itos1(int);//integer convert to string
 private:
 	int ViaCost;
 	int Spacing;
 	Coords *Boundary;
-	/*int Boundary_x1;
-	int Boundary_y1;
-	int Boundary_x2;
-	int Boundary_y2;*/
 	int MetalLayers;
 	int RoutedShapes;
 	int RoutedVias;
 	int Obstacles;
+	int MaxRshapeEdge;
+
+	int min_x;
+	Cluster *Extra_Obs; //0809 like VIA
 	vector < Layer > all_layer;
 	
 	vector < Shape* > all_shape;//via, obstacle, rshape
 	vector < Line*  > all_line;
 	vector <Cluster*> all_cluster;
 	
-	//Extended Kruskal's
-	list <Edge> MSTEdges;
+	//GP has final edge
+	list < GraphPoint* > gp_list;
 
+	//GP sgc2
+	vector<GraphPoint* > gp_vec;
+	vector<GraphPoint* > all_gp_vec; //gp_vec + rshape + via
+	vector<GraphPoint* >::iterator all_gp_rshape_begin;
+
+	int max_dis_for_extra_obs;
 };
-
-
-
-
-
-
-
 
 
 #endif

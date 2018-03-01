@@ -27,7 +27,8 @@ int main(int argc, const char **argv)
 	
 	t_last = clock();
 	float second = ((float)t_last-(float)t_first)/CLOCKS_PER_SEC;
-	cout << "\ntimes: "<<second << "s"<<"\nEXIT! \n" <<endl;
+	//cout << "\ntimes: "<<second << "s"<<"\nEXIT! \n" <<endl;
+	cout << "times: "<<second << " "<<"\n" <<endl;
 }
 
 

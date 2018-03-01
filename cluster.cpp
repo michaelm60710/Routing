@@ -13,24 +13,17 @@ Cluster::Cluster(Shape *temp_shape)
 	shape_num = 1;
 	Shape_type = temp_shape->Shape_type;
 	shape_list.push_back(temp_shape);
-	TopLCorner  = new Point(temp_shape->coords->x1,temp_shape->coords->y2);
-	TopRCorner  = new Point(temp_shape->coords->x2,temp_shape->coords->y2);
-	DownLCorner = new Point(temp_shape->coords->x1,temp_shape->coords->y1);
-	DOwnRCorner = new Point(temp_shape->coords->x2,temp_shape->coords->y1);
-	boundary.push_back(DownLCorner);
-	boundary.push_back(DOwnRCorner);
-	boundary.push_back(TopRCorner);
-	boundary.push_back(TopLCorner);
+}
 
+Cluster::Cluster(int _shape_type)
+{
+	shape_num = 0;
+	Shape_type = _shape_type;
 }
 
 void Cluster::Add_shape(Shape *temp_shape){
 
 
-}
-
-void Cluster::Add_GP(GraphPoint *gp){
-	GraphP_list.push_back(gp);
 }
 
 int Cluster::GetShapeType(){
@@ -55,7 +48,15 @@ GraphPoint* Cluster::Add_GP(Line* L, int UPorDown, int &_idx){
 	return gp;
 }
 
+GraphPoint* Cluster::Add_GP(int pos_x, int pos_y, int layer, int &_idx){// for Extra via(Obs)
+	GraphPoint* gp = new GraphPoint(layer, pos_x, pos_y, _idx, this);
+	GraphP_list.push_back(gp);
 
+	return gp;
+}
+
+int GraphPoint::construct_edge = 0;
+int GraphPoint::construct_min_edge = 0;
 
 GraphPoint::GraphPoint(Line* L, int UPorDown, int _idx){
 	clu = L->S->clu;
@@ -70,17 +71,71 @@ GraphPoint::GraphPoint(Line* L, int UPorDown, int _idx){
 	}
 	idx = _idx;
 	// initialization for Extended Kruskal's
-	visit = chosen = false;
+	visit = false;
 	rank = 0;
 }
 
+GraphPoint::GraphPoint(int _layer_pos, int _x, int _y){ // for opt1
+	clu = NULL;
+	Layer_pos = _layer_pos;
+	idx = -1;
+	x = _x;
+	y = _y;
+	visit = false;
+	select = false;
+	rank = 0;
+	terminal_dis = INT_MAX;
+	Shape_type = OBSTACLE; //Output file need to use QQ
+}
+
+GraphPoint::GraphPoint(int _layer_pos, int _x, int _y, int &_idx){ // for SGC_2
+	clu = NULL;
+	Layer_pos = _layer_pos;
+	idx = _idx++;
+	x = _x;
+	y = _y;
+	visit = false;
+	select = false;
+	rank = 0;
+	terminal_dis = INT_MAX;
+	Shape_type = OBSTACLE;
+}
+
+GraphPoint::GraphPoint(int _layer_pos, int _x, int _y, int &_idx, Cluster *_clu){ // for extra obstacle
+	clu = _clu;
+	Shape_type = OBSTACLE;
+	Layer_pos = _layer_pos;
+	idx = _idx++;
+	x = _x;
+	y = _y;
+	visit = false;
+	select = false;
+	rank = 0;
+	terminal_dis = INT_MAX;
+	Shape_type = OBSTACLE;
+}
+
+
 void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_x, int insert_y, int layer, int via_cost){ //add_dis = 0 or Viacost
-	if (insert_gp->clu == clu && clu->GetShapeType()==RSHAPE) return;//same cluster
+	if (insert_gp->clu == clu && Shape_type==RSHAPE) return;//same cluster
 	int distance = abs(my_x-insert_x) + abs(my_y-insert_y) + via_cost;
 	MAP_GP_Status status1;//,status2;
-	Edge_info *E1;
+	Edge_info *E1 = NULL;
 	status1 = map_edge.insert(MAP_GP_edge::value_type(insert_gp->idx, E1 ) );
+	/*if( my_x==135291 && my_y==35061) {//(351236,34284) to (370421,34284)
+		cout << "edge x y:" << insert_x << ", " << insert_y << endl;
+		cout << "my_x _y:" << my_x << ", " << my_y << endl;
+		cout << insert_gp->Layer_pos << ", " << this->Layer_pos << endl;
+		//cin.get();
 
+	}*/
+	/*if(insert_x==5127 && insert_y==1657) {
+		cout << "@edge x y:" << insert_x << ", " << insert_y << endl;
+		cout << "my_x _y:" << my_x << ", " << my_y << endl;
+		cout << insert_gp->Layer_pos << ", " << this->Layer_pos << ", layer = " << layer << endl;
+		cout << "wait " << endl;		
+		cout << "@@@ " << endl;		
+	}*/
 	if(status1.second==true){
 		E1 = new Edge_info(insert_gp, my_x, my_y, insert_x, insert_y, distance, layer);
 		status1.first->second = E1;
@@ -93,8 +148,10 @@ void GraphPoint::Add_edge(GraphPoint *insert_gp, int my_x, int my_y, int insert_
 			status1.first->second->point_y2 = insert_y;
 			status1.first->second->distance = distance;
 			status1.first->second->layer    = layer;
+			construct_min_edge++; //static
 		}
 	}
+	construct_edge++; //static
 
 }
 
@@ -111,3 +168,30 @@ GraphPoint* GraphPoint::Find_Set(){
 	return root;
 }
 
+BoundLine_info::BoundLine_info(int m_x, int temp_x, int flag, int P_y, int min_x, GraphPoint *gpp=NULL):Gp(NULL),max_x(m_x),point_x(temp_x),point_y(P_y)
+{
+	//min_x = spacing - 1
+	up_edge_GP = down_edge_GP = NULL;
+	if(flag & UP) {
+		down_edge_x = m_x;
+		down_edge_GP = gpp;
+		up_edge_x   = min_x;
+	}
+	else if(flag & DOWN){
+		down_edge_x = min_x;
+		up_edge_x   = m_x;
+		up_edge_GP = gpp;
+	}
+	else { //VIA
+		down_edge_x = min_x;
+		up_edge_x   = min_x;
+	}
+}
+
+BoundLine_info::BoundLine_info(int max_x, int P_y, int min_x, int down_x):Gp(NULL),max_x(max_x),point_x(max_x),point_y(P_y){
+
+	up_edge_GP = down_edge_GP = NULL;
+	down_edge_x = down_x;
+	up_edge_x   = min_x;
+
+}

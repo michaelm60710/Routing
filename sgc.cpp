@@ -1,7 +1,7 @@
 #include "Manager.h"
 #include <iostream>
 #include <algorithm>
-
+//#include <omp.h>
 using namespace std;
 
 
@@ -12,7 +12,7 @@ sort_linex(Line* L1, Line* L2){
 
 void Manager::SpanningGraphConstruct(){
     pair<GraphPoint*, GraphPoint*> GP_result;
-	int l_idx=0;
+	int l_idx=0, temp_layer;
     list < Shape* >::iterator itr1,itr2;
     GraphPoint *gp1, *gp2;
     int x,y;
@@ -20,10 +20,9 @@ void Manager::SpanningGraphConstruct(){
 
     //###1. Initialize
     for(int i =0;i<MetalLayers;i++) {
-        cout << "LAYER " << i << ":" << endl;
+        //cout << "LAYER " << i << ":" << endl;
         all_layer[i].SpanningGraphConstruct();
     }
-    cout << endl;
 
     //###2. Sort all shape line
 	all_line.resize((RoutedShapes+Obstacles+RoutedVias)*2 );
@@ -39,6 +38,8 @@ void Manager::SpanningGraphConstruct(){
         l_r->x = all_shape[s]->coords->x2;
         l_l->y = l_r->y = all_shape[s]->coords->y1;
         l_l->length = l_r->length = all_shape[s]->coords->y2 - l_l->y;
+        l_l->width = 0;
+        l_r->width = l_r->x - l_l->x;
     	if(all_shape[s]->Shape_type==VIA) {
          	all_line[l_idx++]  = l_l;
     	}
@@ -49,29 +50,28 @@ void Manager::SpanningGraphConstruct(){
         }
     }
     sort(all_line.begin(), all_line.end(), sort_linex);
-
+    
     //###2.2 
     clu_end = all_line.size() - 1;
+    int max_x = Boundary->x2 - Spacing + 1;
     for(size_t s = all_line.size()-1; s > 0; s--){
-    	if(all_line[s]->x <= Boundary->x2){
+    	if(all_line[s]->x <= max_x){
     		clu_end = s;
     		break;
     	}
     }
-    /*cout << "bound :" << Boundary->x1 << " ,x2:" << Boundary->x2 << endl; 
-    cout << "origin clu size:" << all_line.size() << endl;
-    cout << "first: " << clu_begin << ", end: " << clu_end << endl;*/
 
     //###3. Construct global graph
-    for(size_t  s = 0; s <= clu_end; s++){//s =0; s < all_line.size(); s++){//
-    	GP_result = all_layer[all_line[s]->S->layer_position].SGconstruct(all_line[s]);
+    for(size_t  s = 0; s <= clu_end; s++){
+    	temp_layer = all_line[s]->S->layer_position;
+    	GP_result = all_layer[temp_layer].SGconstruct(all_line[s]);
+    	all_layer[temp_layer].diff_map_update(all_line[s]);
 
-        if(all_line[s]->S->layer_position>0){
-            all_layer[all_line[s]->S->layer_position-1].SGconstruct_search(all_line[s], GP_result.first, GP_result.second);
-        }
-        if(all_line[s]->S->layer_position<MetalLayers-1){
-            all_layer[all_line[s]->S->layer_position+1].SGconstruct_search(all_line[s], GP_result.first, GP_result.second);
-        }
+    	//###3.2 go up & down to construct graph
+    	SGC_up_down(GP_result, temp_layer, all_line[s]); 
+
+    	//test 1117
+
     }
 
     //###4. Update Via length (Cluster of Via must be only 1 Gp)
@@ -91,10 +91,10 @@ void Manager::SpanningGraphConstruct(){
 
     //###5. Convert to undirected graph
     for(int i =0;i<MetalLayers;i++) all_layer[i].ConvertToUndirectedG();
-    
 }
 
 void Manager::SpanningTreeConstruct(){
+    
     //###1. Init all_cluster
     size_t all_cluster_size = 0;
     for(int i =0;i<MetalLayers;i++) all_cluster_size += all_layer[i].all_cluster.size();
@@ -107,15 +107,165 @@ void Manager::SpanningTreeConstruct(){
     //###3. Extended Kruskal's Algorithm
     ExtendedKruskal();
 
-    //###4. Undirected Graph (just only for plot )
-    //for(int i =0;i<MetalLayers;i++) all_layer[i].ConvertFinalToUndirectedG();
+    //###4. Final GP list construct
+    GraphPoint *r_gp;
+    for(size_t i = 0; i < all_cluster.size(); i++){
+    	if(all_cluster[i]->GetShapeType()==OBSTACLE) continue;
+    	r_gp = *(all_cluster[i]->GraphP_list.begin());
+    	if(r_gp->select) continue;
+    	r_gp->select = true;
+    	gp_list.push_back(r_gp);
+    }
+}
+
+void Manager::SGC_up_down(pair<GraphPoint*, GraphPoint*> GP_result, int temp_layer, Line* _Line){
+    map< int , BoundLine_info* , less<int> > R_bound_map;
+    GraphPoint *P1=NULL, *P2=NULL, *P3=NULL, *P4=NULL;
+    BoundLine_info* b_upper, * b_upper1, * b_down, * b_down1;
+    int temp_min_x, RSHAPE_width;
+    //Init: extra Obs
+    int _x = _Line->x, _y2 = _Line->y, _y1 = _Line->y + _Line->length;
+    int R_d_y2_len = _y1, R_d_y1_len = _y2, R_u_y2_len = _y1, R_u_y1_len = _y2;
+    if(_Line->S->Shape_type!=RSHAPE){
+        R_d_y2_len = R_u_y2_len = _y2;
+        R_d_y1_len = R_u_y1_len = _y1;
+    }
 
 
+    //int up_layer = MetalLayers-1, down_layer = 0;
+    P1 = P2 = P3 = P4 = NULL;
+    if(_Line->S->Shape_type==VIA);
+    else if(_Line->S->Shape_type==RSHAPE){
+        P1 = P2 = P3 = P4 = GP_result.first;
+    }
+    else{ //OBSTACLE
+        P1 = P3 = GP_result.first;
+        P2 = P4 = GP_result.second;
+    }
+
+    if(_Line->S->Shape_type==RSHAPE && _Line->LR==RIGHT){
+        //1. Init R_bound_map
+        RSHAPE_width = _Line->width;
+        if(min_x > _x - RSHAPE_width) temp_min_x = min_x;
+        else                          temp_min_x = _x - RSHAPE_width;
+        
+        b_upper = new BoundLine_info(INT_MAX, 0, UP, _y1+2, temp_min_x, NULL);
+        b_upper1= new BoundLine_info(INT_MAX, 0, DOWN, _y1+1, temp_min_x, NULL);
+        b_down  = new BoundLine_info(INT_MAX, 0, UP, _y2-1, temp_min_x, NULL);
+        b_down1 = new BoundLine_info(INT_MAX, 0, DOWN, -1, temp_min_x, NULL);
+        //cout << "RSHAPE LEFT x1 ,x2:" << _x - RSHAPE_width << ", " << _x << ", y_up ,y_down:" << _y1 << ", " << _y2 << ", " << temp_min_x << endl;
+        R_bound_map.clear();                                                            //Max_x, point_x, flag(UP_or_down), point_y, min_x
+        R_bound_map.insert(pair< int , BoundLine_info*>(_y1+2, b_upper) );
+        R_bound_map.insert(pair< int , BoundLine_info*>(_y1+1, b_upper1) );
+        R_bound_map.insert(pair< int , BoundLine_info*>(_y2-1, b_down) );
+        R_bound_map.insert(pair< int , BoundLine_info*>(-1,    b_down1) );
+        //Print_R_bound(R_bound_map, true, temp_min_x);
+        // up down construct edge
+        if(temp_layer<MetalLayers-1){
+            if(P2) {
+                P2 = all_layer[temp_layer+1].SGconstruct_extra_obs_RSHAPE_right(_x, _y2, (_y1 - _y2), P2, DOWN, R_u_y2_len, R_bound_map);
+                all_layer[temp_layer+1].diff_map_insert_rshape_point(P2, _x, _y2);
+            }
+            if(P1){
+                P1 = all_layer[temp_layer+1].SGconstruct_extra_obs_RSHAPE_right(_x, _y1, (_y1 - _y2), P1, UP, R_u_y1_len, R_bound_map);
+                all_layer[temp_layer+1].diff_map_insert_rshape_point(P1, _x, _y1); 
+            }
+            all_layer[temp_layer+1].Update_Rbound_map(temp_min_x, _y1, _y2, R_bound_map);
+            //Print_R_bound(R_bound_map, false, temp_min_x);
+        }
+        //Up
+        for(int i = temp_layer+2;i<=MetalLayers-1;i++) {
+            all_layer[i].Extra_obs_RSHAPE_right(_Line, P1, P2, _x, _y1, _y2, R_u_y1_len, R_u_y2_len, R_bound_map);
+            if(P1==NULL && P2==NULL) break;
+            all_layer[i].Update_Rbound_map(temp_min_x, _y1, _y2, R_bound_map);
+            //Print_R_bound(R_bound_map, false, temp_min_x);
+        }
+
+        R_bound_map.clear();
+        b_upper = new BoundLine_info(INT_MAX, 0, UP, _y1+2, temp_min_x, NULL);
+        b_upper1= new BoundLine_info(INT_MAX, 0, DOWN, _y1+1, temp_min_x, NULL);
+        b_down  = new BoundLine_info(INT_MAX, 0, UP, _y2-1, temp_min_x, NULL);
+        b_down1 = new BoundLine_info(INT_MAX, 0, DOWN, -1, temp_min_x, NULL);
+        R_bound_map.insert(pair< int , BoundLine_info*>(_y1+2, b_upper) );
+        R_bound_map.insert(pair< int , BoundLine_info*>(_y1+1, b_upper1) );
+        R_bound_map.insert(pair< int , BoundLine_info*>(_y2-1, b_down) );
+        R_bound_map.insert(pair< int , BoundLine_info*>(-1,    b_down1) );
+        
+        
+        if(temp_layer>0){
+            if(P4) {
+                P4 = all_layer[temp_layer-1].SGconstruct_extra_obs_RSHAPE_right(_x, _y2, (_y1 - _y2), P4, DOWN, R_d_y2_len, R_bound_map);
+                all_layer[temp_layer-1].diff_map_insert_rshape_point(P4, _x, _y2);
+            }
+            if(P3) {
+                P3 = all_layer[temp_layer-1].SGconstruct_extra_obs_RSHAPE_right(_x, _y1, (_y1 - _y2), P3, UP, R_d_y1_len, R_bound_map);
+                all_layer[temp_layer-1].diff_map_insert_rshape_point(P3, _x, _y1); 
+            }
+            all_layer[temp_layer-1].Update_Rbound_map(temp_min_x, _y1, _y2, R_bound_map);
+            //Print_R_bound(R_bound_map, false, temp_min_x);
+        }    
+
+        //Down
+        for(int i = temp_layer-2; i>=0;i--) {
+            all_layer[i].Extra_obs_RSHAPE_right(_Line, P3, P4, _x, _y1, _y2, R_d_y1_len, R_d_y2_len, R_bound_map);
+            if(P3==NULL && P4==NULL) break;
+            all_layer[i].Update_Rbound_map(temp_min_x, _y1, _y2, R_bound_map);
+            //Print_R_bound(R_bound_map, false, temp_min_x);
+        }
+    }
+    else{
+        // up down construct edge
+        if(temp_layer<MetalLayers-1){
+            if(P2) P2 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P2, DOWN, R_u_y2_len);
+            if(P1) P1 = all_layer[temp_layer+1].SGconstruct_extra_obs(_x, _y1, (_y1 - _y2), P1, UP, R_u_y1_len);
+        }
+        if(temp_layer>0){
+            if(P4) P4 = all_layer[temp_layer-1].SGconstruct_extra_obs(_x, _y2, (_y1 - _y2), P4, DOWN, R_d_y2_len);
+            if(P3) P3 = all_layer[temp_layer-1].SGconstruct_extra_obs(_x, _y1, (_y1 - _y2), P3, UP, R_d_y1_len);
+        }
+
+
+        //Up
+        for(int i = temp_layer+2;i<=MetalLayers-1;i++) {
+            all_layer[i].Extra_obs(_Line, P1, P2, _x, _y1, _y2, R_u_y1_len, R_u_y2_len);
+            if(P1==NULL && P2==NULL) break;
+        }
+        //Down
+        for(int i = temp_layer-2; i>=0;i--) {
+            all_layer[i].Extra_obs(_Line, P3, P4, _x, _y1, _y2, R_d_y1_len, R_d_y2_len);
+            if(P3==NULL && P4==NULL) break;
+        }
+    }
+
+    //For Extra Obs vertice
+    if(_Line->S->Shape_type==OBSTACLE && all_layer[temp_layer].g_obs_len > 0 ){ //there are new verteices 11/17
+
+    	for(int i = 0; i < all_layer[temp_layer].g_obs_len; i++){
+            P1 = P3 = all_layer[temp_layer].Obs_gp_vec[i];
+    		_x = P1->x; _y1 = P1->y;
+    		R_u_y1_len = _y1;
+            R_u_y1_len = _y1;
+
+    		//Up
+    		for(int i = temp_layer+1;i<=MetalLayers-1;i++) {
+    			if(P1) P1 = all_layer[i].SGconstruct_extra_obs(_x, _y1, max_dis_for_extra_obs/4, P1, UP, R_u_y1_len);
+    			else break;
+    		}
+    		//Down
+    		for(int i = temp_layer-1; i>=0;i--) {
+    			if(P3) P3 = all_layer[i].SGconstruct_extra_obs(_x, _y1, max_dis_for_extra_obs/4, P3, UP, R_d_y1_len);
+    			else break;
+    		}
+
+    	}
+    }
+    all_layer[temp_layer].g_obs_len = 0;
 
 }
 
-void Manager::ExtendedDijkstra(){
 
+void Manager::ExtendedDijkstra(){
+	//cout << "...Start Dijkstra...\n";
     FibHeap<int> FibH;// FibH;
     FibHeap<int>::FibNode *temp_fibn;
     list < GraphPoint* >::iterator gp_itr,begin_itr,end_itr;
@@ -125,9 +275,11 @@ void Manager::ExtendedDijkstra(){
 
 
     //### 1. insert all GP in fibo heap & initialize SET
+    int test = 0;
     for(size_t i = 0; i < all_cluster.size(); i++){
         begin_itr = all_cluster[i]->GraphP_list.begin();
         end_itr = all_cluster[i]->GraphP_list.end();
+        test += all_cluster[i]->GraphP_list.size();
         if(all_cluster[i]->GetShapeType()==RSHAPE || all_cluster[i]->GetShapeType()==VIA){
             (*begin_itr)->parent = (*begin_itr); //SET root
             (*begin_itr)->terminal_dis = 0;
@@ -143,14 +295,14 @@ void Manager::ExtendedDijkstra(){
             }
         }
     }
-
+    cout << "num of vertices: " << test << endl;
+    
     //### 2. Shortest path terminal forest construct
     while(!FibH.empty()){
         temp_fibn = FibH.topNode();
         temp_dis = temp_fibn->key;
         temp_gp = (GraphPoint*)temp_fibn->payload;
         temp_gp->select = true;
-        //cout << "Top: " << temp_dis << endl;
 
         //# pop the target vertex
         FibH.pop();
@@ -198,8 +350,8 @@ void Manager::ExtendedDijkstra(){
         }
     }
     if(isolate_num!=0){
-    	cerr << isolate_num << " vertex are isolated\n";
-    	cerr << isolate_obstacle_num << " OBSTACLE vertex are isolated\n";
+    	//cerr << isolate_num << " vertex are isolated\n";
+    	//cerr << isolate_obstacle_num << " OBSTACLE vertex are isolated\n";
     }
 
     //#check
@@ -207,6 +359,71 @@ void Manager::ExtendedDijkstra(){
 
 
 }
+
+void Manager::ExtendedKruskal() {
+    //cout << "...Start Kruskal's...\n";
+    list <GraphPoint*>::iterator gp_itr, begin1, end1;
+    MAP_GP_edge::iterator map_gp_itr, begin2, end2;
+    GraphPoint *temp_gp1, *temp_gp2;
+    int edgeLength, dis1, dis2;
+
+    multimap < int, Edge_info* > HeapBE; // bridge edge
+    multimap < int, Edge_info* >::iterator curEdge;
+
+    // initialization
+    int SET_count= 0;
+    for (size_t i = 0; i < all_cluster.size(); i++) {
+        begin1 = all_cluster[i]->GraphP_list.begin();
+        end1 = all_cluster[i]->GraphP_list.end();
+        if(all_cluster[i]->GetShapeType()==RSHAPE || all_cluster[i]->GetShapeType()==VIA){
+             (*(all_cluster[i]->GraphP_list.begin() ))->parentKK = (*(all_cluster[i]->GraphP_list.begin() ));
+             SET_count++;
+        }
+        for (gp_itr = begin1; gp_itr != end1; ++gp_itr) {
+            temp_gp1 = (*gp_itr);
+            temp_gp1->select = false; // final edge need to init
+            temp_gp1->parentKK = temp_gp1;
+            temp_gp1->visit = true;
+            begin2 = temp_gp1->map_edge.begin();
+            end2 = temp_gp1->map_edge.end();
+
+            for (map_gp_itr = begin2; map_gp_itr != end2; ++map_gp_itr) {
+                temp_gp2 = map_gp_itr->second->Gp;
+                if (temp_gp2->visit == true) continue;
+                if (temp_gp1->root != temp_gp2->root) {
+                	edgeLength = map_gp_itr->second->distance;
+	                dis1 = temp_gp1->terminal_dis;
+	                dis2 = temp_gp2->terminal_dis;
+                    map_gp_itr->second->source = temp_gp1;
+                    HeapBE.insert(  pair <int, Edge_info*> ( dis1 + edgeLength + dis2, map_gp_itr->second )  );
+                }
+            }
+        }
+    }
+
+    // choose MST points
+    int set_combine = 1;
+    for(curEdge = HeapBE.begin(); curEdge != HeapBE.end(); ++curEdge){
+        temp_gp1 = curEdge->second->source;
+        temp_gp2 = curEdge->second->Gp;
+        GraphPoint *set1 = findSet(temp_gp1->root);
+        GraphPoint *set2 = findSet(temp_gp2->root);
+
+        if (set1 != set2) {
+            set_combine++;
+            unionSet(set1, set2);
+            addMSTEdges(temp_gp1, temp_gp2, false);
+            if(set_combine>=SET_count) {
+            cout << "longest path= " << curEdge->first << endl;
+            break;
+        }
+        }
+        
+
+    }
+}
+
+
 
 GraphPoint* Manager::findSet(GraphPoint *p) {
     if (p != p->parentKK)
@@ -226,106 +443,282 @@ void Manager::unionSet( GraphPoint *s1, GraphPoint *s2 ) {
 
 }
 
-void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2) {
+void Manager::addMSTEdges(GraphPoint *p1, GraphPoint *p2, bool opt1) { //need to optimize! use map search
     GraphPoint *p = p1;
-    //int x1,y1,x2,y2;
-    MAP_GP_edge::iterator map_gp_itr, map_begin_itr, map_end_itr;
-    for(map_gp_itr = p1->map_edge.begin();map_gp_itr!=p1->map_edge.end(); ++map_gp_itr){
-        /*x1 = map_gp_itr->second->point_x1;
-        y1 = map_gp_itr->second->point_y1;
-        x2 = map_gp_itr->second->point_x2;
-        y2 = map_gp_itr->second->point_y2;*/
-        if(p2==map_gp_itr->second->Gp ) {
-            //MSTEdges.push_back( Edge(x1, x2, y1, y2) );
-            p1->final_edge.push_back(map_gp_itr->second);
-        }
+    //test 
+    if(/*opt1 && */p1->root->Layer_pos!=p2->root->Layer_pos && !(p1->Shape_type!=OBSTACLE && p2->Shape_type!=OBSTACLE) ) { //bug: roots are same layer
+        Optimize1(p1, p2);
+        return;
     }
+    //else return;
+
+    MAP_GP_edge::iterator map_gp_itr, map_begin_itr, map_end_itr;
+    add_Final_GP(p1,p2, false);
 
     while (p != p->parent) {
-        for(map_gp_itr = p->map_edge.begin();map_gp_itr!=p->map_edge.end(); ++map_gp_itr){
-            /*x1 = map_gp_itr->second->point_x1;
-            y1 = map_gp_itr->second->point_y1;
-            x2 = map_gp_itr->second->point_x2;
-            y2 = map_gp_itr->second->point_y2;*/
-            if(p->parent==map_gp_itr->second->Gp ) {
-                //MSTEdges.push_back( Edge(x1, x2, y1, y2) );
-                p->final_edge.push_back(map_gp_itr->second);
-            }
-        }
+    	if(!p->select){
+    		add_Final_GP(p,p->parent, true);
+    		p->select = true;
+    	}
+    	else break;
+
         p = p->parent;
     }
     p = p2;
     while (p != p->parent) {
-        for(map_gp_itr = p->map_edge.begin();map_gp_itr!=p->map_edge.end(); ++map_gp_itr){
-            /*x1 = map_gp_itr->second->point_x1;
-            y1 = map_gp_itr->second->point_y1;
-            x2 = map_gp_itr->second->point_x2;
-            y2 = map_gp_itr->second->point_y2;*/
-            if(p->parent==map_gp_itr->second->Gp ) {
-                //MSTEdges.push_back( Edge(x1, x2, y1, y2) );
-                 p->final_edge.push_back(map_gp_itr->second);
-            }
-        }
+    	if(!p->select){
+    		add_Final_GP(p,p->parent, true);
+    		p->select = true;
+    	}
+    	else break;
+
         p = p->parent;
     }
+
 }
 
-void Manager::ExtendedKruskal() {
-    cout << "...Start Kruskal's" << endl;
-    list <GraphPoint*>::iterator gp_itr, begin1, end1;
-    MAP_GP_edge::iterator map_gp_itr, begin2, end2;
-    GraphPoint *temp_gp1, *temp_gp2;
-    int edgeLength, dis1, dis2;
+void Manager::add_Final_GP(GraphPoint *p1, GraphPoint *p2, bool insert_gp_list) {
+	MAP_GP_edge::iterator it1 = p1->map_edge.find(p2->idx);
+	Edge_info* temp_edge;
+	Edge_info *E1;
+	if(it1 == p1->map_edge.end() ) cout << insert_gp_list << "??\n";
+	else {
+		if(insert_gp_list) gp_list.push_back(p1);
+		temp_edge = it1->second;
+		p1->final_edge.push_back(temp_edge);
+		E1 = new Edge_info(p1, temp_edge->point_x2, temp_edge->point_y2, temp_edge->point_x1, temp_edge->point_y1, temp_edge->distance, temp_edge->layer);
+		p2->final_edge.push_back(E1);
+	}
 
-    multimap < int, Edge_info* > HeapBE; // bridge edge
-    multimap < int, Edge_info* >::iterator curEdge;
+}
 
-    // initialization
-    int ttt= 0;
-    for (size_t i = 0; i < all_cluster.size(); i++) {
-        begin1 = all_cluster[i]->GraphP_list.begin();
-        end1 = all_cluster[i]->GraphP_list.end();
-        if(all_cluster[i]->GetShapeType()==RSHAPE || all_cluster[i]->GetShapeType()==VIA){
-             (*(all_cluster[i]->GraphP_list.begin() ))->parentKK = (*(all_cluster[i]->GraphP_list.begin() ));
-             ttt++;
-        }
-        for (gp_itr = begin1; gp_itr != end1; ++gp_itr) {
-            temp_gp1 = (*gp_itr);
-            temp_gp1->parentKK = temp_gp1;
-            //temp_gp1->visit = true;
-            begin2 = temp_gp1->map_edge.begin();
-            end2 = temp_gp1->map_edge.end();
+void Manager::Optimize1(GraphPoint *p1, GraphPoint* p2){
+	GraphPoint *temp_p, *temp_p1, *p_begin, *p_end, *insert_gp;	
+    MAP_GP_edge::iterator it1;
+    list<Edge_info*>::iterator edge_itr;
+    Edge_info *temp_edge, *temp_edge1, *E1;
+    FibHeap<int> FibH;// FibH;
+    FibHeap<int>::FibNode *temp_fibn;
+    int temp_layer;
+    int x1,y1,x2,y2, xx1, yy1, xx2, yy2 ,bound_x1, bound_x2, bound_y1, bound_y2, new_x, new_y, dis;
+    int nearest_point;
+    //  2------3
+    //  0------1
 
-            for (map_gp_itr = begin2; map_gp_itr != end2; ++map_gp_itr) {
-                temp_gp2 = map_gp_itr->second->Gp;
-                //if (temp_gp2->visit == true) continue;
-                edgeLength = map_gp_itr->second->distance;
-                dis1 = temp_gp1->terminal_dis;
-                dis2 = temp_gp2->terminal_dis;
+	//ftemp_edge
+    p_begin = p1->root;
+    p_end = p2->root;
 
-                if (temp_gp1->root != temp_gp2->root) {
-                    map_gp_itr->second->source = temp_gp1;
-                    HeapBE.insert(  pair <int, Edge_info*> ( dis1 + edgeLength + dis2, map_gp_itr->second )  );
+    //###1.1 construct path & init ftemp_edge
+    Recur_parent_opt1(p1);
+    p1->path = temp_p = p2;
+    while(temp_p != temp_p->parent){
+        temp_p->path = temp_p->parent;
+        temp_p = temp_p->parent;
+    }
+
+    //###1.2 find ftemp_edge
+    p_end->terminal_dis = INT_MAX;
+    p_end->Fnode = FibH.push(INT_MAX, temp_p);
+    p_end->ftemp_edge.clear();
+    for(temp_p = p_begin;temp_p != p_end; temp_p = temp_p->path){
+        it1 = temp_p->map_edge.find(temp_p->path->idx);
+        temp_p->ftemp_edge.clear();
+        temp_p->ftemp_edge.push_back(it1->second);
+        temp_p->terminal_dis = INT_MAX;
+        temp_p->Fnode = FibH.push(INT_MAX, temp_p);
+    }
+    //###1.3 construct new overlap via
+    temp_layer = (*(p_begin->ftemp_edge.begin()))->layer;
+    GraphPoint *same_l_gp = p_begin;
+    for(temp_p = p_begin;temp_p != p_end; temp_p = temp_p->path){
+    	temp_edge = *(temp_p->ftemp_edge.begin()); 
+    	if(temp_layer!=temp_edge->layer){
+            if(abs(temp_layer-temp_edge->layer)>1);
+            else{
+                opt1_shape(temp_edge,x1,y1,x2,y2);//cout << "x1: " << temp_edge->point_x1 << ", y1: " <<temp_edge->point_y1 << ", x2:" << temp_edge->point_x2 << ", y2: "<< temp_edge->point_y2 << ", pos:" << nearest_point << endl;
+                for(temp_p1 = same_l_gp; temp_p1!=temp_p; temp_p1 = temp_p1->path){//main part: consider overlap
+                    temp_edge1 =  *(temp_p1->ftemp_edge.begin()); 
+                    nearest_point = opt1_shape(temp_edge1,xx1,yy1,xx2,yy2);
+                    
+                    //###Find overlap bound begin
+                    if(xx1 < x1){
+                        bound_x1 = x1;
+                        if(xx2 < x1) continue;
+                        else if(xx2 > x2) bound_x2 = x2;                        
+                        else              bound_x2 = xx2;
+                    }
+                    else if(xx1 > x2) continue;
+                    else{//x1 <= xx1 <= x2
+                        bound_x1 = xx1;
+                        if(xx2 > x2) bound_x2 = x2;
+                        else         bound_x2 = xx2;
+                    }
+
+                    if(yy1 < y1){
+                        bound_y1 = y1;
+                        if(yy2 < y1) continue;
+                        else if(yy2 > y2) bound_y2 = y2;                        
+                        else              bound_y2 = yy2;
+                    }
+                    else if(yy1 > y2) continue;
+                    else{//y1 <= yy1 <= y2
+                        bound_y1 = yy1;
+                        if(yy2 > y2) bound_y2 = y2;
+                        else         bound_y2 = yy2;
+                    }
+                    if(bound_x1==bound_x2 && bound_y1==bound_y2) continue;
+                    if(nearest_point==0){
+                        new_x = bound_x1;
+                        new_y = bound_y1;
+                    }    
+                    else if(nearest_point==1){
+                        new_x = bound_x2;
+                        new_y = bound_y1;
+                    }
+                    else if(nearest_point==2){
+                        new_x = bound_x1;
+                        new_y = bound_y2;
+                    }
+                    else if(nearest_point==3){
+                        new_x = bound_x2;
+                        new_y = bound_y2;
+                    }
+                    //###Insert 2 edge
+                    insert_gp = new GraphPoint(temp_layer, new_x, new_y);
+                    insert_gp->Fnode = FibH.push(INT_MAX, insert_gp);
+                    dis = abs(temp_edge->point_x2 - new_x) + abs(temp_edge->point_y2 - new_y);
+                    E1 = new Edge_info(temp_edge->Gp, new_x, new_y, temp_edge->point_x2, temp_edge->point_y2, dis, temp_edge->layer);
+                    insert_gp->ftemp_edge.push_back(E1);
+                    dis = abs(temp_edge1->point_x1 - new_x) + abs(temp_edge1->point_y1 - new_y);
+                    E1 = new Edge_info(insert_gp, temp_edge1->point_x1, temp_edge1->point_y1 ,new_x, new_y, dis, temp_edge1->layer);
+                    temp_p1->ftemp_edge.push_back(E1);
                 }
             }
+    		
+    		temp_layer = temp_edge->layer;
+    		same_l_gp = temp_p;
+    	}
+    }
+
+    //###1.4 find shortest path (dijkstra's)
+    FibH.decrease_key(p_begin->Fnode, 0);
+    p_begin->terminal_dis = 0;
+    while(!FibH.empty()){
+        temp_fibn = FibH.topNode();
+        temp_p = (GraphPoint*)temp_fibn->payload;
+        if(temp_p==p_end) break;
+        FibH.pop();
+
+        for(edge_itr = temp_p->ftemp_edge.begin(); edge_itr != temp_p->ftemp_edge.end(); ++edge_itr){
+            dis = temp_p->terminal_dis + (*edge_itr)->distance;
+            temp_p1 = (*edge_itr)->Gp;
+            if(temp_p1->terminal_dis > dis){
+            	temp_p1->terminal_dis = dis;
+            	temp_p1->path_opt = temp_p;
+            	FibH.decrease_key(temp_p1->Fnode, dis);
+            }
+        }
+
+    }
+
+    //###2 construct the final edge
+    for(temp_p1 = p_end; temp_p1 != p_begin; temp_p1 = temp_p1->path_opt){ ////bug
+    	temp_edge = NULL;
+    	temp_p = temp_p1->path_opt;
+        for(edge_itr = temp_p->ftemp_edge.begin(); edge_itr != temp_p->ftemp_edge.end(); ++edge_itr){
+            if((*edge_itr)->Gp==temp_p1){
+                temp_edge = (*edge_itr);
+                break;
+            }
+        }
+        if(temp_edge==NULL) { cerr << "error!"<< endl; continue;}//bug
+        
+        temp_p->final_edge.push_back(temp_edge);
+        E1 = new Edge_info(temp_p, temp_edge->point_x2, temp_edge->point_y2, temp_edge->point_x1, temp_edge->point_y1, temp_edge->distance, temp_edge->layer);
+        temp_p1->final_edge.push_back(E1);
+
+    }
+
+    //###2.1 add to graph list
+    for(temp_p = p_end;temp_p != p_begin; temp_p = temp_p->path_opt){
+        if(!temp_p->select){
+            gp_list.push_back(temp_p);
+            temp_p->select = true;
         }
     }
 
-    // choose MST points
-    while (!HeapBE.empty()) {
-        curEdge = HeapBE.begin();
-        temp_gp1 = curEdge->second->source;
-        temp_gp2 = curEdge->second->Gp;
-        GraphPoint *set1 = findSet(temp_gp1->root);
-        GraphPoint *set2 = findSet(temp_gp2->root);
-        if (set1 != set2) {
-            unionSet(set1, set2);
-            addMSTEdges(temp_gp1, temp_gp2);
-        }
-        HeapBE.erase(curEdge);
-    }
+
 
 }
+
+void Manager::Recur_parent_opt1(GraphPoint* gp1){
+
+
+	if(gp1 != gp1->parent) {
+		if(gp1->parent==NULL){
+			cout << "errorQQ" << endl;
+			//cin.get();
+		}
+		gp1->parent->path = gp1;
+		Recur_parent_opt1(gp1->parent);
+	}
+
+}
+
+int Manager::opt1_shape(Edge_info *E, int &x1, int &y1, int &x2, int &y2){
+	int nearest_pos = 0;
+	x1 = E->point_x1;
+	x2 = E->point_x2;
+	y1 = E->point_y1;
+	y2 = E->point_y2;
+	if(x1 > x2){
+		swap(x1, x2);
+		nearest_pos++;
+	}
+	if(y1 > y2){
+		swap(y1, y2);
+		nearest_pos+=2;
+	}
+
+	return nearest_pos;
+}
+
+
+
+
+void Manager::Print_R_bound(map< int , BoundLine_info* , less<int> > &R_bound_map, bool print, int R_min_x){
+    if(print){
+       cout << "R_bound_map print" << endl;
+        for(map< int , BoundLine_info* , less<int> >::iterator it1 = R_bound_map.begin();it1 != R_bound_map.end();++it1){
+            cout << "y, max_x, up_edge_x, down_edge_x: " << it1->second->point_y << ", " << it1->second->max_x << ", " << it1->second->Get_up_edge_x() << ", " << it1->second->Get_down_edge_x() << endl;
+        } 
+        return;
+    }
+
+    
+    bool bug = false;
+    map< int , BoundLine_info* , less<int> >::reverse_iterator pre_ritr,it1;
+    pre_ritr = it1 = R_bound_map.rbegin();
+    ++it1;
+    for(;it1 != R_bound_map.rend();++it1){
+        if(pre_ritr->second->down_edge_x != it1->second->up_edge_x)bug = true;// cout << "Q";
+        if(R_min_x > it1->second->Get_up_edge_x() || R_min_x > it1->second->Get_down_edge_x()) bug = true;
+        pre_ritr = it1;
+    }
+    if(bug){
+        cout << "R_bound_map print" << endl;
+        for(map< int , BoundLine_info* , less<int> >::reverse_iterator it1 = R_bound_map.rbegin();it1 != R_bound_map.rend();++it1){
+            cout << "y, max_x, up_edge_x, down_edge_x: " << it1->second->point_y << ", " << it1->second->max_x << ", " << it1->second->Get_up_edge_x() << ", " << it1->second->Get_down_edge_x() << endl;
+        }
+        cin.get();
+    }
+    if(bug) cin.get();
+
+}
+
+
+
 
 
 
